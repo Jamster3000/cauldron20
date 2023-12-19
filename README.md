@@ -5,7 +5,7 @@ Cauldron20, a chrome extension that provides functionalily between character she
 # How it works
 This works by clicking on the extension and entering your character sheet's number (e.g. 112012248). This will then use dndbeyond's api for character sheets. It will remember your character so this will be a one time input. If you want to use a different character just input a new number and your old character will be replaced with the new one.
 
-# Installation
+# Installation 🚀
 To install and try this work-in-progress extension
 1) Install all the code on this github
 2) extract the code from the zip folder
@@ -20,3 +20,7 @@ The extension should work as intended.
 > This is a work in progress and there is likley to be many issues and bugs to happen.
 
 I would like to also add to this that I don't know JavaScript and I honeslty think it's a headache for me until I get the hang of this.
+
+![GitHub issues](https://img.shields.io/github/issues/jamster3000/Joan-smart-assistant)
+![Last Commit](https://img.shields.io/github/last-commit/jamster3000/Joan-smart-assistant)
+![GitHub Stars](https://img.shields.io/github/stars/jamster3000/Joan-smart-assistant?style=social)![Code Size](https://img.shields.io/github/languages/code-size/jamster3000/Joan-smart-assistant)
