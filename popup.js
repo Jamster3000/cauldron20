@@ -2,12 +2,6 @@ document.addEventListener('DOMContentLoaded', function () {
     // Fetch character info when the button is clicked
     document.getElementById('fetchButton').addEventListener('click', fetchCharacterInfo);
 
-    chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-        if (request.action) {
-            displayCharacterInfo(characterData)
-        }
-    })
-
     // Retrieve the stored character ID and populate the input field
     chrome.storage.local.get('characterId', function (result) {
         const characterIdInput = document.getElementById('characterIdInput');
@@ -41,6 +35,7 @@ function fetchCharacterInfo() {
         .then(response => response.json())
         .then(data => {
             displayCharacterInfo(data.data);
+            storeCharacterData(data.data);
         })
         .catch(error => {
             console.error('Error fetching character info:', error);
@@ -60,4 +55,10 @@ function displayCharacterInfo(characterData) {
     <p>Weight: ${characterData.weight || 'N/A'}</p>
     <p>Alignment: ${characterData.alignmentId}</p>
   `;
+}
+
+function storeCharacterData(characterData) {
+    chrome.storage.local.set({ 'characterData': characterData }, function () {
+        console.log('Character Data stored:', characterData);
+    });
 }
