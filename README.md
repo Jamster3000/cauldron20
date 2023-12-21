@@ -22,7 +22,8 @@ The extension should work as intended.
 I would like to also add to this that I don't know JavaScript and I honeslty think it's a headache for me until I get the hang of this.
 
 # Screenshots
-![image](https://github.com/Jamster3000/cauldron20/assets/148760154/19c31f2c-5034-4be9-a1a3-79afcf6a69bf)
+![image](https://github.com/Jamster3000/cauldron20/assets/148760154/d1435f9c-2a0d-442f-b535-29940bc5c44d)
+
 
 ![GitHub issues](https://img.shields.io/github/issues/jamster3000/Joan-smart-assistant)
 ![Last Commit](https://img.shields.io/github/last-commit/jamster3000/Joan-smart-assistant)
