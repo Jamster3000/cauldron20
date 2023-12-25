@@ -1,0 +1,83 @@
+#strButton {
+    background-color: white;
+    color: black;
+    padding: 5px;
+    border: 1px solid black;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 15px;
+}
+
+#strButton:hover {
+    background-color: white;
+}
+
+#dexButton {
+    background-color: white;
+    color: black;
+    padding: 5px;
+    border: 1px solid black;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 15px;
+}
+
+#dexButton:hover {
+    background-color: white;
+}
+
+#conButton {
+    background-color: white;
+    color: black;
+    padding: 5px;
+    border: 1px solid black;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 15px;
+}
+
+#conButton:hover {
+    background-color: white;
+}
+
+#intButton {
+    background-color: white;
+    color: black;
+    padding: 5px;
+    border: 1px solid black;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 15px;
+}
+
+#intButton:hover {
+    background-color: white;
+}
+
+#wisButton {
+    background-color: white;
+    color: black;
+    padding: 5px;
+    border: 1px solid black;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 15px;
+}
+
+#wisButton:hover {
+    background-color: white;
+}
+
+#chaButton {
+    background-color: white;
+    color: black;
+    padding: 5px;
+    border: 1px solid black;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 15px;
+}
+
+#chaButton:hover {
+    background-color: white;
+}
