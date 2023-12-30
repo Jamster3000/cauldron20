@@ -4,7 +4,7 @@
     "version": "1.0.0",
     "description": "Chrome Extension to incorporate dndbeyond character into the cauldron VTT.",
     "permissions": [
-        "activeTab",
+	"tabs",
         "storage",
         "https://character-service.dndbeyond.com/character/v5/*",
         "https://www.cauldron-vtt.net/adventure/*",
@@ -15,6 +15,10 @@
     ],
     "browser_action": {
         "default_popup": "popup.html"
+    },
+        "background": {
+        "scripts": ["background.js"],
+        "persistent": false
     },
     "content_scripts": [
         {

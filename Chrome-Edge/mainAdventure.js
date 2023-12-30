@@ -17,7 +17,13 @@ setTimeout(function () {
 
     viewCharacter.addEventListener('click', function(event) {
         event.preventDefault();
-        showCharacterSheet();
+	getUserCharacter((error, adventureData) => {
+  	    if (error) {
+    		console.error('Error:', error);
+    		return;
+  	    }
+	    showCharacterSheet(adventureData);
+	});
     });
 
 }, 0);
@@ -27,7 +33,7 @@ function changePlayArea() {
     playArea.style.bottom = '60px';
 }
 
-function showCharacterSheet() {
+function showCharacterSheet(adventureData) {
     const listSkills = [{ name: "Acrobatics", ability: "Dex" },{ name: "Animal Handling", ability: "Wis" },{ name: "Arcana", ability: "Int" },{ name: "Athletics", ability: "Str" },{ name: "Deception", ability: "Cha" },{ name: "History", ability: "Int" },{ name: "Insight", ability: "Wis" },{ name: "Intimidation", ability: "Cha" },{ name: "Investigation", ability: "Int" },{ name: "Medicine", ability: "Wis" },{ name: "Nature", ability: "Int" },{ name: "Perception", ability: "Wis" },{ name: "Performance", ability: "Cha" },{ name: "Persuasion", ability: "Cha" },{ name: "Religion", ability: "Int" },{ name: "Sleight of Hand", ability: "Dex" },{ name: "Stealth", ability: "Dex" },{ name: "Survival", ability: "Wis" }];
     const savingThrowList = ["Strength", "Dexterity", "Constitution", "Intellegence", "Wisdom", "Charisma"];    
 
@@ -45,7 +51,7 @@ function showCharacterSheet() {
         overlayContainer.style.top = '50px';
         overlayContainer.style.left = '25px';
         overlayContainer.style.backgroundColor = 'rgba(255,255,255, 1)';
-        overlayContainer.style.zIndex = '999999';
+        overlayContainer.style.zIndex = '10010';
 
         // Create overlay header
         const overlayHeader = document.createElement('div');
@@ -57,34 +63,69 @@ function showCharacterSheet() {
 	    overlayContainer.style.display = 'none';
 	});
 
+	//working out the total character hp
+	const conStat = Math.floor((stats.totalConstitution - 10) / 2)//ability score -10/2 to get modifier (round up)
+        const level = calculateLevel(characterData.currentXp)
+        const totalHitPoints = characterData.baseHitPoints + (Number(conStat) * Number(level));//constitustion modifier X level + base hit points = total hp
+
         // Create overlay body
         const overlayBody = document.createElement('div');
         overlayBody.classList.add('panel-body');
 
+	console.log(adventureData);
+	console.log(adventureData.characters['@name']);
+
 	//html for the main page of the character sheet
 	overlayBody.innerHTML = `
+			<style>
+        		    .character-menu {
+            			display: grid;
+            			grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); /* Adjust minmax values as needed */
+            			gap: 10px; /* Adjust gap as needed */
+        		    }
+    			</style>
 			<div style="display: flex;">
-    			    <div style="border: 2px solid #336699; padding: 10px; margin-right: 10px;">
+    			    <div style="border: 2px solid #336699; padding: 10px; margin-right: 10px; height: 515px;">
+				    <br>
        		            	    <h5 style="font-weight: bold;">STR</h5>
-        			    <button id="strButton" style="margin-right: 5px;">${characterData.stats[0].value} (${characterData.stats[0].value >= 10 ? '+' : ''}${Math.floor((characterData.stats[0].value-10)/2)})</button>
-        			    <h5 style="font-weight: bold;">DEX</h5>
-        			    <button id="dexButton" style="margin-right: 5px;">${characterData.stats[1].value} (${characterData.stats[1].value >= 10 ? '+' : ''}${Math.floor((characterData.stats[1].value-10)/2)})</button>
+        			    <button id="strButton" style="margin-right: 5px;">${stats.totalStrength} (${stats.totalStrength >= 10 ? '+' : ''}${Math.floor((stats.totalStrength-10)/2)})</button>
+				    <h5 style="font-weight: bold;">DEX</h5>
+        			    <button id="dexButton" style="margin-right: 5px;">${stats.totalDexterity} (${stats.totalDexterity >= 10 ? '+' : ''}${Math.floor((stats.totalDexterity-10)/2)})</button>
         			    <h5 style="font-weight: bold;">CON</h5>
-        			    <button id="conButton" style="margin-right: 5px;">${characterData.stats[2].value} (${characterData.stats[2].value >= 10 ? '+' : ''}${Math.floor((characterData.stats[2].value-10)/2)})</button>
-        			    <h5 style="font-weight: bold;">INT</h5>
-        			    <button id="intButton" style="margin-right: 5px;">${characterData.stats[3].value} (${characterData.stats[3].value >= 10 ? '+' : ''}${Math.floor((characterData.stats[3].value-10)/2)})</button>
-        			    <h5 style="font-weight: bold;">WIS</h5>
-        			    <button id="wisButton" style="margin-right: 5px;">${characterData.stats[4].value} (${characterData.stats[4].value >= 10 ? '+' : ''}${Math.floor((characterData.stats[4].value-10)/2)})</button>
-        			    <h5 style="font-weight: bold;">CHA</h5>
-        			    <button id="chaButton" style="margin-right: 5px;">${characterData.stats[5].value} (${characterData.stats[5].value >= 10 ? '+' : ''}${Math.floor((characterData.stats[5].value-10)/2)})</button>
-    			    </div>
-			    <div style="border: 2px solid #336699; padding: 15px; margin-right: 10px;">
+        			    <button id="conButton" style="margin-right: 5px;">${stats.totalConstitution} (${stats.totalConstitution >= 10 ? '+' : ''}${Math.floor((stats.totalConstitution-10)/2)})</button>
+  				    <h5 style="font-weight: bold;">INT</h5>
+        			    <button id="intButton" style="margin-right: 5px;">${stats.totalIntellegence} (${stats.totalIntellegence >= 10 ? '+' : ''}${Math.floor((stats.totalIntellegence-10)/2)})</button>
+				    <h5 style="font-weight: bold;">WIS</h5>
+        			    <button id="wisButton" style="margin-right: 5px;">${stats.totalWisdom} (${stats.totalWisdom >= 10 ? '+' : ''}${Math.floor((stats.totalWisdom-10)/2)})</button>
+				    <h5 style="font-weight: bold;">CHA</h5>
+        			    <button id="chaButton" style="margin-right: 5px;">${stats.totalCharisma} (${stats.totalCharisma >= 10 ? '+' : ''}${Math.floor((stats.totalCharisma-10)/2)})</button>
+    			    	    <h3 style="margin-top: 50px; font-size: 20px;">ᴬᵇᶦˡᶦᵗʸ ˢᶜᵒʳᵉ</h3>
+			    </div>
+			    <div style="border: 2px solid #336699; padding: 15px; margin-right: 10px; height: 515px;">
 				<ul id="skillList">
 				</ul>
+				<h3 style="margin-top: -10px; font-size: 20px; margin-left: 45px;">ˢᵏᶦˡˡˢ</h3>
 			    </div>
-			    <div style="border: 2px solid #336699; padding 15px; margin-right: 10px; height: 165px">
+			    <div style="border: 2px solid #336699; padding 15px; margin-right: 1px; height: 185px; margin-top: 330px; width: 110px;">
 				<ul id="savingThrowElement">
 			        </ul>
+				<h3 style="margin-top: -8px; font-size: 20px; margin-left: 10px;">ˢᵃᵛᶦⁿᵍ ᵀʰʳᵒʷˢ</h3>
+			    </div>
+			    <div class="Character-menu-container" style="margin-top: 95px; height: 40px; margin-left: 9px;">
+			        <div class="character-menu" style="border: 2px solid #336699; padding 5px; height: 230px; width: 110px; margin-left: -120px;">
+				    <button id="actions" class="btn btn-primary btn-xs open_menu" style="font-size: 12px; margin-top: 10px; margin-left: 2px; width: 100px; height: 28px;">Actions</button>
+				    <button id="bio" class="btn btn-primary btn-xs open_menu" style="font-size: 12px; margin-top: -10px; margin-left: 2px; width: 100px; height: 28px;">Bio</button>
+				    <button id="character" class="btn btn-primary btn-xs open_menu" style="font-size: 12px; margin-top: -10px; margin-left: 2px; width: 100px; height: 28px;">Character</button>
+				    <button id="features" class="btn btn-primary btn-xs open_menu" style="font-size: 12px; margin-top: -10px; margin-left: 2px; width: 100px; height: 28px;">Features</button>	
+				    <button id="inventory" class="btn btn-primary btn-xs open_menu" style="font-size: 12px; margin-top: -10px; margin-left: 2px; width: 100px; height: 28px;">Inventory</button>
+				    <button id="spells" class="btn btn-primary btn-xs open_menu" style="font-size: 12px; margin-top: -10px; margin-left: 2px; width: 100px; height: 28px;">Spells</button>
+			        </div>
+			    </div>
+			    <div>
+				
+			        <input type="text" id="CurrentHitPoints value="N/A" style="width: 30px; height: 30px; margin-left: -75px;">
+			        <input type="text" id="maxHitPoints" disabled=true value="${totalHitPoints}" style="width: 30px; height: 30px; style="margin-left: -75px;">
+				<label style="width: 30px; height: 30px; margin-left: -105px; font-size: 20px;">HP</label>
 			    </div>
 			</div>
 `;
@@ -99,32 +140,32 @@ function showCharacterSheet() {
 	//event listeners for the ability buttons
 	const strButton = overlayBody.querySelector('#strButton');
 	strButton.addEventListener('click', function() {
-	    console.log("Your strength:", characterData.stats[0].value);
+	    console.log("Your strength:", stats.totalStrength);
 	 });
 
 	const dexButton = overlayBody.querySelector('#dexButton');
 	dexButton.addEventListener('click', function() {
-	    console.log("Your dexterity:", characterData.stats[1].value);
+	    console.log("Your dexterity:", stats.totalDexterity);
 	});
 	
 	const conButton = overlayBody.querySelector('#conButton');
         conButton.addEventListener('click', function() {
-    	    console.log("Your constitution:", characterData.stats[2].value);
+    	    console.log("Your constitution:", stats.totalConstitution);
 	});
 
 	const intButton = overlayBody.querySelector('#intButton');
 	intButton.addEventListener('click', function() {
-    	    console.log("Your intelligence:", characterData.stats[3].value);
+    	    console.log("Your intelligence:", stats.totalintellegence);
 	});
 
 	const wisButton = overlayBody.querySelector('#wisButton');
 	wisButton.addEventListener('click', function() {
-            console.log("Your wisdom:", characterData.stats[4].value);
+            console.log("Your wisdom:", stats.totalWisdom);
 	});
 
 	const chaButton = overlayBody.querySelector('#chaButton');
 	chaButton.addEventListener('click', function() {
-  	  console.log("Your charisma:", characterData.stats[5].value);
+  	  console.log("Your charisma:", stats.totalCharisma);
 	});
 	
         // Append elements to build the overlay
@@ -184,15 +225,15 @@ function showCharacterSheet() {
 		const characterProf = calculateProf(calculateLevel(characterData.currentXp));
 
 		if (listSkills[i].ability === "Str") {
-		    total = Math.floor((characterData.stats[0].value-10)/2) + characterProf;
+		    total = Math.floor((stats.totalStrength-10)/2) + characterProf;
 		} else if (listSkills[i].ability === "Dex") {
-		    total = Math.floor((characterData.stats[1].value-10)/2) + characterProf;
+		    total = Math.floor((stats.totalDexterity-10)/2) + characterProf;
 		} else if (listSkills[i].ability === "Int") {
-		    total = Math.floor((characterData.stats[3].value-10)/2) + characterProf;
+		    total = Math.floor((stats.totalConstitution-10)/2) + characterProf;
 		} else if (listSkills[i].ability === "Wis") {
-		    total = Math.floor((characterData.stats[4].value-10)/2) + characterProf;
+		    total = Math.floor((stats.totalWisdom-10)/2) + characterProf;
 		} else if (listSkills[i].ability === "Cha") {
-		    total = Math.floor((characterData.stats[5].value-10)/2) + characterProf;
+		    total = Math.floor((stats.totalCharisma-10)/2) + characterProf;
 		}
 	        skillModifier.textContent = total >= 0 ? `+${total}` : total;
 
@@ -203,15 +244,17 @@ function showCharacterSheet() {
 		let total = 0;
 
 		if (listSkills[i].ability === "Str") {
-		    total = Math.floor((characterData.stats[0].value-10)/2);
+		    total = Math.floor((stats.totalStrength-10)/2);
 		} else if (listSkills[i].ability === "Dex") {
-		    total = Math.floor((characterData.stats[1].value-10)/2);
+		    total = Math.floor((stats.totalDexterity-10)/2);
+		} else if (listSkills[i].ability === "Con") {
+		    total = Math.floor((stats.totalConstitution-10)/2);
 		} else if (listSkills[i].ability === "Int") {
-		    total = Math.floor((characterData.stats[3].value-10)/2);
+		    total = Math.floor((stats.totalIntellegence-10)/2);
 		} else if (listSkills[i].ability === "Wis") {
-		    total = Math.floor((characterData.stats[4].value-10)/2);
+		    total = Math.floor((stats.totalWisdom-10)/2);
 		} else if (listSkills[i].ability === "Cha") {
-		    total = Math.floor((characterData.stats[5].value-10)/2);
+		    total = Math.floor((stats.totalCharisma-10)/2);
 		}
 		skillModifier.textContent = total >= 0 ? `+${total}` : total;
 
@@ -257,17 +300,17 @@ function showCharacterSheet() {
 	        const characterProf = calculateProf(calculateLevel(characterData.currentXp));
 
 	        if (savingThrowList[i] === "Strength") {
-		    total = Math.floor((characterData.stats[0].value-10)/2) + characterProf;
+		    total = Math.floor((stats.totalStrength-10)/2) + characterProf;
 		} else if (savingThrowList[i] === "Dexterity") {
-        	    total = Math.floor((characterData.stats[1].value - 10) / 2) + characterProf;
+        	    total = Math.floor((stats.totalDexterity - 10) / 2) + characterProf;
     	        } else if (savingThrowList[i] === "Constitution") {
-        	    total = Math.floor((characterData.stats[2].value - 10) / 2) + characterProf;
+        	    total = Math.floor((stats.totalConstitution - 10) / 2) + characterProf;
     		} else if (savingThrowList[i] === "Intelligence") {
-        	    total = Math.floor((characterData.stats[3].value - 10) / 2) + characterProf;
+        	    total = Math.floor((stats.totalIntellegence - 10) / 2) + characterProf;
     		} else if (savingThrowList[i] === "Wisdom") {
-        	    total = Math.floor((characterData.stats[4].value - 10) / 2) + characterProf;
+        	    total = Math.floor((stats.totalWisdom - 10) / 2) + characterProf;
     		} else if (savingThrowList[i] === "Charisma") {
-        	    total = Math.floor((characterData.stats[5].value - 10) / 2) + characterProf;
+        	    total = Math.floor((stats.totalCharisma - 10) / 2) + characterProf;
    		}
 		
 		savingThrowButton.textContent = total >= 0 ? `+${total}` : total;
@@ -279,17 +322,17 @@ function showCharacterSheet() {
 		 let total = 0;
 
 	        if (savingThrowList[i] === "Strength") {
-		    total = Math.floor((characterData.stats[0].value-10) / 2)
+		    total = Math.floor((stats.totalStrength-10) / 2)
 		} else if (savingThrowList[i] === "Dexterity") {
-        	    total = Math.floor((characterData.stats[1].value - 10) / 2); 	 
+        	    total = Math.floor((stats.totalDexterity - 10) / 2); 	 
     	        } else if (savingThrowList[i] === "Constitution") {
-        	    total = Math.floor((characterData.stats[2].value - 10) / 2);
+        	    total = Math.floor((stats.totalConstitution - 10) / 2);
     		} else if (savingThrowList[i] === "Intelligence") {
-        	    total = Math.floor((characterData.stats[3].value - 10) / 2);
+        	    total = Math.floor((stats.totalIntellegence - 10) / 2);
     		} else if (savingThrowList[i] === "Wisdom") {
-        	    total = Math.floor((characterData.stats[4].value - 10) / 2);
+        	    total = Math.floor((stats.totalWisdom - 10) / 2);
     		} else if (savingThrowList[i] === "Charisma") {
-        	    total = Math.floor((characterData.stats[5].value - 10) / 2);
+        	    total = Math.floor((stats.totalCharisma - 10) / 2);
    		}
 		
 		savingThrowButton.textContent = total >= 0 ? `+${total}` : total;
@@ -347,8 +390,76 @@ function calculateLevel(xp) {
 }
 
 function getCharacterStats(characterData) {
-    console.log(characterData);
     const savingThrowList = ["Strength", "Dexterity", "Constitution", "Intellegence", "Wisdom", "Charisma"];    
 
-    
+    let totalStrength = characterData.stats[0].value;
+    let totalDexterity = characterData.stats[1].value;
+    let totalConstitution = characterData.stats[2].value;
+    let totalIntellegence = characterData.stats[3].value;
+    let totalWisdom = characterData.stats[4].value;
+    let totalCharisma = characterData.stats[5].value;
+
+    for (let i = 0; i<characterData.modifiers.race.length; i++) {
+	if (characterData.modifiers.race[i].friendlyTypeName === "Bonus") {
+	    const abilityIncrease = characterData.modifiers.race[i].friendlySubtypeName.replace(" Score", "");
+	    if (abilityIncrease === "Strength") {
+		totalStrength += characterData.modifiers.race[i].value;
+	    } else if (abilityIncrease === "Dexterity") {
+		totalDexterity += characterData.modifiers.race[i].value;
+	    } else if (abilityIncrease === "Constitution") {
+		totalConstitution += characterData.modifiers.race[i].value;
+	    } else if (abilityIncrease === "Intelligence") {
+                totalIntelligence += characterData.modifiers.race[i].value;
+            }
+	}
+    }
+
+    return {
+        totalStrength,
+        totalDexterity,
+        totalConstitution,
+        totalIntellegence,
+        totalWisdom,
+        totalCharisma,
+    };
+}
+
+function totalHitPoints(hitPoints) {
+    chrome.storage.local.get('characterData', function (result) {
+        const characterData = results.characterData;
+	const stats = getCharacterData(characterData);
+
+        if (characterData) {
+
+            const conStat = Math.floor((stats.totalConstitution - 10) / 2)//ability score -10/2 to get modifier (round up)
+            const level = calculateLevel(characterData.currentXp)
+            const totalHitPoints = characterData.baseHitPoints + (Number(conStat) * Number(level));//constitustion modifier X level + base hit points = total hp
+            hitPoints.value = totalHitPoints;
+            console.log(totalHitPoints);
+        } else {
+            console.log('Character Data not found in storage');
+        }
+    });
+
+    return totalHitPoints;
+}
+
+function getUserCharacter(callback) {
+  chrome.storage.local.get('url', function (result) {
+    const cauldronURL = result.url;
+    console.log(cauldronURL + "?output=json");
+
+    fetch(cauldronURL + "?output=json")
+      .then(response => response.json())
+      .then(data => {
+        //console.log(data.adventure);
+        // Invoke the callback with the adventure data
+        callback(null, data.adventure);
+      })
+      .catch(error => {
+        console.error('Error fetching cauldron JSON data:', error);
+        // Invoke the callback with the error
+        callback(error);
+      });
+  });
 }
