@@ -23,6 +23,7 @@ I would like to also add to this that I don't know JavaScript and I honeslty thi
 
 # Screenshots
 ![image](https://github.com/Jamster3000/cauldron20/assets/148760154/d1435f9c-2a0d-442f-b535-29940bc5c44d)
+![image](https://github.com/Jamster3000/cauldron20/assets/148760154/03615e0c-9c9f-4934-8ee0-57bfed0a5675)
 
 
 ![GitHub issues](https://img.shields.io/github/issues/jamster3000/Joan-smart-assistant)
