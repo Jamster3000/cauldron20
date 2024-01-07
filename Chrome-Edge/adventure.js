@@ -1,31 +1,43 @@
+let characterSheetOverlayOpen = false;
+
 setTimeout(function () {
-    changePlayArea(); //resizes playarea   
+    getUserCharacter((error, adventureData) => {
+        if (error) {
+	    console.error("Error:", error);
+	    return;
+	}
+	
+    	if (adventureData['@is_dm'] === "yes") {
+            console.log('You are the DM, there is no character button for you!');
+        } else {
+            changePlayArea(); //resizes playarea   
 
-    const container = document.querySelector('.container');//contains each section of the page (playArea, chat, header, etc.)
+            const container = document.querySelector('.container');//contains each section of the page (playArea, chat, header, etc.)
 
-    const divCharacterTools = document.createElement('div');
-    divCharacterTools.className = "charactertools";//This is where all the character's infomation will be.
-    container.appendChild(divCharacterTools);
+            const divCharacterTools = document.createElement('div');
+            divCharacterTools.className = "charactertools";//This is where all the character's infomation will be.
+            container.appendChild(divCharacterTools);
 
-    const viewCharacter = document.createElement('button');
-    viewCharacter.textContent = "View Character Sheet";
-    viewCharacter.classList.add('btn', 'btn-default');
-    viewCharacter.style.position = 'fixed';
-    viewCharacter.style.bottom = '15px';
-    viewCharacter.style.left = '15px';
-    divCharacterTools.appendChild(viewCharacter); // Appended the button to the container
+            const viewCharacter = document.createElement('button');
+            viewCharacter.textContent = "View Character Sheet";
+            viewCharacter.classList.add('btn', 'btn-default');
+            viewCharacter.style.position = 'fixed';
+            viewCharacter.style.bottom = '15px';
+            viewCharacter.style.left = '15px';
+            divCharacterTools.appendChild(viewCharacter); // Appended the button to the container
 
-    viewCharacter.addEventListener('click', function(event) {
-        event.preventDefault();
-	getUserCharacter((error, adventureData) => {
-  	    if (error) {
-    		console.error('Error:', error);
-    		return;
-  	    }
-	    showCharacterSheet(adventureData);
-	});
+            viewCharacter.addEventListener('click', function(event) {
+                event.preventDefault();
+	        getUserCharacter((error, adventureData) => {
+  	            if (error) {
+    		        console.error('Error:', error);
+    		        return;
+  	            }
+	            showCharacterSheet(adventureData);
+	        });
+            });
+        }
     });
-
 }, 0);
 
 function changePlayArea() {
@@ -34,24 +46,25 @@ function changePlayArea() {
 }
 
 function showCharacterSheet(adventureData) {
+    if (characterSheetOverlayOpen) {
+        console.log('character sheet already open');
+	return;
+    }
+
     const listSkills = [{ name: "Acrobatics", ability: "Dex" },{ name: "Animal Handling", ability: "Wis" },{ name: "Arcana", ability: "Int" },{ name: "Athletics", ability: "Str" },{ name: "Deception", ability: "Cha" },{ name: "History", ability: "Int" },{ name: "Insight", ability: "Wis" },{ name: "Intimidation", ability: "Cha" },{ name: "Investigation", ability: "Int" },{ name: "Medicine", ability: "Wis" },{ name: "Nature", ability: "Int" },{ name: "Perception", ability: "Wis" },{ name: "Performance", ability: "Cha" },{ name: "Persuasion", ability: "Cha" },{ name: "Religion", ability: "Int" },{ name: "Sleight of Hand", ability: "Dex" },{ name: "Stealth", ability: "Dex" },{ name: "Survival", ability: "Wis" }];
     const savingThrowList = ["Strength", "Dexterity", "Constitution", "Intellegence", "Wisdom", "Charisma"];    
 
     chrome.storage.local.get('characterData', function(result) {
-	if (adventureData['@is_dm'] === "yes") {
-	    break();
-	}
-
         const characterData = result.characterData;
 	const stats = getCharacterStats(characterData);
 	console.log(characterData);
+        console.log(adventureData);
 
         const overlayContainer = document.createElement('div');
         overlayContainer.id = 'customOverlay';
         overlayContainer.classList.add('panel', 'panel-primary');
         overlayContainer.style.display = 'none';
         overlayContainer.style.position = 'fixed';
-        overlayContainer.style.inset = 'opx';
         overlayContainer.style.top = '50px';
         overlayContainer.style.left = '25px';
         overlayContainer.style.backgroundColor = 'rgba(255,255,255, 1)';
@@ -83,6 +96,12 @@ function showCharacterSheet(adventureData) {
 	const closeButton = overlayHeader.querySelector('.close');
 	closeButton.addEventListener('click', function() {
 	    overlayContainer.style.display = 'none';
+	    characterSheetOverlayOpen = false;
+
+	    const characterSheetOverlay = document.getElementById('customOverlay');
+	    if (characterSheetOverlay) {
+	   	characterSheetOverlay.remove();
+	    }
 	});
 
 	//working out the total character hp
@@ -94,8 +113,6 @@ function showCharacterSheet(adventureData) {
         const overlayBody = document.createElement('div');
         overlayBody.classList.add('panel-body');
 
-	console.log(adventureData);
-
 	//html for the main page of the character sheet
 	overlayBody.innerHTML = `
 			<style>
@@ -105,7 +122,7 @@ function showCharacterSheet(adventureData) {
             			gap: 10px; /* Adjust gap as needed */
         		    }
     			</style>
-			<div style="display: flex;">
+			<div id="overlayContainer" style="display: flex;">
     			    <div style="border: 2px solid #336699; padding: 10px; margin-right: 10px; height: 515px;">
 				    <br>
        		            	    <h5 style="font-weight: bold;">STR</h5>
@@ -122,7 +139,7 @@ function showCharacterSheet(adventureData) {
         			    <button id="chaButton" style="margin-right: 5px;">${stats.totalCharisma} (${stats.totalCharisma >= 10 ? '+' : ''}${Math.floor((stats.totalCharisma-10)/2)})</button>
     			    	    <h3 style="margin-top: 50px; font-size: 20px;">ᴬᵇᶦˡᶦᵗʸ ˢᶜᵒʳᵉ</h3>
 			    </div>
-			    <div style="border: 2px solid #336699; padding: 15px; margin-right: 10px; height: 515px;">
+			    <div id=SkillListDiv style="border: 2px solid #336699; padding: 15px; margin-right: 10px; height: 515px;">
 				<ul id="skillList">
 				</ul>
 				<h3 style="margin-top: -10px; font-size: 20px; margin-left: 45px;">ˢᵏᶦˡˡˢ</h3>
@@ -191,7 +208,44 @@ function showCharacterSheet(adventureData) {
 	chaButton.addEventListener('click', function() {
   	  console.log("Your charisma:", stats.totalCharisma);
 	});
+
+	//event listeners for the character buttons
+	const actionButton = overlayBody.querySelector('#actions');
+	actionButton.addEventListener('click', function() {
+	    console.log("action button pressed");
+	    showActions(adventureData);
+	});
 	
+	const bioButton = overlayBody.querySelector('#bio');
+	bioButton.addEventListener('click', function() {
+	    console.log("bio button pressed");
+	    showBio(adventureData);
+	});
+
+	const characterButton = overlayBody.querySelector('#character');
+	characterButton.addEventListener('click', function() {
+	    console.log('character button pressed');
+	    showCharacterSheet(adventureData);
+	});
+
+	const featuresButton = overlayBody.querySelector('#features');
+	featuresButton.addEventListener('click', function() {
+	    console.log('features button pressed');
+	    showFeatures(adventureData);
+	});
+
+	const inventoryButton = overlayBody.querySelector('#inventory');
+	inventoryButton.addEventListener('click', function() {
+	    console.log('inventory button pressed');
+	    showInventory(adventureData);
+	});
+
+	const spellsButton = overlayBody.querySelector('#spells');
+	spellsButton.addEventListener('click', function() {
+	    console.log('spells button pressed');
+	    showSpells(adventureData);
+	});
+
         // Append elements to build the overlay
         overlayContainer.appendChild(overlayHeader);
         overlayContainer.appendChild(overlayBody);
@@ -375,8 +429,321 @@ function showCharacterSheet(adventureData) {
 	    getSavingThrowElement.appendChild(savingThrowLabel);
 	    getSavingThrowElement.appendChild(breakLine);
 	}
-    });
 
+        characterSheetOverlayOpen = true;
+    });
+}
+
+function showActions(adventureData) {
+    //clear content of overlay
+    const content = document.getElementById('overlayContainer');
+    content.remove();
+
+    chrome.storage.local.get('characterData', function(result) {
+	const characterData = result.characterData;
+	const stats = getCharacterStats(characterData);
+
+	let characterHidden = "";
+
+	//get the player's character's current hp
+	// the current hp of the viewd character will be based on what the hp for their charatcer is on cauldron
+	for (let i = 0; i<adventureData.characters.character.length; i++) {
+	    if (adventureData.characters.character[i].name === characterData.name) {
+		if (adventureData.characters.character[i].hidden === "yes") {
+		    characterHidden = "[hidden]";
+		}
+		break;
+	    }
+	}
+
+	//change the header of the overlay window
+        const header = document.querySelectorAll('.panel-heading');
+
+	header.forEach(header => {
+  	    if (header && header.textContent && header.textContent.includes(characterData.name)) {
+    	        header.innerHTML = `${characterData.name} - Actions ${characterHidden} <span class="glyphicon glyphicon-remove close" aria-hidden="true"></span>`;
+                
+		const overlayContainer = document.getElementById('customOverlay');
+
+		const closeButton = header.querySelector('.close');
+		closeButton.addEventListener('click', function() {
+	    	    overlayContainer.style.display = 'none';
+	    	    characterSheetOverlayOpen = false;
+
+	    	    const characterSheetOverlay = document.getElementById('customOverlay');
+	    	    if (characterSheetOverlay) {
+	   		    characterSheetOverlay.remove();
+	    	    }
+		});
+  	     }
+	});
+
+        const overlayBody = document.querySelectorAll('.panel-body');
+        overlayBody.forEach(overlayBody => {
+            overlayBody.innerHTML = `
+		<style>
+        		.vertical-line {
+            		border-left: 1px solid #000; /* Adjust the color and size as needed */
+            		height: 30px; /* Adjust the height as needed */
+            		margin: 0 10px; /* Adjust the margin as needed */
+        		}
+    		</style>
+		<div style="height: 200px; overflow: auto; border: 1px solid #ccc; padding: 10px;">
+		    <ul id="ContentList">
+	                <p style="font-size: 20px;"><b>Actions</b></p>
+		        <div style="margin-left: 20px;">
+		            <ul id="ActionList" stye="margin-left: -80px;">
+			        <p><b>Actions In Combat</b></p>
+			        <p style="max-width: 400px; font-size: 12px;">Attack, Cast a Spell, Dash, Disengage, Dodge, Grapple, Help, Hide, Improvise, Ready, Search, Shove, Use an Object</p>
+		                <div>
+				    <span><button id="unarmedStrike"><b>Unarmed Strike</b></button></span>
+				    <span><label style="font-size: 22px;">｜</label></span>
+				    <span><label id="actionReach">reach: 5ft.</label></span>
+				    <span><label style="font-size: 22px;">｜</label></span>
+				    <span><button id="unarmedStrikeAttackRoll">test</button></span>
+				</div>
+			        <hr>
+			     </ul>
+		        </div>
+		    </ul>
+		</div>
+	    `;
+        });
+
+	const actionReach = document.getElementById('actionReach');
+	let reach = parseFloat(actionReach.textContent.match(/\d+(\.\d+)?/));
+	if (characterData.race.fullName === "Bugbear") {
+	    reach += 5;
+	    actionReach.textContent = "+" + String(reach);
+	}
+
+	let attackRoll = document.getElementById('unarmedStrikeAttackRoll');
+	attackRoll.textContent = "1";
+	//let attackRoll = document.getElementById('unarmedStrikeAttackRoll');
+	//let attackNumber = attackRoll.textContent;
+	//if (characterData.classes[0].definition.name === "Monk") {
+	//    console.log('running');
+	//    attackNumber = Math.floor((stats.totalDexterity-10)/2);
+	//    console.log('attack number:', attackNumber);
+	//    attackRoll.textContent = attackNumber;
+	//    console.log('attack roll:', attackRoll);
+	//}
+
+	for (let i = 0; i<characterData.classes[0].classFeatures.length; i++) {
+	    try {
+		if (characterData.classes[0].classFeatures[i]) {
+		}
+	    } catch(err) {}
+	}
+    });
+}
+
+function showBio(adventureData) {
+    //clear content of overlay
+    const content = document.getElementById('overlayContainer');
+    content.remove();
+
+    chrome.storage.local.get('characterData', function(result) {
+	const characterData = result.characterData;
+
+	let characterHidden = "";
+
+	//get the player's character's current hp
+	// the current hp of the viewd character will be based on what the hp for their charatcer is on cauldron
+	for (let i = 0; i<adventureData.characters.character.length; i++) {
+	    if (adventureData.characters.character[i].name === characterData.name) {
+		if (adventureData.characters.character[i].hidden === "yes") {
+		    characterHidden = "[hidden]";
+		}
+		break;
+	    }
+	}
+
+	//change the header of the overlay window
+        const header = document.querySelectorAll('.panel-heading');
+
+	header.forEach(header => {
+  	    if (header && header.textContent && header.textContent.includes(characterData.name)) {
+    	        header.innerHTML = `${characterData.name} - Bio ${characterHidden} <span class="glyphicon glyphicon-remove close" aria-hidden="true"></span>`;
+                
+		const overlayContainer = document.getElementById('customOverlay');
+
+		const closeButton = header.querySelector('.close');
+		closeButton.addEventListener('click', function() {
+	    	    overlayContainer.style.display = 'none';
+	    	    characterSheetOverlayOpen = false;
+
+	    	    const characterSheetOverlay = document.getElementById('customOverlay');
+	    	    if (characterSheetOverlay) {
+	   		    characterSheetOverlay.remove();
+	    	    }
+		});
+  	     }
+	});
+
+	const overlayBody = document.querySelectorAll('.panel-body');
+        overlayBody.forEach(overlayBody => {
+            overlayBody.innerHTML =	`
+	        <p>Test</p>
+	    `;
+        });
+    });
+}
+
+function showFeatures(adventureData) {
+    //clear content of overlay
+    const content = document.getElementById('overlayContainer');
+    content.remove();
+
+    chrome.storage.local.get('characterData', function(result) {
+	const characterData = result.characterData;
+
+	let characterHidden = "";
+
+	//get the player's character's current hp
+	// the current hp of the viewd character will be based on what the hp for their charatcer is on cauldron
+	for (let i = 0; i<adventureData.characters.character.length; i++) {
+	    if (adventureData.characters.character[i].name === characterData.name) {
+		if (adventureData.characters.character[i].hidden === "yes") {
+		    characterHidden = "[hidden]";
+		}
+		break;
+	    }
+	}
+
+	//change the header of the overlay window
+        const header = document.querySelectorAll('.panel-heading');
+
+	header.forEach(header => {
+  	    if (header && header.textContent && header.textContent.includes(characterData.name)) {
+    	        header.innerHTML = `${characterData.name} - Features ${characterHidden} <span class="glyphicon glyphicon-remove close" aria-hidden="true"></span>`;
+                
+		const overlayContainer = document.getElementById('customOverlay');
+
+		const closeButton = header.querySelector('.close');
+		closeButton.addEventListener('click', function() {
+	    	    overlayContainer.style.display = 'none';
+	    	    characterSheetOverlayOpen = false;
+
+	    	    const characterSheetOverlay = document.getElementById('customOverlay');
+	    	    if (characterSheetOverlay) {
+	   		    characterSheetOverlay.remove();
+	    	    }
+		});
+  	     }
+	});
+
+	const overlayBody = document.querySelectorAll('.panel-body');
+        overlayBody.forEach(overlayBody => {
+            overlayBody.innerHTML =	`
+	        <p>Test</p>
+	    `;
+        });
+    });
+}
+
+function showInventory(adventureData) {
+    //clear content of overlay
+    const content = document.getElementById('overlayContainer');
+    content.remove();
+
+    chrome.storage.local.get('characterData', function(result) {
+	const characterData = result.characterData;
+
+	let characterHidden = "";
+
+	//get the player's character's current hp
+	// the current hp of the viewd character will be based on what the hp for their charatcer is on cauldron
+	for (let i = 0; i<adventureData.characters.character.length; i++) {
+	    if (adventureData.characters.character[i].name === characterData.name) {
+		if (adventureData.characters.character[i].hidden === "yes") {
+		    characterHidden = "[hidden]";
+		}
+		break;
+	    }
+	}
+
+	//change the header of the overlay window
+        const header = document.querySelectorAll('.panel-heading');
+
+	header.forEach(header => {
+  	    if (header && header.textContent && header.textContent.includes(characterData.name)) {
+    	        header.innerHTML = `${characterData.name} - Inventory ${characterHidden} <span class="glyphicon glyphicon-remove close" aria-hidden="true"></span>`;
+                
+		const overlayContainer = document.getElementById('customOverlay');
+
+		const closeButton = header.querySelector('.close');
+		closeButton.addEventListener('click', function() {
+	    	    overlayContainer.style.display = 'none';
+	    	    characterSheetOverlayOpen = false;
+
+	    	    const characterSheetOverlay = document.getElementById('customOverlay');
+	    	    if (characterSheetOverlay) {
+	   		    characterSheetOverlay.remove();
+	    	    }
+		});
+  	     }
+	});
+
+	const overlayBody = document.querySelectorAll('.panel-body');
+        overlayBody.forEach(overlayBody => {
+            overlayBody.innerHTML =	`
+	        <p>Test</p>
+	    `;
+        });
+    });
+}
+
+function showSpells(adventureData) {
+    //clear content of overlay
+    const content = document.getElementById('overlayContainer');
+    content.remove();
+
+    chrome.storage.local.get('characterData', function(result) {
+	const characterData = result.characterData;
+
+	let characterHidden = "";
+
+	//get the player's character's current hp
+	// the current hp of the viewd character will be based on what the hp for their charatcer is on cauldron
+	for (let i = 0; i<adventureData.characters.character.length; i++) {
+	    if (adventureData.characters.character[i].name === characterData.name) {
+		if (adventureData.characters.character[i].hidden === "yes") {
+		    characterHidden = "[hidden]";
+		}
+		break;
+	    }
+	}
+
+	//change the header of the overlay window
+        const header = document.querySelectorAll('.panel-heading');
+
+	header.forEach(header => {
+  	    if (header && header.textContent && header.textContent.includes(characterData.name)) {
+    	        header.innerHTML = `${characterData.name} - Spells ${characterHidden} <span class="glyphicon glyphicon-remove close" aria-hidden="true"></span>`;
+                
+		const overlayContainer = document.getElementById('customOverlay');
+
+		const closeButton = header.querySelector('.close');
+		closeButton.addEventListener('click', function() {
+	    	    overlayContainer.style.display = 'none';
+	    	    characterSheetOverlayOpen = false;
+
+	    	    const characterSheetOverlay = document.getElementById('customOverlay');
+	    	    if (characterSheetOverlay) {
+	   		    characterSheetOverlay.remove();
+	    	    }
+		});
+  	     }
+	});
+
+	const overlayBody = document.querySelectorAll('.panel-body');
+        overlayBody.forEach(overlayBody => {
+            overlayBody.innerHTML =	`
+	        <p>Test</p>
+	    `;
+        });
+    });
 }
 
 function handleSkillButtonClick(skillName, modifier) {
@@ -459,7 +826,6 @@ function totalHitPoints(hitPoints) {
             const level = calculateLevel(characterData.currentXp)
             const totalHitPoints = characterData.baseHitPoints + (Number(conStat) * Number(level));//constitustion modifier X level + base hit points = total hp
             hitPoints.value = totalHitPoints;
-            console.log(totalHitPoints);
         } else {
             console.log('Character Data not found in storage');
         }
@@ -471,13 +837,10 @@ function totalHitPoints(hitPoints) {
 function getUserCharacter(callback) {
   chrome.storage.local.get('url', function (result) {
     const cauldronURL = result.url;
-    console.log(cauldronURL + "?output=json");
 
     fetch(cauldronURL + "?output=json")
       .then(response => response.json())
       .then(data => {
-        //console.log(data.adventure);
-        // Invoke the callback with the adventure data
         callback(null, data.adventure);
       })
       .catch(error => {

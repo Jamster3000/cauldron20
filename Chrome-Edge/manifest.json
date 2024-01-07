@@ -27,7 +27,7 @@
         },
         {
             "matches": ["https://www.cauldron-vtt.net/adventure/*"],
-            "js": ["mainAdventure.js"],
+            "js": ["adventure.js"],
             "exclude_matches": ["https://www.cauldron-vtt.net/adventure"],
 	    "css": ["characterSheet.css"]
         }
