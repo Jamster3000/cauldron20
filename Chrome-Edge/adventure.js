@@ -488,7 +488,7 @@ function showActions(adventureData) {
 						<button id="spells" class="btn btn-primary btn-xs open_menu" style="font-size: 12px; margin-top: -10px; margin-left: 2px; width: 100px; height: 28px;">Spells</button>
 					</div>
 				</div>
-				<div id="actionsList" style="height: 200px; width: 350px; margin-top: -10px; overflow: auto; border: 2px solid #336699; padding: 10px;">
+				<div id="actionsList" style="height: 400px; width: 350px; margin-top: -10px; overflow: auto; border: 2px solid #336699; padding: 10px;">
 					<ul id="ContentList">
 						<p style="font-size: 20px;"><b>Actions</b></p>
 						<div style="margin-left: 20px;">
@@ -528,7 +528,7 @@ function showActions(adventureData) {
 			const weaponReach = ["Glaive", "Halberd", "Lance", "Pike", "Whip"];
 			const rangeWeapon = ["Crossbow, light", "Dart", "Shortbow", "Sling", "Blowgun", "Crossbow hand", "Crossbow, heavy", "Longbow", "Net"];
 
-			if (characterData.inventory[i].definition.filterType === "Weapon") {
+			if (characterData.inventory[i].definition.filterType === "Weapon" || characterData.inventory[i].definition.filterType === "Rod"|| characterData.inventory[i].definition.filterType === "Staff") {
 				const itemName = characterData.inventory[i].definition.name;
 				const equiped = characterData.inventory[i].equiped;
 				const range = characterData.inventory[i].definition.range;
@@ -540,6 +540,7 @@ function showActions(adventureData) {
 				//weapon
 				var weaponButton = document.createElement('button');
 				weaponButton.id = "weapon"
+				weaponButton.style.fontWeight = 'bold';
 				weaponButton.textContent = itemName;
 
 				//label
@@ -592,6 +593,10 @@ function showActions(adventureData) {
 				SecondSplitLabel.style.fontWeight = 'bold';
 				SecondSplitLabel.textContent = "｜";
 
+				//description
+				var description = document.createElement('label');
+				description.textContent = characterData.inventory[i].definition.description.replace(/<[^>]*>/g, '');
+
 				const breakLine = document.createElement('hr');
 
 				allActionsDiv.appendChild(weaponButton);
@@ -599,6 +604,7 @@ function showActions(adventureData) {
 				allActionsDiv.appendChild(reachLabel);
 				allActionsDiv.appendChild(SecondSplitLabel);
 				allActionsDiv.appendChild(weaponAttackButton);
+				allActionsDiv.appendChild(description);
 				allActionsDiv.appendChild(breakLine);
 			}
 		}
@@ -916,19 +922,42 @@ function getCharacterStats(characterData) {
     let totalCharisma = characterData.stats[5].value;
 
     for (let i = 0; i<characterData.modifiers.race.length; i++) {
-	if (characterData.modifiers.race[i].friendlyTypeName === "Bonus") {
-	    const abilityIncrease = characterData.modifiers.race[i].friendlySubtypeName.replace(" Score", "");
-	    if (abilityIncrease === "Strength") {
-		totalStrength += characterData.modifiers.race[i].value;
-	    } else if (abilityIncrease === "Dexterity") {
-		totalDexterity += characterData.modifiers.race[i].value;
-	    } else if (abilityIncrease === "Constitution") {
-		totalConstitution += characterData.modifiers.race[i].value;
-	    } else if (abilityIncrease === "Intelligence") {
-                totalIntelligence += characterData.modifiers.race[i].value;
-            }
+		if (characterData.modifiers.race[i].friendlyTypeName === "Bonus") {
+			const abilityIncrease = characterData.modifiers.race[i].friendlySubtypeName.replace(" Score", "");
+			if (abilityIncrease === "Strength") {
+			totalStrength += characterData.modifiers.race[i].value;
+			} else if (abilityIncrease === "Dexterity") {
+			totalDexterity += characterData.modifiers.race[i].value;
+			} else if (abilityIncrease === "Constitution") {
+			totalConstitution += characterData.modifiers.race[i].value;
+			} else if (abilityIncrease === "Intelligence") {
+					totalIntelligence += characterData.modifiers.race[i].value;
+				}
+		}
 	}
-    }
+
+	for (let i = 0; i < characterData.modifiers.class.length; i++) {
+		const abilities = ["Strength", "Dexterity", "Constitution", "Intellegence", "Wisdom", "Charisma"]
+		const type = characterData.modifiers.class[i].friendlySubtypeName.replace(' Score', '');
+
+		console.log(type);
+		if (abilities.includes(type) && characterData.modifiers.class[i].type === "bonus") {
+			const ability = abilities.includes(type);
+			if (type === "Strength" && ability === true) {
+				totalStrength += characterData.modifiers.class[i].value;
+			} else if (type === 'Dexterity' && ability === true) {
+				totalDexterity += characterData.modifiers.class[i].value;
+			} else if (type === 'Constitution' && type === true) {
+				totalConstitution += characterData.modifiers.class[i].value;
+			} else if (type === 'Intellegence' && ability === true) {
+				totalIntellegence += characterData.modifiers.class[i].value;
+			} else if (type === 'Wisdom' && ability === true) {
+				totalWisdom += characterData.modifiers.class[i].value;
+			} else if (type === 'Charisma' && ability === true) {
+				totalCharisma += characterData.modifiers.class[i].value;
+			}
+		}
+	}
 
     return {
         totalStrength,
