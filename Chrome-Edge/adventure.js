@@ -6,7 +6,6 @@ setTimeout(function () {
 	    console.error("Error:", error);
 	    return;
 	}
-	
     	if (adventureData['@is_dm'] === "yes") {
             console.log('You are the DM, there is no character button for you!');
         } else {
@@ -22,7 +21,7 @@ setTimeout(function () {
             viewCharacter.textContent = "View Character Sheet";
             viewCharacter.classList.add('btn', 'btn-default');
             viewCharacter.style.position = 'fixed';
-            viewCharacter.style.bottom = '15px';
+            viewCharacter.style.bottom = '10px';
             viewCharacter.style.left = '15px';
             divCharacterTools.appendChild(viewCharacter); // Appended the button to the container
 
@@ -42,7 +41,7 @@ setTimeout(function () {
 
 function changePlayArea() {
     const playArea = document.querySelector('.playarea');
-    playArea.style.bottom = '60px';
+    playArea.style.bottom = '50px';
 }
 
 function showCharacterSheet(adventureData, buttonPressed) {
@@ -71,8 +70,8 @@ function showCharacterSheet(adventureData, buttonPressed) {
         overlayContainer.classList.add('panel', 'panel-primary');
         overlayContainer.style.display = 'none';
         overlayContainer.style.position = 'fixed';
-        overlayContainer.style.top = '50px';
-        overlayContainer.style.left = '25px';
+        overlayContainer.style.top = '40px';
+        overlayContainer.style.left = '15px';
         overlayContainer.style.backgroundColor = 'rgba(255,255,255, 1)';
         overlayContainer.style.zIndex = '10010';
 
@@ -442,6 +441,8 @@ function showCharacterSheet(adventureData, buttonPressed) {
 }
 
 function showActions(adventureData) {
+	const content = document.getElementById('overlayContainer');
+	content.innerHTML = ''; // Clear existing content
 	chrome.storage.local.get('characterData', function (result) {
 		const characterData = result.characterData;
 		const stats = getCharacterStats(characterData);
@@ -459,26 +460,64 @@ function showActions(adventureData) {
 			}
 		}
 
-		// clear content of overlay
-		const content = document.getElementById('overlayContainer');
-		content.innerHTML = '';
+			// clear content of overlay
+			const content = document.getElementById('overlayContainer');
+			content.innerHTML = '';
 
-		const header = document.getElementById('titleBar');
-		header.innerHTML = `${characterData.name} - Action ${characterHidden} <span class="glyphicon glyphicon-remove close" aria-hidden="true"></span>`;
+			var header = document.getElementById('titleBar');
+			header.innerHTML = `${characterData.name} - Action ${characterHidden} <span class="glyphicon glyphicon-remove close" aria-hidden="true"></span>`;
 
+		//closes the overlay on button click of the cross
+		const closeButton = header.querySelector('.close');
+		closeButton.addEventListener('click', function () {
+			//overlayContainer.style.display = 'none';
+			characterSheetOverlayOpen = false;
+
+			const characterSheetOverlay = document.getElementById('customOverlay');
+			if (characterSheetOverlay) {
+				characterSheetOverlay.remove();
+			}
+		});
+
+		const removeOverlayBody = document.querySelector('.panel-body');
+		removeOverlayBody.remove();
+
+		// Create overlay body
 		const overlayBody = document.createElement('div');
-		overlayBody.classList.add('panel-body');
+		//overlayBody.classList.add('panel-body');
+		overlayBody.id = "actions";
 
+		//const overlayBody = document.querySelector('.panel-body');
 		overlayBody.innerHTML = `
             <style>
-                .vertical-line {
-                    border-left: 1px solid #000; /* Adjust the color and size as needed */
-                    height: 30px; /* Adjust the height as needed */
-                    margin: 0 10px; /* Adjust the margin as needed */
-                }
-            </style>
+				.vertical-line {
+					border-left: 1px solid #000; /* Adjust the color and size as needed */
+					height: 30px; /* Adjust the height as needed */
+					margin: 0 10px; /* Adjust the margin as needed */
+				}
+
+				.bottom-right-container {
+					position: absolute;
+					bottom: 0;
+					right: 0;
+					margin-right: 40px; /* Adjust the margin as needed */
+					margin-bottom: 30px; /* Adjust the margin as needed */
+					border: 2px solid #336699;
+					padding: 5px;
+					width: 110px;
+					height: 230px;
+				}
+
+				.bottom-right-button {
+					font-size: 12px;
+					width: 100px;
+					height: 28px;
+					margin-top: 10px;
+					margin-left: 2px;
+				}
+			</style>
 			<div>
-				<div class="Character-menu-container" style="margin-top: -10px; height: 40px; margin-left: 485px;">
+				<div class="Character-menu-container" style="margin-top: -10px; height: 40px; margin-left: 455px;">
 					<div class="character-menu" style="border: 2px solid #336699; padding 5px; height: 230px; width: 110px; margin-left: -120px;">
 						<button id="actions" class="btn btn-primary btn-xs open_menu" style="font-size: 12px; margin-top: 10px; margin-left: 2px; width: 100px; height: 28px;">Actions</button>
 						<button id="bio" class="btn btn-primary btn-xs open_menu" style="font-size: 12px; margin-top: -10px; margin-left: 2px; width: 100px; height: 28px;">Bio</button>
@@ -488,7 +527,7 @@ function showActions(adventureData) {
 						<button id="spells" class="btn btn-primary btn-xs open_menu" style="font-size: 12px; margin-top: -10px; margin-left: 2px; width: 100px; height: 28px;">Spells</button>
 					</div>
 				</div>
-				<div id="actionsList" style="height: 400px; width: 350px; margin-top: -10px; overflow: auto; border: 2px solid #336699; padding: 10px;">
+				<div id="actionsList" style="height: 495px; width: 345px; margin-left: -25px; margin-top: -50px; overflow: auto; border: 2px solid #336699; padding: 10px;">
 					<ul id="ContentList">
 						<p style="font-size: 20px;"><b>Actions</b></p>
 						<div style="margin-left: 20px;">
@@ -507,21 +546,14 @@ function showActions(adventureData) {
 						</div>
 					</ul>
 				</div>
+				<div class="bottom-right-container" id="ammoList">
+				</div>
 			</div>
         `;
 
-		//closes the overlay on button click of the cross
-		const closeButton = header.querySelector('.close');
-		closeButton.addEventListener('click', function () {
-			overlayContainer.style.display = 'none';
-			characterSheetOverlayOpen = false;
-
-			const characterSheetOverlay = document.getElementById('customOverlay');
-			if (characterSheetOverlay) {
-				characterSheetOverlay.remove();
-			}
-		});
-		
+		//there should be two daggers, show one as melee stats, and one as ranged
+		let secondDagger = false;
+		//loop for weapons
 		for (let i = 0; i < characterData.inventory.length; i++) {
 			var allActionsDiv = overlayBody.querySelector('#allActions');
 
@@ -550,7 +582,7 @@ function showActions(adventureData) {
 				splitLabel.textContent = "｜";
 
 				//weapon reach
-				if (rangeWeapon.includes(characterData.inventory[i].definition.type)) {
+				if (secondDagger === true || rangeWeapon.includes(characterData.inventory[i].definition.type)) {
 					var reachLabel = document.createElement('label');
 					reachLabel.textContent = range + "/" + longRange + "ft.";
 				} else {
@@ -570,7 +602,7 @@ function showActions(adventureData) {
 				var weaponAttackButton = document.createElement('button');
 				weaponAttackButton.id = "weapon";
 
-				if (rangeWeapon.includes(characterData.inventory[i].definition.type)) {
+				if (secondDagger === true || rangeWeapon.includes(characterData.inventory[i].definition.type)) {
 					const dex = Math.floor((stats.totalDexterity - 10) / 2);
 					if (dex >= 0) {
 						weaponAttackButton.textContent = "+" + Number(profBonus + dex);
@@ -584,7 +616,10 @@ function showActions(adventureData) {
 					} else {
 						weaponAttackButton.textContent = "-" + Number(profBonus + str)
 					}
-					
+				}
+
+				if (itemName === "Dagger") {
+					secondDagger = true;
 				}
 
 				//label
@@ -606,7 +641,159 @@ function showActions(adventureData) {
 				allActionsDiv.appendChild(weaponAttackButton);
 				allActionsDiv.appendChild(description);
 				allActionsDiv.appendChild(breakLine);
+
+				(function () {
+					// Add a click event listener to the current weapon button
+					const currentWeaponButton = weaponButton;
+					const currentAttackRoll = weaponAttackButton;
+					currentWeaponButton.addEventListener('click', function () {
+						// Handle the click event for the current weapon button
+						console.log("Weapon button clicked:", currentWeaponButton.textContent);
+						// Add your custom logic here
+						});
+
+					currentAttackRoll.addEventListener('click', function () {
+						console.log('Weapon attack button pressed:', currentAttackRoll.textContent);
+					});
+				})();
 			}
+			content.classList.add('show-actions');
+		}
+
+		//for other none weapon actions
+		for (let i = 0; i < characterData.actions.class.length; i++) {
+			var allActionsDiv = overlayBody.querySelector('#allActions');
+			const snippet = characterData.actions.class[i].snippet.toLowerCase();
+
+			//name button
+			var nameButton = null
+
+			//label for description/snippet
+			var snippetLabel = null
+
+			//breakline
+			var breakLine = null
+
+			if (snippet.includes("as an action") || snippet.includes("your action")) {
+				nameButton = document.createElement('button');
+				nameButton.textContent = characterData.actions.class[i].name;
+				nameButton.id = "actionName"
+				nameButton.style.fontWeight = "bold";
+
+				snippetLabel = document.createElement('label');
+				snippetLabel.textContent = characterData.actions.class[i].snippet;
+
+				breakLine = document.createElement('hr');
+			}
+
+			try {
+				allActionsDiv.appendChild(nameButton);
+				allActionsDiv.appendChild(snippetLabel);
+				allActionsDiv.appendChild(breakLine);
+
+				(function () {
+					const currentALTWeapon = nameButton;
+					const currentALTAttack = 
+
+					// Add a click event listener to the current weapon button
+					currentALTWeapon.addEventListener('click', function () {
+						// Handle the click event for the current weapon button
+						console.log("Weapon button clicked:", currentALTWeapon.textContent);
+						// Add your custom logic here
+					});
+				})();
+			}
+			catch { }
+		}
+
+		//feats
+		for (let i = 0; i < characterData.actions.feat.length; i++) {
+			var allActionsDiv = overlayBody.querySelector('#allActions');
+			const snippet = characterData.actions.feat[i].snippet.toLowerCase();
+
+			//name button
+			var nameButton = null
+
+			//label for description/snippet
+			var snippetLabel = null
+
+			//breakline
+			var breakLine = null
+
+			if (snippet.includes("as an action") || snippet.includes("use your action")) {	
+				nameButton = document.createElement('button');
+				nameButton.textContent = characterData.actions.feat[i].name;
+				nameButton.id = "actionName"
+				nameButton.style.fontWeight = "bold";
+
+				snippetLabel = document.createElement('label');
+				snippetLabel.textContent = characterData.actions.feat[i].snippet;
+
+				breakLine = document.createElement('hr');
+			}
+
+			try {
+				allActionsDiv.appendChild(nameButton);
+				allActionsDiv.appendChild(snippetLabel);
+				allActionsDiv.appendChild(breakLine);
+
+				(function () {
+					const currentFeatsButton = nameButton;
+
+					// Add a click event listener to the current weapon button
+					currentFeatsButton.addEventListener('click', function () {
+						// Handle the click event for the current weapon button
+						console.log("Weapon button clicked:", currentFeatsButton.textContent);
+						// Add your custom logic here
+					});
+				})();
+			}
+			catch { }
+		}
+
+		//race
+		for (let i = 0; i < characterData.actions.race.length; i++) {
+			var allActionsDiv = overlayBody.querySelector('#allActions');
+			const snippet = characterData.actions.race[i].snippet.toLowerCase();
+
+			//name button
+			var nameButton = null
+
+			//label for description/snippet
+			var snippetLabel = null
+
+			//breakline
+			var breakLine = null
+
+			if (snippet.includes("as an action") || snippet.includes("use your action")) {
+				nameButton = document.createElement('button');
+				nameButton.textContent = characterData.actions.race[i].name;
+				nameButton.id = "actionName"
+				nameButton.style.fontWeight = "bold";
+
+				snippetLabel = document.createElement('label');
+				snippetLabel.textContent = characterData.actions.race[i].snippet;
+
+				breakLine = document.createElement('hr');
+			}
+
+			try {
+				allActionsDiv.appendChild(nameButton);
+				allActionsDiv.appendChild(snippetLabel);
+				allActionsDiv.appendChild(breakLine);
+
+				(function () {
+					const currentRaceButton = nameButton;
+
+					// Add a click event listener to the current weapon button
+					currentRaceButton.addEventListener('click', function () {
+						// Handle the click event for the current weapon button
+						console.log("Weapon button clicked:", currentRaceButton.textContent);
+						// Add your custom logic here
+					});
+				})();
+			}
+			catch { }
 		}
 
 		setTimeout(() => {
@@ -621,7 +808,7 @@ function showActions(adventureData) {
 			} else {
 				console.error("Button not found.");
 			}
-		}, 0); // You can adjust the delay time if needed
+		}, 0);
 
 
 		//event listeners for the character buttons
@@ -663,17 +850,53 @@ function showActions(adventureData) {
 			showSpells(adventureData);
 		});
 
+		const unarmedStrikeButton = overlayBody.querySelector('#unarmedStrike');
+		const unarmedStrikeMod = overlayBody.querySelector('#unarmedStrikeAttackRoll')
+		unarmedStrikeButton.addEventListener('click', function () {
+			console.log('unarmed strike button pressed: ' + unarmedStrikeMod.textContent);
+		})
+
+		//shows ammo left in inventory
+		const ammoList = ["Crossbow Bolts", "Arrows", "Sling Bullets", "Blowgun Needles"]
+		for (let i = 0; i < characterData.inventory.length; i++) {
+			var ammoDiv = overlayBody.querySelector('#ammoList');
+			if (ammoList.includes(characterData.inventory[i].definition.name)) {
+				console.log(characterData.inventory[i].definition.name);
+				console.log(characterData.inventory[i].quantity);
+
+				//name label
+				var nameLabel = document.createElement('label');
+				nameLabel.textContent = characterData.inventory[i].definition.name;
+				nameLabel.style.fontSize = "11px";
+
+				//splitLabel
+				var splitLabel = document.createElement('label');
+				splitLabel.textContent = " | ";
+				splitLabel.style.fontSize = "16px";
+
+				//amount of ammo
+				var ammoAmountLabel = document.createElement('label');
+				ammoAmountLabel.textContent = characterData.inventory[i].quantity;
+				ammoAmountLabel.style.fontSize = "11px";
+
+				//line
+				const breakLine = document.createElement('hr');
+
+				ammoDiv.appendChild(nameLabel);
+				ammoDiv.appendChild(splitLabel);
+				ammoDiv.appendChild(ammoAmountLabel);
+				ammoDiv.appendChild(breakLine);
+			}
+		}
+
 		// Append overlayBody to the document body
 		content.appendChild(overlayBody);
 	});
 }
 
-
 function showBio(adventureData) {
-	//clear content of overlay
 	const content = document.getElementById('overlayContainer');
-	content.remove();
-
+	content.innerHTML = ''; // Clear existing content
 	chrome.storage.local.get('characterData', function (result) {
 		const characterData = result.characterData;
 
@@ -690,37 +913,139 @@ function showBio(adventureData) {
 			}
 		}
 
-		//change the header of the overlay window
-		const header = document.querySelectorAll('.panel-heading');
+		var header = document.getElementById('titleBar');
+		header.innerHTML = `${characterData.name} - Bio ${characterHidden} <span class="glyphicon glyphicon-remove close" aria-hidden="true"></span>`;
 
-		header.forEach(header => {
-			if (header && header.textContent && header.textContent.includes(characterData.name)) {
-				header.innerHTML = `${characterData.name} - Bio ${characterHidden} <span class="glyphicon glyphicon-remove close" aria-hidden="true"></span>`;
+		//closes the overlay on button click of the cross
+		const closeButton = header.querySelector('.close');
+		closeButton.addEventListener('click', function () {
+			characterSheetOverlayOpen = false;
 
-				const overlayContainer = document.getElementById('customOverlay');
-
-				const closeButton = header.querySelector('.close');
-				closeButton.addEventListener('click', function () {
-					overlayContainer.style.display = 'none';
-					characterSheetOverlayOpen = false;
-
-					const characterSheetOverlay = document.getElementById('customOverlay');
-					if (characterSheetOverlay) {
-						characterSheetOverlay.remove();
-					}
-				});
+			const characterSheetOverlay = document.getElementById('customOverlay');
+			if (characterSheetOverlay) {
+				characterSheetOverlay.remove();
 			}
 		});
 
-		const overlayBody = document.querySelectorAll('.panel-body');
+		//const overlayBody = document.querySelectorAll('.panel-body');
 		overlayBody.forEach(overlayBody => {
 			overlayBody.innerHTML = `
-	        <p>Test</p>
-	    `;
+				<div id="overlayContainer">
+					<div class="Character-menu-container" style="margin-top: -10px; height: 40px; margin-left: 475px;">
+						<div class="character-menu" style="border: 2px solid #336699; padding 5px; height: 230px; width: 110px; margin-left: -120px;">
+							<button id="actions" class="btn btn-primary btn-xs open_menu" style="font-size: 12px; margin-top: 10px; margin-left: 2px; width: 100px; height: 28px;">Actions</button>
+							<button id="bio" class="btn btn-primary btn-xs open_menu" style="font-size: 12px; margin-top: 7px; margin-left: 2px; width: 100px; height: 28px;">Bio</button>
+							<button id="character" class="btn btn-primary btn-xs open_menu" style="font-size: 12px; margin-top: 7px; margin-left: 2px; width: 100px; height: 28px;">Character</button>
+							<button id="features" class="btn btn-primary btn-xs open_menu" style="font-size: 12px; margin-top: 7px; margin-left: 2px; width: 100px; height: 28px;">Features</button>
+							<button id="inventory" class="btn btn-primary btn-xs open_menu" style="font-size: 12px; margin-top: 7px; margin-left: 2px; width: 100px; height: 28px;">Inventory</button>
+							<button id="spells" class="btn btn-primary btn-xs open_menu" style="font-size: 12px; margin-top: 7px; margin-left: 2px; width: 100px; height: 28px;">Spells</button>
+						</div>
+					</div>
+					<div class="bioDiv" style="height: 495px; width: 345px; margin-left: -10px; margin-top: -40px; overflow: auto; border: 2px solid #336699; padding: 10px;">
+						<ul id="ContentList">
+						    <button id=bioButtonBackstory style="font-size: 20px;"><b>Backstory</b></button>
+							<div id="backstoryDiv" style="margin-left: 20px;">
+								<label style="font-size: 13px;">${characterData.notes.backstory ? characterData.notes.backstory: ""}</label>
+							</div>
+							<button id=bioButtonAllies style="font-size: 20px;"><b>Allies</b></button>
+							<div id="alliesDiv" style="margin-left: 20px;">
+								<label style="font-size: 13px;">${characterData.notes.allies ? characterData.notes.allies: ""}</label>
+							</div>
+							<button id=bioButtonEnemies style="font-size: 20px;"><b>Enemies</b></button>
+							<div id="enemiesDiv" style="margin-left: 20px;">
+								<label style="font-size: 13px;">${characterData.notes.enemies ? characterData.notes.enemies: ""}</label>
+							</div>
+							<button id=bioButtonOrganisations style="font-size: 20px;"><b>Organizations</b></button>
+							<div id="organizationsDiv" style="margin-left: 20px;">
+								<label style="font-size: 13px;">${characterData.notes.organizations ? characterData.notes.organizations: ""}</label>
+							</div>
+							<button id=bioButtonOtherHoldings style="font-size: 20px;"><b>Other holdings</b></button>
+							<div id="otherHoldingsDiv" style="margin-left: 20px;">
+								<label style="font-size: 13px;">${characterData.notes.otherHoldings ? characterData.notes.otherHoldings: ""}</label>
+							</div>
+							<button id=bioButtonOtherNotes style="font-size: 20px;"><b>Other Notes</b></button>
+							<div id="otherNotesDiv" style="margin-left: 20px;">
+								<label style="font-size: 13px;">${characterData.notes.otherNotes ? characterData.notes.otherNotes: ""}</label>
+							</div>
+							<button id=bioButtonPersonalPossessions style="font-size: 20px;"><b>Personal Possessions</b></button>
+							<div id="personalPossessionsDiv" style="margin-left: 20px;">
+								<label style="font-size: 13px;">${characterData.notes.personalPossessions ? characterData.notes.personalPossessions: ""}</label>
+							</div>
+							<button id=bioButtonBackgroundDescription style="font-size: 20px;"><b>Background: ${characterData.background.definition.name}</b></button>
+							<div id="backgroundDescription" style="margin-left: 20px;">
+								<label style="font-size: 13px;">${removeHtmlTags(characterData.background.definition.shortDescription)}
+							</div>
+							<button id=bioButtonBackgroundFeature style="font-size: 12px;"><b>Background Feature: ${characterData.background.definition.featureName}</b></button>
+							<div id="backgroundFeature" style="margin-left: 20px;">
+							    <label style="font-size: 13px;">${removeHtmlTags(characterData.background.definition.featureDescription)}
+							</div>
+							<button id=bioButtonAppearance style="font-size: 16px;"><b>Appearance</b></button>
+							<div id="apperance" style="margin-left: 20px;">
+							    <label style="font-size: 13px;">${characterData.traits.appearance ? characterData.traits.appearance: ""}
+							</div>
+							<button id=bioButtonBonds style="font-size: 16px;"><b>Bond</b></button>
+							<div id="bond" style="margin-left: 20px;">
+							    <label style="font-size: 13px;">${characterData.traits.bonds}
+							</div>
+							<button id=bioButtonFlaws style="font-size: 16px;"><b>Flaws</b></button>
+							<div id="flaws" style="margin-left: 20px;">
+								<label style="font-size: 13px;">${characterData.traits.flaws}
+							</div>
+							<button id=bioButtonIdeals style="font-size: 16px;"><b>Ideals</b></button>
+							<div id="ideals" style="margin-left: 20px;">
+								<label style="font-size: 13px;">${characterData.traits.ideals}
+							</div>
+							<button id=bioButtonPersonalityTraits style="font-size: 16px;"><b>Personality Traits</b></button>
+							<div id="personalityTraits" style="margin-left: 20px;">
+								<label style="font-size: 13px;">${characterData.traits.personalityTraits}
+							</div>
+						</ul>
+					</div>
+				</div>
+        `;
+			
+			//event listeners for the character buttons
+			const actionButton = overlayBody.querySelector('#actions');
+			actionButton.addEventListener('click', function () {
+				console.log("action button pressed");
+				showActions(adventureData);
+			});
+
+			const bioButton = overlayBody.querySelector('#bio');
+			bioButton.addEventListener('click', function () {
+				console.log("bio button pressed");
+				showBio(adventureData);
+			});
+
+			const characterButton = overlayBody.querySelector('#character');
+			characterButton.addEventListener('click', function () {
+				console.log('character button pressed');
+				const characterSheetOverlay = document.getElementById('customOverlay');
+				characterSheetOverlay.remove();
+				showCharacterSheet(adventureData);
+			});
+
+			const featuresButton = overlayBody.querySelector('#features');
+			featuresButton.addEventListener('click', function () {
+				console.log('features button pressed');
+				showFeatures(adventureData);
+			});
+
+			const inventoryButton = overlayBody.querySelector('#inventory');
+			inventoryButton.addEventListener('click', function () {
+				console.log('inventory button pressed');
+				showInventory(adventureData);
+			});
+
+			const spellsButton = overlayBody.querySelector('#spells');
+			spellsButton.addEventListener('click', function () {
+				console.log('spells button pressed');
+				showSpells(adventureData);
+			});
 		});
 	});
+	content.classList.add('show-bio');
 }
-
 function showFeatures(adventureData) {
     //clear content of overlay
     const content = document.getElementById('overlayContainer');
@@ -940,7 +1265,6 @@ function getCharacterStats(characterData) {
 		const abilities = ["Strength", "Dexterity", "Constitution", "Intellegence", "Wisdom", "Charisma"]
 		const type = characterData.modifiers.class[i].friendlySubtypeName.replace(' Score', '');
 
-		console.log(type);
 		if (abilities.includes(type) && characterData.modifiers.class[i].type === "bonus") {
 			const ability = abilities.includes(type);
 			if (type === "Strength" && ability === true) {
@@ -1003,4 +1327,9 @@ function getUserCharacter(callback) {
         callback(error);
       });
   });
+}
+
+function removeHtmlTags(htmlString) {
+	var doc = new DOMParser().parseFromString(htmlString, 'text/html');
+	return doc.body.textContent || "";
 }

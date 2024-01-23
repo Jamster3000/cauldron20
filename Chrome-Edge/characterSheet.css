@@ -123,3 +123,31 @@
 #weapon:hover {
     background-color: white;
 }
+
+#actionName {
+    background-color: white;
+    color: black;
+    padding: 5px;
+    border: 1px solid black;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 15px;
+}
+
+#actionName:hover {
+    background-color: white;
+}
+
+#bioButton {
+    background-color: white;
+    color: black;
+    padding: 5px;
+    border: 1px solid black;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 15px;
+}
+
+#bioButton:hover {
+    background-color: white;
+}
