@@ -28,8 +28,20 @@ Creating a character
 The default view of the character sheet
 ![image](https://github.com/Jamster3000/cauldron20/assets/148760154/03615e0c-9c9f-4934-8ee0-57bfed0a5675)
 
+The action page of the character sheet
+![image](https://github.com/Jamster3000/cauldron20/assets/148760154/5b0f2c08-de81-4d55-9de8-1ef33cb4ff3b)
+
+
 The Bio page of the character sheet
 ![image](https://github.com/Jamster3000/cauldron20/assets/148760154/2b2a84e4-6ea5-4c08-ade3-c7dc2e5e0d18)
+
+The features of the character sheet
+![image](https://github.com/Jamster3000/cauldron20/assets/148760154/13c49088-abd6-4766-a43a-738809b0c531)
+
+The inventory of the character sheet
+![image](https://github.com/Jamster3000/cauldron20/assets/148760154/277fd353-dea1-492f-8124-33418ecf66f7)
+
+
 
 
 
