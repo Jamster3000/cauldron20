@@ -22,6 +22,7 @@ The extension should work as intended.
 I would like to also add to this that I don't know JavaScript and I honeslty think it's a headache for me until I get the hang of this.
 
 # Screenshots
+Creating a character
 ![image](https://github.com/Jamster3000/cauldron20/assets/148760154/d1435f9c-2a0d-442f-b535-29940bc5c44d)
 ![image](https://github.com/Jamster3000/cauldron20/assets/148760154/03615e0c-9c9f-4934-8ee0-57bfed0a5675)
 ![image](https://github.com/Jamster3000/cauldron20/assets/148760154/2b2a84e4-6ea5-4c08-ade3-c7dc2e5e0d18)
