@@ -1,5 +1,13 @@
 let characterSheetOverlayOpen = false;
+
 setTimeout(function () {
+    // Check if the webpage has an active WebSocket connection
+    if (window.websocket) {
+        // Add event listeners to the WebSocket object
+        window.websocket.addEventListener('message', handleWebSocketMessage);
+        // Add more event listeners as needed (e.g., 'open', 'close', 'error')
+    }
+
     //adds additional commands to the chat
 	const chatInput = document.querySelector('.form-control'); // Adjust selector as needed
 
@@ -19,6 +27,9 @@ setTimeout(function () {
 
 			if (message === "/test") {
 				console.log('You entered /test this is the developer/s chat command test.');
+			}
+			else {
+			    return;
 			}
 
 			chatInput.value = "You entered /test this is the developer's chat command test."; //removed the "Unknown command." error not coming up in chat, or even change it to my own message saving the code from adding additional html
@@ -65,6 +76,83 @@ setTimeout(function () {
 function changePlayArea() {
     const playArea = document.querySelector('.playarea');
     playArea.style.bottom = '50px';
+}
+
+function write_sidebar(message) {
+    var sidebar = document.querySelector('.sidebar');
+    message = message.replace(/\n/g, '<br />');
+    sidebar.innerHTML += '<p>' + message + '</p>';
+    sidebar.scrollTop = sidebar.scrollHeight;
+}
+
+function message_to_sidebar(name, message) {
+	if ((message.substring(0, 7) == 'http://') || (message.substring(0, 8) == 'https://')) {
+		var parts = message.split('.');
+		var extension = parts.pop();
+		var images = ['gif', 'jpg', 'jpeg', 'png', 'webp'];
+
+		if (images.includes(extension)) {
+			message = '<img src="' + message + '" style="cursor:pointer;" onClick="javascript:show_image(this)" />';
+		} else {
+			message = '<a href="' + message + '" target="_blank">' + message + '</a>';
+		}
+	} else {
+		message = message.replace(/</g, '&lt;').replace(/\n/g, '<br />');
+	}
+
+	if (name != null) {
+		message = '<b>' + name + ':</b><span style="display:block; margin-left:15px;">' + message + '</span>';
+	}
+
+	write_sidebar(message);
+}
+
+function websocket_send(data) {
+    // Inject script into webpage context to access window.websocket
+    const script = document.createElement('script');
+    script.textContent = `
+        // Access the WebSocket object from the webpage
+        var websiteWebSocket = window.websocket;
+        
+        // Log the WebSocket object
+        console.log("WebSocket object from website:", websiteWebSocket);
+
+        // Once you have access to the WebSocket object, perform further actions
+        if (websiteWebSocket == null || websiteWebSocket.readyState !== WebSocket.OPEN) {
+            return;
+        }
+
+        // Continue with your logic here, e.g., sending data through the WebSocket
+        var data = ${JSON.stringify(data)};
+        websiteWebSocket.send(data);
+    `;
+    (document.head || document.documentElement).appendChild(script);
+    script.remove(); // Clean up injected script after use
+}
+
+function handleWebSocketMessage(event) {
+    console.log('running');
+    // Extract the data from the WebSocket message
+    var messageData = event.data;
+
+    // Process the received data as needed
+    console.log("Received data from WebSocket:", messageData);
+
+    // Example: Forward the received data to the background script
+    chrome.runtime.sendMessage({dataFromWebSocket: messageData});
+}
+
+function send_message(message, name, write_to_sidebar = true) {
+	var data = {
+		action: 'say',
+		name: name,
+		mesg: message
+	};
+	websocket_send(data);
+
+	if (write_to_sidebar) {
+		message_to_sidebar(name, message);
+	}
 }
 
 function showCharacterSheet(adventureData, buttonPressed) {
@@ -216,38 +304,61 @@ function showCharacterSheet(adventureData, buttonPressed) {
 		const strButton = overlayBody.querySelector('#strButton');
 		strButton.addEventListener('click', function() {
 			console.log("Your strength:", stats.totalStrength);
-			var sidebar = document.querySelector('.sidebar');
-			var strengthMessage = document.createElement('p');
 
 			//random number
 			let randomNumber = Math.floor(Math.random() * 20)+1 //this will do any number from 0 - 20
-			strengthMessage.textContent = `You made a strength check - Modifier: ${Math.floor((stats.totalStrength-10)/2)} Rolled: ${randomNumber} Total: ${randomNumber + Math.floor((stats.totalStrength-10)/2)}`;
-			sidebar.appendChild(strengthMessage);
+			var message = `You made a strength check - Modifier: ${Math.floor((stats.totalStrength-10)/2)} Rolled: ${randomNumber} Total: ${randomNumber + Math.floor((stats.totalStrength-10)/2)}`;
+			send_message(message, characterData.name);
 		 });
 
 		const dexButton = overlayBody.querySelector('#dexButton');
 		dexButton.addEventListener('click', function() {
 			console.log("Your dexterity:", stats.totalDexterity);
+
+			//random number
+			let randomNumber = Math.floor(Math.random() * 20)+1 //this will do any number from 0 - 20
+			var message = `You made a Dexteriy check - Modifier: ${Math.floor((stats.totalDexterity-10)/2)} Rolled: ${randomNumber} Total: ${randomNumber + Math.floor((stats.totalDexterity-10)/2)}`;
+			send_message(message, characterData.name);
 		});
 	
 		const conButton = overlayBody.querySelector('#conButton');
 			conButton.addEventListener('click', function() {
     			console.log("Your constitution:", stats.totalConstitution);
+
+			//random number
+			let randomNumber = Math.floor(Math.random() * 20)+1 //this will do any number from 0 - 20
+			var message = `You made a Constitution check - Modifier: ${Math.floor((stats.totalConstitution-10)/2)} Rolled: ${randomNumber} Total: ${randomNumber + Math.floor((stats.totalConstitution-10)/2)}`;
+			send_message(message, characterData.name);
 		});
 
 		const intButton = overlayBody.querySelector('#intButton');
 		intButton.addEventListener('click', function() {
     			console.log("Your intelligence:", stats.totalintellegence);
+
+			//random number
+			let randomNumber = Math.floor(Math.random() * 20)+1 //this will do any number from 0 - 20
+			var message = `You made a Intellegence check - Modifier: ${Math.floor((stats.totalIntellegence-10)/2)} Rolled: ${randomNumber} Total: ${randomNumber + Math.floor((stats.totalIntellegence-10)/2)}`;
+			send_message(message, characterData.name);
 		});
 
 		const wisButton = overlayBody.querySelector('#wisButton');
 		wisButton.addEventListener('click', function() {
-				console.log("Your wisdom:", stats.totalWisdom);
+			console.log("Your wisdom:", stats.totalWisdom);
+
+			//random number
+			let randomNumber = Math.floor(Math.random() * 20)+1 //this will do any number from 0 - 20
+			var message = `You made a Wisdom check - Modifier: ${Math.floor((stats.totalWisdom-10)/2)} Rolled: ${randomNumber} Total: ${randomNumber + Math.floor((stats.totalWisdom-10)/2)}`;
+			send_message(message, characterData.name);
 		});
 
 		const chaButton = overlayBody.querySelector('#chaButton');
 		chaButton.addEventListener('click', function() {
-  		  console.log("Your charisma:", stats.totalCharisma);
+  		  	console.log("Your charisma:", stats.totalCharisma);
+
+			//random number
+			let randomNumber = Math.floor(Math.random() * 20)+1 //this will do any number from 0 - 20
+			var message = `You made a Charisma check - Modifier: ${Math.floor((stats.totalCharisma-10)/2)} Rolled: ${randomNumber} Total: ${randomNumber + Math.floor((stats.totalCharisma-10)/2)}`;
+			send_message(message, characterData.name);
 		});
 
 		//event listeners for the character buttons

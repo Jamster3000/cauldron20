@@ -22,28 +22,7 @@ The extension should work as intended.
 I would like to also add to this that I don't know JavaScript and I honeslty think it's a headache for me until I get the hang of this.
 
 # Screenshots
-Creating a character
-![image](https://github.com/Jamster3000/cauldron20/assets/148760154/d1435f9c-2a0d-442f-b535-29940bc5c44d)
-
-The default view of the character sheet
-![image](https://github.com/Jamster3000/cauldron20/assets/148760154/03615e0c-9c9f-4934-8ee0-57bfed0a5675)
-
-The action page of the character sheet
-![image](https://github.com/Jamster3000/cauldron20/assets/148760154/5b0f2c08-de81-4d55-9de8-1ef33cb4ff3b)
-
-
-The Bio page of the character sheet
-![image](https://github.com/Jamster3000/cauldron20/assets/148760154/2b2a84e4-6ea5-4c08-ade3-c7dc2e5e0d18)
-
-The features of the character sheet
-![image](https://github.com/Jamster3000/cauldron20/assets/148760154/13c49088-abd6-4766-a43a-738809b0c531)
-
-The inventory of the character sheet
-![image](https://github.com/Jamster3000/cauldron20/assets/148760154/277fd353-dea1-492f-8124-33418ecf66f7)
-
-
-
-
+![image](https://github.com/Jamster3000/cauldron20/assets/148760154/19c31f2c-5034-4be9-a1a3-79afcf6a69bf)
 
 ![GitHub issues](https://img.shields.io/github/issues/jamster3000/Joan-smart-assistant)
 ![Last Commit](https://img.shields.io/github/last-commit/jamster3000/Joan-smart-assistant)
