@@ -1,13 +1,6 @@
 let characterSheetOverlayOpen = false;
 
 setTimeout(function () {
-    // Check if the webpage has an active WebSocket connection
-    if (window.websocket) {
-        // Add event listeners to the WebSocket object
-        window.websocket.addEventListener('message', handleWebSocketMessage);
-        // Add more event listeners as needed (e.g., 'open', 'close', 'error')
-    }
-
     //adds additional commands to the chat
 	const chatInput = document.querySelector('.form-control'); // Adjust selector as needed
 
@@ -24,7 +17,7 @@ setTimeout(function () {
 					p.parentNode.removeChild(p);
 				}
 			}
-
+		
 			if (message === "/test") {
 				console.log('You entered /test this is the developer/s chat command test.');
 			}
@@ -79,6 +72,7 @@ function changePlayArea() {
 }
 
 function write_sidebar(message) {
+    console.log("9");
     var sidebar = document.querySelector('.sidebar');
     message = message.replace(/\n/g, '<br />');
     sidebar.innerHTML += '<p>' + message + '</p>';
@@ -103,13 +97,12 @@ function message_to_sidebar(name, message) {
 	if (name != null) {
 		message = '<b>' + name + ':</b><span style="display:block; margin-left:15px;">' + message + '</span>';
 	}
-
 	write_sidebar(message);
 }
 
 function websocket_send(data) {
     // Inject script into webpage context to access window.websocket
-    const script = document.createElement('script');
+    var script = document.createElement('script');
     script.textContent = `
         // Access the WebSocket object from the webpage
         var websiteWebSocket = window.websocket;
@@ -119,11 +112,11 @@ function websocket_send(data) {
 
         // Once you have access to the WebSocket object, perform further actions
         if (websiteWebSocket == null || websiteWebSocket.readyState !== WebSocket.OPEN) {
-            return;
+            console.log("Not open");
         }
 
-        // Continue with your logic here, e.g., sending data through the WebSocket
         var data = ${JSON.stringify(data)};
+	console.log(data);
         websiteWebSocket.send(data);
     `;
     (document.head || document.documentElement).appendChild(script);
@@ -148,6 +141,7 @@ function send_message(message, name, write_to_sidebar = true) {
 		name: name,
 		mesg: message
 	};
+	console.log(data);
 	websocket_send(data);
 
 	if (write_to_sidebar) {
@@ -1642,19 +1636,262 @@ function showSpells(adventureData, buttonPressed) {
 
 		const overlayBody = document.querySelector('.panel-body');
 		overlayBody.innerHTML = `
+		<style>
+			.buttonNameWrap {
+				white-space: normal; 
+				width: 120px; 
+				font-style: italic;
+				background-color: white;
+				color: #6385C1;
+				padding: 5px;
+				border: 1px solid black;
+				border-radius: 5px;
+				cursor: pointer;
+				font-size: 15px;
+			  }
+			  buttonNameWrap:hover {
+			      background-color: white;
+			  }
+			  .hrBreakline {
+				  margin: 0;
+				  padding: 20;
+			  }
+		</style>
 		<div id="overlayContainer">
 			<div class="Character-menu-container" style="margin-top: -10px; height: 40px; margin-left: 465px;">
-				<div class="character-menu" style="border: 2px solid #336699; padding 5px; height: 230px; width: 110px; margin-left: -120px;">
-					<button id="actions" class="btn btn-primary btn-xs open_menu" style="font-size: 12px; margin-top: 10px; margin-left: 2px; width: 100px; height: 28px;">Actions</button>
-					<button id="bio" class="btn btn-primary btn-xs open_menu" style="font-size: 12px; margin-top: -10px; margin-left: 2px; width: 100px; height: 28px;">Bio</button>
-					<button id="character" class="btn btn-primary btn-xs open_menu" style="font-size: 12px; margin-top: -10px; margin-left: 2px; width: 100px; height: 28px;">Character</button>
-					<button id="features" class="btn btn-primary btn-xs open_menu" style="font-size: 12px; margin-top: -10px; margin-left: 2px; width: 100px; height: 28px;">Features</button>
-					<button id="inventory" class="btn btn-primary btn-xs open_menu" style="font-size: 12px; margin-top: -10px; margin-left: 2px; width: 100px; height: 28px;">Inventory</button>
-					<button id="spells" class="btn btn-primary btn-xs open_menu" style="font-size: 12px; margin-top: -10px; margin-left: 2px; width: 100px; height: 28px;">Spells</button>
+			    <div class="character-menu" style="border: 2px solid #336699; padding 5px; height: 230px; width: 110px; margin-left: -120px;">
+			    	<button id="actions" class="btn btn-primary btn-xs open_menu" style="font-size: 12px; margin-top: 10px; margin-left: 2px; width: 100px; height: 28px;">Actions</button>
+				<button id="bio" class="btn btn-primary btn-xs open_menu" style="font-size: 12px; margin-top: -10px; margin-left: 2px; width: 100px; height: 28px;">Bio</button>
+				<button id="character" class="btn btn-primary btn-xs open_menu" style="font-size: 12px; margin-top: -10px; margin-left: 2px; width: 100px; height: 28px;">Character</button>
+				<button id="features" class="btn btn-primary btn-xs open_menu" style="font-size: 12px; margin-top: -10px; margin-left: 2px; width: 100px; height: 28px;">Features</button>
+				<button id="inventory" class="btn btn-primary btn-xs open_menu" style="font-size: 12px; margin-top: -10px; margin-left: 2px; width: 100px; height: 28px;">Inventory</button>
+				<button id="spells" class="btn btn-primary btn-xs open_menu" style="font-size: 12px; margin-top: -10px; margin-left: 2px; width: 100px; height: 28px;">Spells</button>
+			    </div>
+			</div>
+			<div id="SpellInformation" style="border: 2px solid #336699; padding 5px; height: 230px; width: 110px; margin-left: 345px; margin-top: 220px;">
+			    <div style="margin-top: 25px; margin-left: 5px;">
+				<label style="margin-left: 10px;">
+				<hr class="hrBreakline">
+				<label style="margin-left: 10px;">
+				<hr class="hrBreakline">
+				<label style="margin-left: 10px;">
+			    </div>
+			</div>
+			<div class="spellDiv" style="height: 495px; width: 345px; margin-left: -10px; margin-top: -490px; overflow: auto; border: 2px solid #336699; padding: 10px;">
+			    <ul id="spellList">
+				<div id="allSpells">
+			            <h4><b>Name&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspTime</b></h4>
+				    <div id="level0">
+				        <h2><b>Cantrips</b></h2>
+				    </div>
+				    <div id="level1">
+					<h2><b>Level 1</b></h2>
+					<p>Spell Slots&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspExpended Spell Slots</p>
+					<div style="display: flex; justify-content: space-between;">
+    					    <input id="maxHitPoints" placeholder="${characterData.spellSlots[0].available}" disabled=true style="width: 40px;">
+					    <div style="width: 5px;"></div>
+    					    <input id="maxHitPoints" value="${characterData.spellSlots[0].used}" disabled=true style="width: 40px;">
+					</div>
+					<br>
+				    </div>
+				    <div id="level2">
+  				      <h2><b>Level 2</b></h2>
+				      <p>Spell Slots&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspExpended Spell Slots</p>
+					<div style="display: flex; justify-content: space-between;">
+    					    <input id="maxHitPoints" placeholder="${characterData.spellSlots[1].available}" disabled=true style="width: 40px;">
+					    <div style="width: 5px;"></div>
+    					    <input id="maxHitPoints" value="${characterData.spellSlots[1].used}" disabled=true style="width: 40px;">
+					</div>
+					<br>
+				    </div>
+				    <div id="level3">
+  				      <h2><b>Level 3</b></h2>
+					<p>Spell Slots&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspExpended Spell Slots</p>
+					<div style="display: flex; justify-content: space-between;">
+    					    <input id="maxHitPoints" placeholder="${characterData.spellSlots[2].available}" disabled=true style="width: 40px;">
+					    <div style="width: 5px;"></div>
+    					    <input id="maxHitPoints" value="${characterData.spellSlots[2].used}" disabled=true style="width: 40px;">
+					</div>
+					<br>
+				    </div>
+				    <div id="level4">
+   				     <h2><b>Level 4</b></h2>
+					<p>Spell Slots&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspExpended Spell Slots</p>
+					<div style="display: flex; justify-content: space-between;">
+    					    <input id="maxHitPoints" placeholder="${characterData.spellSlots[3].available}" disabled=true style="width: 40px;">
+					    <div style="width: 5px;"></div>
+    					    <input id="maxHitPoints" value="${characterData.spellSlots[3].used}" disabled=true style="width: 40px;">
+					</div>
+					<br>
+				    </div>
+				    <div id="level5">
+   				     <h2><b>Level 5</b></h2>
+					<p>Spell Slots&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspExpended Spell Slots</p>
+					<div style="display: flex; justify-content: space-between;">
+    					    <input id="maxHitPoints" placeholder="${characterData.spellSlots[4].available}" disabled=true style="width: 40px;">
+					    <div style="width: 5px;"></div>
+    					    <input id="maxHitPoints" value="${characterData.spellSlots[4].used}" disabled=true style="width: 40px;">
+					</div>
+					<br>
+				    </div>
+				    <div id="level6">
+  				      <h2><b>Level 6</b></h2>
+					<p>Spell Slots&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspExpended Spell Slots</p>
+					<div style="display: flex; justify-content: space-between;">
+    					    <input id="maxHitPoints" placeholder="${characterData.spellSlots[5].available}" disabled=true style="width: 40px;">
+					    <div style="width: 5px;"></div>
+    					    <input id="maxHitPoints" value="${characterData.spellSlots[5].used}" disabled=true style="width: 40px;">
+					</div>
+					<br>
+				    </div>
+				    <div id="level7">
+  				      <h2><b>Level 7</b></h2>
+					<p>Spell Slots&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspExpended Spell Slots</p>
+					<div style="display: flex; justify-content: space-between;">
+    					    <input id="maxHitPoints" placeholder="${characterData.spellSlots[6].available}" disabled=true style="width: 40px;">
+					    <div style="width: 5px;"></div>
+    					    <input id="maxHitPoints" value="${characterData.spellSlots[6].used}" disabled=true style="width: 40px;">
+					</div>
+					<br>
+				    </div>
+				    <div id="level8">
+  				      <h2><b>Level 8</b></h2>
+					<p>Spell Slots&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspExpended Spell Slots</p>
+					<div style="display: flex; justify-content: space-between;">
+    					    <input id="maxHitPoints" placeholder="${characterData.spellSlots[7].available}" disabled=true style="width: 40px;">
+					    <div style="width: 5px;"></div>
+    					    <input id="maxHitPoints" value="${characterData.spellSlots[7].used}" disabled=true style="width: 40px;">
+					</div>
+					<br>
+				    </div>
+				    <div id="level9">
+  				      <h2><b>Level 9</b></h2>
+					<p>Spell Slots&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspExpended Spell Slots</p>
+					<div style="display: flex; justify-content: space-between;">
+    					    <input id="maxHitPoints" placeholder="${characterData.spellSlots[8].available}" disabled=true style="width: 40px;">
+					    <div style="width: 5px;"></div>
+    					    <input id="maxHitPoints" value="${characterData.spellSlots[8].used}" disabled=true style="width: 40px;">
+					</div>
+					<br>
+				    </div>
 				</div>
+			    </ul>
 			</div>
 		</div>
 		`
+
+		let level = 0
+
+	        for (let l = -1; l<level; l++) {
+		    for (let i = 0; i<characterData.classSpells[0].spells.length; i++) {
+		        var allSpellDiv = document.querySelector('#allSpells');
+			var cantripsDiv = document.getElementById('level0');
+			var level1Div = document.getElementById('level1');
+			var level2Div = document.getElementById('level2');
+			var level3Div = document.getElementById('level3');
+			var level4Div = document.getElementById('level4');
+			var level5Div = document.getElementById('level5');
+			var level6Div = document.getElementById('level6');
+			var level7Div = document.getElementById('level7');
+			var level8Div = document.getElementById('level8');
+			var level9Div = document.getElementById('level9');
+			var time = characterData.classSpells[0].spells[i].activation.activationTime;
+			var type = characterData.classSpells[0].spells[i].activation.activationType;
+
+		        //name of spell button
+		        var nameButton = document.createElement('button');
+		        nameButton.style.fontSize = '13px';
+		        nameButton.style.fontWeight = 'bold';
+	
+			console.log(characterData.spellSlots[0].available);
+			if (characterData.classSpells[0].spells[i].usesSpellSlot == false) {
+		        	nameButton.textContent = characterData.classSpells[0].spells[i].definition.name + " (At Will)";
+			} else {
+			    nameButton.textContent = characterData.classSpells[0].spells[i].definition.name;
+			}
+		        nameButton.classList = 'buttonNameWrap';
+
+			timeLabel = document.createElement('label');
+			timeLabel.id = "spellTime";
+			timeLabel.style.fontSize = '13px';
+		        timeLabel.style.fontWeight = 'bold';
+			timeLabel.style.padding = '10px';
+
+			
+	
+			if (type == 1) {
+			    timeLabel.textContent = time+"A";
+			} else if (type == 3) {
+			    timeLabel.textContent = time+"BA";
+			} else if (type == 4) {
+			    timeLabel.textContent = time+"R";
+			} else if (type == 6) {
+			    timeLabel.textContent = time+"M";
+			} else if (type == 7) {
+			    timeLabel.textContent = time+"H";
+			}
+			
+
+		        //breakline
+		        const breakline = document.createElement('hr');
+		    
+			switch (characterData.classSpells[0].spells[i].definition.level) {
+			    case 0:
+			        cantripsDiv.appendChild(nameButton);
+				cantripsDiv.appendChild(timeLabel);
+				cantripsDiv.appendChild(breakline);
+				break;
+			    case 1:
+				level1Div.appendChild(nameButton);	
+				level1Div.appendChild(timeLabel);
+				level1Div.appendChild(breakline);
+				break;
+			    case 2:
+				level2Div.appendChild(nameButton);
+				level2Div.appendChild(timeLabel);
+				level2Div.appendChild(breakline);
+				break;
+			    case 3:
+				level3Div.appendChild(nameButton);
+				level3Div.appendChild(timeLabel);
+				level3Div.appendChild(breakline);
+				break;
+			    case 4:
+				level4Div.appendChild(nameButton);
+				level4Div.appendChild(timeLabel);
+				level4Div.appendChild(breakline);
+				break;
+			    case 5:
+				level5Div.appendChild(nameButton);
+				level5Div.appendChild(timeLabel);
+				level5Div.appendChild(breakline);
+				break;
+			    case 6:
+				level6Div.appendChild(nameButton);
+				level6Div.appendChild(timeLabel);
+				level6Div.appendChild(breakline);
+				break;
+ 			    case 7:
+				level7Div.appendChild(nameButton);
+				level7Div.appendChild(timeLabel);
+				level7Div.appendChild(breakline);
+				break;
+			    case 8:
+				level8Div.appendChild(nameButton);
+				level8Div.appendChild(timeLabel);
+				level8Div.appendChild(breakline);
+				break;
+			    case 9:
+				level9Div.appendChild(nameButton);
+				level9Div.appendChild(timeLabel);
+				level9Div.appendChild(breakline);
+				break;
+			    default:
+		       	        allSpellDiv.appendChild(nameButton);
+		        	allSpellDiv.appendChild(breakline);
+			}
+		    }
+		}
 
 		//event listeners for the character buttons
 		const actionButton = overlayBody.querySelector('#actions');
