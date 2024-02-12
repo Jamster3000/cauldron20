@@ -65,7 +65,8 @@ setTimeout(function () {
             });
         }
     });
-}, 750);
+}, 1000);
+
 function changePlayArea() {
     const playArea = document.querySelector('.playarea');
     playArea.style.bottom = '50px';
@@ -1258,115 +1259,80 @@ function showFeatures(adventureData, buttonPressed) {
 				</div>
 		`;
 
-		try {
-			for (let i = 0; i < characterData.actions.class.length; i++) {
-				var allActionsDiv = document.querySelector('#allActions');
 
-				//name of feature
-				var featureNameButton = document.createElement('button');
-				featureNameButton.id = "featureButton";
-				featureNameButton.textContent = characterData.actions.class[i].name;
+		var listFeatures = [];
 
-				//description of feature
-				var featureDescription = document.createElement('p');
-				featureDescription.textContent = characterData.actions.class[i].snippet;
+		const actionTypes = ['class', 'background', 'feat', 'item', 'race'];
 
-				//the breakline
-				var breakline = document.createElement('hr');
+		// Iterate over each action type
+		actionTypes.forEach(actionType => {
+   		    try {
+     		       // Get the array of actions based on the current action type
+     	  	       const actions = actionType === 'class' ? characterData.actions[actionType] : characterData.actions[actionType];
 
-				allActionsDiv.appendChild(featureNameButton);
-				allActionsDiv.appendChild(featureDescription);
-				allActionsDiv.appendChild(breakline);
-			}
-		} catch { }
+        	       // Loop through the actions array and add elements to the listFeatures array
+               	       actions.forEach(action => {
+                           var allActionsDiv = document.querySelector('#allActions');
 
-		try {
-			for (let i = 0; i < characterData.actions.background.length; i++) {
-				var allActionsDiv = document.querySelector('#allActions');
+         	           var featureNameButton = document.createElement('button');
+         	           featureNameButton.id = "featureButton";
+         	           featureNameButton.textContent = action.name;
 
-				//name of feature
-				var featureNameButton = document.createElement('button');
-				featureNameButton.id = "featureButton";
-				featureNameButton.textContent = characterData.actions.background[i].name;
+           	           var featureDescription = document.createElement('p');
+            	           featureDescription.textContent = descriptionToCharacterData(action.snippet, characterData, stats);
 
-				//description of feature
-				var featureDescription = document.createElement('p');
-				featureDescription.textContent = characterData.actions.background[i].snippet;
+           	           var breakline = document.createElement('hr');
 
-				//the breakline
-				var breakline = document.createElement('hr');
+            	           // Add all elements to the listFeatures array
+            	           listFeatures.push([featureNameButton, featureDescription, breakline]);
+       		       });
+    		    } catch (error) {
+        	       	console.log(`Error processing ${actionType} actions:`, error);
+    		    }
+	        });
 
-				allActionsDiv.appendChild(featureNameButton);
-				allActionsDiv.appendChild(featureDescription);
-				allActionsDiv.appendChild(breakline);
-			}
-		} catch { }
+		const optionTypes = ['class', 'background', 'feat', 'item', 'race'];
 
-		try {
-			for (let i = 0; i < characterData.actions.feat.length; i++) {
-				var allActionsDiv = document.querySelector('#allActions');
+		// Iterate over each option type
+		optionTypes.forEach(optionType => {
+    		    try {
+        	        // Get the array of options based on the current option type
+        	        const options = characterData.options[optionType];
 
-				//name of feature
-				var featureNameButton = document.createElement('button');
-				featureNameButton.id = "featureButton";
-				featureNameButton.textContent = characterData.actions.feat[i].name;
+        	        // Loop through the options array and add elements to the listFeatures array
+        	        options.forEach(option => {
+            		    var allActionsDiv = document.querySelector('#allActions');
 
-				//description of feature
-				var featureDescription = document.createElement('p');
-				featureDescription.textContent = characterData.actions.feat[i].snippet;
+            		    var featureNameButton = document.createElement('button');
+            		    featureNameButton.id = "featureButton";
+            		    featureNameButton.textContent = option.definition.name;
 
-				//the breakline
-				var breakline = document.createElement('hr');
+            		    var featureDescription = document.createElement('p');
+            		    featureDescription.textContent = descriptionToCharacterData(option.definition.snippet, characterData, stats);
 
-				allActionsDiv.appendChild(featureNameButton);
-				allActionsDiv.appendChild(featureDescription);
-				allActionsDiv.appendChild(breakline);
-			}
-		} catch { }
+            		    var breakline = document.createElement('hr');
 
-		try {
-			for (let i = 0; i < characterData.actions.item.length; i++) {
-				var allActionsDiv = document.querySelector('#allActions');
+            		    // Add all elements to the listFeatures array
+            		    listFeatures.push([featureNameButton, featureDescription, breakline]);
+        	        });
+    		    } catch {}
+		});
 
-				//name of feature
-				var featureNameButton = document.createElement('button');
-				featureNameButton.id = "featureButton";
-				featureNameButton.textContent = characterData.actions.item[i].name;
+		listFeatures.sort((a, b) => {
+    			// Check if either 'a' or 'b' is undefined
+    			if (!a || !a[0].innerHTML) return -1; // 'a' comes before 'b'
+    			if (!b || !b[0].innerHTML) return 1; // 'b' comes before 'a'
+    			return a[0].innerHTML.localeCompare(b[0].innerHTML);
+		    });
 
-				//description of feature
-				var featureDescription = document.createElement('p');
-				featureDescription.textContent = characterData.actions.item[i].snippet;
+		for (let i = 0; i<listFeatures.length; i++) {
+		    var allFeaturesDiv = document.querySelector('#allActions');
 
-				//the breakline
-				var breakline = document.createElement('hr');
+		    for (let j = 0; j<listFeatures[i].length; j++) {
+		        allFeaturesDiv.appendChild(listFeatures[i][j]);
+		    }
 
-				allActionsDiv.appendChild(featureNameButton);
-				allActionsDiv.appendChild(featureDescription);
-				allActionsDiv.appendChild(breakline);
-			}
-		} catch { }
-
-		try {
-			for (let i = 0; i < characterData.actions.race.length; i++) {
-				var allActionsDiv = document.querySelector('#allActions');
-
-				//name of feature
-				var featureNameButton = document.createElement('button');
-				featureNameButton.id = "featureButton";
-				featureNameButton.textContent = characterData.actions.race[i].name;
-
-				//description of feature
-				var featureDescription = document.createElement('p');
-				featureDescription.textContent = characterData.actions.race[i].snippet;
-
-				//the breakline
-				var breakline = document.createElement('hr');
-
-				allActionsDiv.appendChild(featureNameButton);
-				allActionsDiv.appendChild(featureDescription);
-				allActionsDiv.appendChild(breakline);
-			}
-		} catch { }
+		}
 
 		//event listeners for the character buttons
 		const actionButton = overlayBody.querySelector('#actions');
@@ -2067,3 +2033,42 @@ function removeHtmlTags(htmlString) {
 	var doc = new DOMParser().parseFromString(htmlString, 'text/html');
 	return doc.body.textContent || "";
 }
+
+function descriptionToCharacterData(description, characterData, stats) {
+    const abilityMap = {
+        "str": "totalStrength",
+        "dex": "totalDexterity",
+        "con": "totalConstitution",
+        "int": "totalIntelligence",
+        "wis": "totalWisdom",
+        "cha": "totalCharisma"
+    };
+
+    //replaces modifier:[ability score] with the correct number
+    for (let abilityAbbreviation in abilityMap) {
+        let rePattern = new RegExp(`modifier:${abilityAbbreviation}`, "g");
+        let abilityModifier = Math.floor((stats[abilityMap[abilityAbbreviation]] - 10) / 2);
+	let replacementValue = abilityModifier >= 0 ? '+' + abilityModifier : '-' + abilityModifier;
+
+        description = description.replace(rePattern, replacementValue).replace('{', '').replace('}', '');
+    }
+
+    //replaces +classlevel with the classes level
+    let rePattern = /\+classlevel\)/;
+    let replacementValue = calculateLevel(characterData.currentXp); // Replace this with the desired number
+    description = description.replace(rePattern, "+" + replacementValue);
+
+    //replaces min:1#unsighned
+    let rePattern2 = /@(min|max):\d+#unsigned/;
+    description = description.replace(rePattern2, "");
+
+    let rePatternSum = /(\d+)\s*\+\s*(\d+)/g;
+    description = description.replace(rePatternSum, (match, x, y) => parseInt(x) + parseInt(y));
+
+//need to get rid of the ( in (+23
+
+    return description;
+}
+
+
+	
