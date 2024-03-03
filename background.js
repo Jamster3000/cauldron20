@@ -9,5 +9,4 @@ setTimeout(function () {
             }
         });
     });
-
 },0);
