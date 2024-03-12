@@ -3,7 +3,7 @@
 Cauldron20, a chrome extension that provides functionalily between character sheets on [dndbeyond](https://www.dndbeyond.com/) and [Cauldron](https://www.cauldron-vtt.net). Although not yet completed, it reads data from a character sheet on dndbeyond and can use different data from it into different areas of cauldron VTT.
 
 # How it works
-This works by clicking on the extension and entering your character sheet's number (e.g. 112012248). This will then use dndbeyond's api for character sheets. It will remember your character so this will be a one time input. If you want to use a different character just input a new number and your old character will be replaced with the new one.
+This works by clicking on the extension and entering your character sheet's number (e.g. 112012248). This will then use dndbeyond's api for character sheets. It will remember your character so this will be a one time input. If you want to use a different character just input a new number and your old character will be replaced with the new one (there is currenlty no plans for multi-character functionality)
 
 # Installation 🚀
 To install and try this work-in-progress extension
