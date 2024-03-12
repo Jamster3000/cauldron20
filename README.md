@@ -14,7 +14,7 @@ To install and try this work-in-progress extension
 5) Top left, choose "load unpacked" and choose the folder that contains the code.
 6) Clicking on the extention and input the number that identifies your character (make sure that your character sheet on dndbeyond is in public so it can be accessed by the extension)
 
-The extension should work as intended. 
+See [wiki](https://github.com/Jamster3000/cauldron20/wiki) for more in depth instructions on how to setup the extension and use it.
 
 > [!NOTE]
 > This is a work in progress and there is likley to be many issues and bugs to happen.
