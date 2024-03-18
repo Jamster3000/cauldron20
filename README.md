@@ -43,6 +43,9 @@ Inventory
 spells
 ![image](https://github.com/Jamster3000/cauldron20/assets/148760154/4939eda3-5033-480d-9314-ac9203ba9954)
 
+Spell Details
+![image](https://github.com/Jamster3000/cauldron20/assets/148760154/7733d18c-1870-4cf7-b886-737eb87ff009)
+
 
 ![GitHub issues](https://img.shields.io/github/issues/jamster3000/Joan-smart-assistant)
 ![Last Commit](https://img.shields.io/github/last-commit/jamster3000/Joan-smart-assistant)
