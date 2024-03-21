@@ -2,34 +2,6 @@ let characterSheetOverlayOpen = false;
 saveSpellSlots(null);
 
 setTimeout(function () {
-    //adds additional commands to the chat
-	const chatInput = document.querySelector('.form-control'); // Adjust selector as needed
-
-	chatInput.addEventListener('keydown', (event) => {
-		if (event.key === 'Enter') {
-			//value of the chat input
-			var message = chatInput.value;
-
-			const sidebar = document.querySelector('.sidebar');
-			const pElement = sidebar.getElementsByTagName('p');
-
-			for (const p of pElement) {
-				if (p.textContent === "Unknown command.") {
-					p.parentNode.removeChild(p);
-				}
-			}
-		
-			if (message === "/test") {
-				console.log('You entered /test this is the developer/s chat command test.');
-			}
-			else {
-			    return;
-			}
-
-			chatInput.value = "You entered /test this is the developer's chat command test."; //removed the "Unknown command." error not coming up in chat, or even change it to my own message saving the code from adding additional html
-		}
-	});
-
     getUserCharacter((error, adventureData) => {
         if (error) {
 	    console.error("Error:", error);
@@ -135,7 +107,7 @@ function handleWebSocketMessage(event) {
     chrome.runtime.sendMessage({dataFromWebSocket: messageData});
 }
 
-function send_message(message, name, write_to_sidebar = true) {
+function message_send(message, name, write_to_sidebar = true) {
 	var data = {
 		action: 'say',
 		name: name,
@@ -300,9 +272,9 @@ function showCharacterSheet(adventureData, buttonPressed) {
 			console.log("Your strength:", stats.totalStrength);
 
 			//random number
-			let randomNumber = Math.floor(Math.random() * 20)+1 //this will do any number from 0 - 20
-			var message = `You made a strength check - Modifier: ${Math.floor((stats.totalStrength-10)/2)} Rolled: ${randomNumber} Total: ${randomNumber + Math.floor((stats.totalStrength-10)/2)}`;
-			send_message(message, characterData.name);
+			let randomNumber = Math.floor(Math.random() * 20)+1 //this will do any number from 1 - 20
+			var message = `strength check \nModifier: ${Math.floor((stats.totalStrength-10)/2)}\nRolled: ${randomNumber}\nTotal: [${randomNumber + Math.floor((stats.totalStrength-10)/2)}]`;
+			sendDataToSidebar(message, characterData.name);	
 		 });
 
 		const dexButton = overlayBody.querySelector('#dexButton');
@@ -311,28 +283,30 @@ function showCharacterSheet(adventureData, buttonPressed) {
 
 			//random number
 			let randomNumber = Math.floor(Math.random() * 20)+1 //this will do any number from 0 - 20
-			var message = `You made a Dexteriy check - Modifier: ${Math.floor((stats.totalDexterity-10)/2)} Rolled: ${randomNumber} Total: ${randomNumber + Math.floor((stats.totalDexterity-10)/2)}`;
-			send_message(message, characterData.name);
+			var message = `You made a Dexteriy check - Modifier: ${Math.floor((stats.totalDexterity-10)/2)} Rolled: ${randomNumber} Total: [${randomNumber + Math.floor((stats.totalDexterity-10)/2)}]`;
+			sendDataToSidebar(message, characterData.name);	
+
 		});
 	
 		const conButton = overlayBody.querySelector('#conButton');
-			conButton.addEventListener('click', function() {
-    			console.log("Your constitution:", stats.totalConstitution);
+		conButton.addEventListener('click', function() {
+    		console.log("Your constitution:", stats.totalConstitution);
 
 			//random number
 			let randomNumber = Math.floor(Math.random() * 20)+1 //this will do any number from 0 - 20
-			var message = `You made a Constitution check - Modifier: ${Math.floor((stats.totalConstitution-10)/2)} Rolled: ${randomNumber} Total: ${randomNumber + Math.floor((stats.totalConstitution-10)/2)}`;
-			send_message(message, characterData.name);
+			var message = `You made a Constitution check - Modifier: ${Math.floor((stats.totalConstitution-10)/2)} Rolled: ${randomNumber} Total: [${randomNumber + Math.floor((stats.totalConstitution-10)/2)}]`;
+			sendDataToSidebar(message, characterData.name);	
+
 		});
 
 		const intButton = overlayBody.querySelector('#intButton');
 		intButton.addEventListener('click', function() {
-    			console.log("Your intelligence:", stats.totalintellegence);
+    		console.log("Your intelligence:", stats.totalintellegence);
 
 			//random number
 			let randomNumber = Math.floor(Math.random() * 20)+1 //this will do any number from 0 - 20
-			var message = `You made a Intellegence check - Modifier: ${Math.floor((stats.totalIntellegence-10)/2)} Rolled: ${randomNumber} Total: ${randomNumber + Math.floor((stats.totalIntellegence-10)/2)}`;
-			send_message(message, characterData.name);
+			var message = `You made a Intellegence check - Modifier: ${Math.floor((stats.totalIntellegence-10)/2)} Rolled: ${randomNumber} Total: [${randomNumber + Math.floor((stats.totalIntellegence-10)/2)}]	`;
+			sendDataToSidebar(message, characterData.name);	
 		});
 
 		const wisButton = overlayBody.querySelector('#wisButton');
@@ -341,8 +315,8 @@ function showCharacterSheet(adventureData, buttonPressed) {
 
 			//random number
 			let randomNumber = Math.floor(Math.random() * 20)+1 //this will do any number from 0 - 20
-			var message = `You made a Wisdom check - Modifier: ${Math.floor((stats.totalWisdom-10)/2)} Rolled: ${randomNumber} Total: ${randomNumber + Math.floor((stats.totalWisdom-10)/2)}`;
-			send_message(message, characterData.name);
+			var message = `You made a Wisdom check - Modifier: ${Math.floor((stats.totalWisdom-10)/2)} Rolled: ${randomNumber} Total: [${randomNumber + Math.floor((stats.totalWisdom-10)/2)}]`;
+			sendDataToSidebar(message, characterData.name);	
 		});
 
 		const chaButton = overlayBody.querySelector('#chaButton');
@@ -351,8 +325,8 @@ function showCharacterSheet(adventureData, buttonPressed) {
 
 			//random number
 			let randomNumber = Math.floor(Math.random() * 20)+1 //this will do any number from 0 - 20
-			var message = `You made a Charisma check - Modifier: ${Math.floor((stats.totalCharisma-10)/2)} Rolled: ${randomNumber} Total: ${randomNumber + Math.floor((stats.totalCharisma-10)/2)}`;
-			send_message(message, characterData.name);
+			var message = `You made a Charisma check - Modifier: ${Math.floor((stats.totalCharisma-10)/2)} Rolled: ${randomNumber} Total: [${randomNumber + Math.floor((stats.totalCharisma-10)/2)}]`;
+			sendDataToSidebar(message, characterData.name);	
 		});
 
 		//event listeners for the character buttons
@@ -403,38 +377,38 @@ function showCharacterSheet(adventureData, buttonPressed) {
 
 		//loop for showing all elements for skills
 		const getSkillListElement = document.getElementById('skillList');
-		for (let i = 0; i<listSkills.length; i++) {
+		for (let i = 0; i < listSkills.length; i++) {
 			//radio button
 			const listElement = document.createElement('input');
 			listElement.type = "radio";
 			listElement.disabled = true;
-	    
+
 			for (let j = 0; j < characterData.modifiers.background.length; j++) {
-					if (characterData.modifiers.background[j].subType.includes(listSkills[i].name.toLowerCase())) {
-						listElement.checked = true;
-						break;
-					}
+				if (characterData.modifiers.background[j].subType.includes(listSkills[i].name.toLowerCase())) {
+					listElement.checked = true;
+					break;
 				}
+			}
 
 			for (let j = 0; j < characterData.modifiers.class.length; j++) {
-			if (characterData.modifiers.class[j].subType.includes(listSkills[i].name.toLowerCase())) {
-				listElement.checked = true;
-				break;
-			}
+				if (characterData.modifiers.class[j].subType.includes(listSkills[i].name.toLowerCase())) {
+					listElement.checked = true;
+					break;
+				}
 			}
 
 			for (let j = 0; j < characterData.modifiers.race.length; j++) {
-			if (characterData.modifiers.race[j].subType.includes(listSkills[i].name.toLowerCase())) {
-				listElement.checked = true;
-				break;
-			}
+				if (characterData.modifiers.race[j].subType.includes(listSkills[i].name.toLowerCase())) {
+					listElement.checked = true;
+					break;
+				}
 			}
 
 			//breakline
 			const breakLine = document.createElement('br');
 
 			//skill label
-				const skillLabel = document.createElement('label');
+			const skillLabel = document.createElement('label');
 			skillLabel.style.fontSize = "11px";
 			skillLabel.textContent = listSkills[i].name;
 
@@ -444,48 +418,49 @@ function showCharacterSheet(adventureData, buttonPressed) {
 			skillModifier.style.marginRight = "5px";
 
 			if (listElement.checked === true) {
-			let total = 0;
-			const characterProf = calculateProf(calculateLevel(characterData.currentXp));
+				let total = 0;
+				const characterProf = calculateProf(calculateLevel(characterData.currentXp));
 
-			if (listSkills[i].ability === "Str") {
-				total = Math.floor((stats.totalStrength-10)/2) + characterProf;
-			} else if (listSkills[i].ability === "Dex") {
-				total = Math.floor((stats.totalDexterity-10)/2) + characterProf;
-			} else if (listSkills[i].ability === "Int") {
-				total = Math.floor((stats.totalConstitution-10)/2) + characterProf;
-			} else if (listSkills[i].ability === "Wis") {
-				total = Math.floor((stats.totalWisdom-10)/2) + characterProf;
-			} else if (listSkills[i].ability === "Cha") {
-				total = Math.floor((stats.totalCharisma-10)/2) + characterProf;
-			}
+				if (listSkills[i].ability === "Str") {
+					total = Math.floor((stats.totalStrength - 10) / 2) + characterProf;
+				} else if (listSkills[i].ability === "Dex") {
+					total = Math.floor((stats.totalDexterity - 10) / 2) + characterProf;
+				} else if (listSkills[i].ability === "Int") {
+					total = Math.floor((stats.totalIntellegence - 10) / 2) + characterProf;
+				} else if (listSkills[i].ability === "Wis") {
+					total = Math.floor((stats.totalWisdom - 10) / 2) + characterProf;
+				} else if (listSkills[i].ability === "Cha") {
+					total = Math.floor((stats.totalCharisma - 10) / 2) + characterProf;
+				}
+				skillModifier.textContent = total >= 0 ? `+${total}` : total;
+				skillModifier.addEventListener('click', function () {
+					let randomNumber = Math.floor(Math.random() * 20) + 1
+					var message = `${listSkills[i].name} check\nModifier: ${total}\nRolled: ${randomNumber}\nTotal: [${randomNumber + total}]`;
+					sendDataToSidebar(message, characterData.name);
+				});
+			} else {
+				let total = 0;
+
+				if (listSkills[i].ability === "Str") {
+					total = Math.floor((stats.totalStrength - 10) / 2);
+				} else if (listSkills[i].ability === "Dex") {
+					total = Math.floor((stats.totalDexterity - 10) / 2);
+				} else if (listSkills[i].ability === "Int") {
+					total = Math.floor((stats.totalIntellegence - 10) / 2);
+				} else if (listSkills[i].ability === "Wis") {
+					total = Math.floor((stats.totalWisdom - 10) / 2);
+				} else if (listSkills[i].ability === "Cha") {
+					total = Math.floor((stats.totalCharisma - 10) / 2);
+				}
 				skillModifier.textContent = total >= 0 ? `+${total}` : total;
 
-			skillModifier.addEventListener('click', function () {
-        			handleSkillButtonClick(listSkills[i].name, total);
-    			});
-			} else {	
-			let total = 0;
-
-			if (listSkills[i].ability === "Str") {
-				total = Math.floor((stats.totalStrength-10)/2);
-			} else if (listSkills[i].ability === "Dex") {
-				total = Math.floor((stats.totalDexterity-10)/2);
-			} else if (listSkills[i].ability === "Con") {
-				total = Math.floor((stats.totalConstitution-10)/2);
-			} else if (listSkills[i].ability === "Int") {
-				total = Math.floor((stats.totalIntellegence-10)/2);
-			} else if (listSkills[i].ability === "Wis") {
-				total = Math.floor((stats.totalWisdom-10)/2);
-			} else if (listSkills[i].ability === "Cha") {
-				total = Math.floor((stats.totalCharisma-10)/2);
+				skillModifier.addEventListener('click', function () {
+					let randomNumber = Math.floor(Math.random() * 20) + 1
+					var message = `${listSkills[i].name} check\nModifier: ${total}\nRolled: ${randomNumber}\nTotal: [${randomNumber + total}]`;
+					sendDataToSidebar(message, characterData.name);
+				});
 			}
-			skillModifier.textContent = total >= 0 ? `+${total}` : total;
 
-			skillModifier.addEventListener('click', function () {
-       				handleSkillButtonClick(listSkills[i].name, total);
-    			});
-			}
-	    
 			//adding all elements 
 			getSkillListElement.appendChild(listElement);
 			getSkillListElement.appendChild(skillModifier);
@@ -539,8 +514,11 @@ function showCharacterSheet(adventureData, buttonPressed) {
 			savingThrowButton.textContent = total >= 0 ? `+${total}` : total;
 
 			savingThrowButton.addEventListener('click', function () {
-        			handleSkillButtonClick(savingThrowList[i], total);
-    			});
+				let randomNumber = Math.floor(Math.random() * 20) + 1
+				var message = `${listSkills[i].name} check\nModifier: ${total}\nRolled: ${randomNumber}\nTotal: [${randomNumber + total}]`;
+				sendDataToSidebar(message, characterData.name);
+			});
+				
 			} else {
 			 let total = 0;
 
@@ -561,8 +539,10 @@ function showCharacterSheet(adventureData, buttonPressed) {
 			savingThrowButton.textContent = total >= 0 ? `+${total}` : total;
 
 			savingThrowButton.addEventListener('click', function () {
-        			handleSkillButtonClick(savingThrowList[i], total);
-    			});
+				let randomNumber = Math.floor(Math.random() * 20) + 1
+				var message = `${listSkills[i].name} check\nModifier: ${total}\nRolled: ${randomNumber}\nTotal: [${randomNumber + total}]`;
+				sendDataToSidebar(message, characterData.name);
+			});
 			}
 
 			//breakline
@@ -762,8 +742,8 @@ function showActions(adventureData, buttonPressed, characterData) {
 				SecondSplitLabel.textContent = "｜";
 
 				//description
-				var description = document.createElement('label');
-				description.textContent = characterData.inventory[i].definition.description.replace(/<[^>]*>/g, '');
+				var weaponDescription = document.createElement('label');
+				weaponDescription.textContent = characterData.inventory[i].definition.description.replace(/<[^>]*>/g, '');
 
 				const breakLine = document.createElement('hr');
 
@@ -772,7 +752,7 @@ function showActions(adventureData, buttonPressed, characterData) {
 				allActionsDiv.appendChild(reachLabel);
 				allActionsDiv.appendChild(SecondSplitLabel);
 				allActionsDiv.appendChild(weaponAttackButton);
-				allActionsDiv.appendChild(description);
+				allActionsDiv.appendChild(weaponDescription);
 				allActionsDiv.appendChild(breakLine);
 
 				(function () {
@@ -780,9 +760,8 @@ function showActions(adventureData, buttonPressed, characterData) {
 					const currentWeaponButton = weaponButton;
 					const currentAttackRoll = weaponAttackButton;
 					currentWeaponButton.addEventListener('click', function () {
-						// Handle the click event for the current weapon button
-						console.log("Weapon button clicked:", currentWeaponButton.textContent);
-						// Add your custom logic here
+						message = `${currentWeaponButton.textContent}\nReach: ${reachLabel.textContent}\nTo Hit: ${weaponAttackButton.textContent}\n${weaponDescription.textContent}`;
+						sendDataToSidebar(message, characterData.name);
 					});
 
 					currentAttackRoll.addEventListener('click', function () {
@@ -1261,8 +1240,8 @@ function showFeatures(adventureData, buttonPressed, characterData) {
 
            	        var breakline = document.createElement('hr');
 
-            	        // Add all elements to the listFeatures array
-            	        listFeatures.push([featureNameButton, featureDescription, breakline]);
+            	    // Add all elements to the listFeatures array
+            	    listFeatures.push([featureNameButton, featureDescription, breakline]);
        		    });
     		} catch (error) {
         	    console.log(`Error processing ${actionType} actions:`, error);
@@ -1352,6 +1331,7 @@ function showFeatures(adventureData, buttonPressed, characterData) {
 
 	content.appendChild(overlayBody);
 }
+
 function showInventory(adventureData, buttonPressed, characterData) {
 	if (characterSheetOverlayOpen && buttonPressed == "null") {
 		console.log("character sheeta already open");
@@ -2085,7 +2065,7 @@ function spellInfo(buttonPressed, adventureData, spellInformation, spellLevel, c
 		console.log("cast spell button pressed");
 		const newline = "\n";
 		var message = spellInformation['name'] + newline + spellInformation['school level'] + newline + spellInformation['casting time'] + newline + spellInformation['range'] + newline + spellInformation['components'] + newline + spellInformation['duration'] + newline + newline + spellInformation['description'].replace(/<br><br>/g, '\n\n');
-		send_message(message, characterData.name);
+		message_send(message, characterData.name);
 
 		getSpellSlots(function (data) {
 			if (data) {
@@ -2144,7 +2124,6 @@ function spellInfo(buttonPressed, adventureData, spellInformation, spellLevel, c
 
 	content.appendChild(overlayBody);
 }
-
 
 function compareSlots2Used(spellLevelData) {
 	const spellSlotElements = document.querySelectorAll('.spellSlots');
@@ -2361,10 +2340,17 @@ function descriptionToCharacterData(description, characterData, stats) {
     return description;
 }
 
-//figure out why the spell/spell detail is crashing so much
-//spellInfo function seems to be the problem here as it disappears when a spell button name is clicked
+function sendDataToSidebar(information, characterName) {
+	let script = document.createElement('script');
 
+	script.textContent = `
+			  // Call the page's function with the provided arguments
+			  send_message(${JSON.stringify(information)}, '${characterName}');
+			`;
 
+	(document.head || document.documentElement).appendChild(script);
+}
 
 //after the above then add the compareSlots2Used function to switch case
 //in spell description give option to cast at higher level where possible, otherwise just offer "cast spell" button
+// remove all the previous copied functions as they are no longer needed
