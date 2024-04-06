@@ -1,34 +1,7 @@
 let characterSheetOverlayOpen = false;
+saveSpellSlots(null);
 
 setTimeout(function () {
-    //adds additional commands to the chat
-	const chatInput = document.querySelector('.form-control'); // Adjust selector as needed
-
-	chatInput.addEventListener('keydown', (event) => {
-		if (event.key === 'Enter') {
-			//value of the chat input
-			var message = chatInput.value;
-
-			const sidebar = document.querySelector('.sidebar');
-			const pElement = sidebar.getElementsByTagName('p');
-
-			for (const p of pElement) {
-				if (p.textContent === "Unknown command.") {
-					p.parentNode.removeChild(p);
-				}
-			}
-		
-			if (message === "/test") {
-				console.log('You entered /test this is the developer/s chat command test.');
-			}
-			else {
-			    return;
-			}
-
-			chatInput.value = "You entered /test this is the developer's chat command test."; //removed the "Unknown command." error not coming up in chat, or even change it to my own message saving the code from adding additional html
-		}
-	});
-
     getUserCharacter((error, adventureData) => {
         if (error) {
 	    console.error("Error:", error);
@@ -65,7 +38,7 @@ setTimeout(function () {
             });
         }
     });
-}, 1000);
+}, 0);
 
 function changePlayArea() {
     const playArea = document.querySelector('.playarea');
@@ -73,7 +46,6 @@ function changePlayArea() {
 }
 
 function write_sidebar(message) {
-    console.log("9");
     var sidebar = document.querySelector('.sidebar');
     message = message.replace(/\n/g, '<br />');
     sidebar.innerHTML += '<p>' + message + '</p>';
@@ -109,15 +81,15 @@ function websocket_send(data) {
         var websiteWebSocket = window.websocket;
         
         // Log the WebSocket object
-        console.log("WebSocket object from website:", websiteWebSocket);
+        //console.log("WebSocket object from website:", websiteWebSocket);
 
         // Once you have access to the WebSocket object, perform further actions
         if (websiteWebSocket == null || websiteWebSocket.readyState !== WebSocket.OPEN) {
-            console.log("Not open");
+            //console.log("Not open");
         }
 
         var data = ${JSON.stringify(data)};
-	console.log(data);
+	//console.log(data);
         websiteWebSocket.send(data);
     `;
     (document.head || document.documentElement).appendChild(script);
@@ -125,24 +97,23 @@ function websocket_send(data) {
 }
 
 function handleWebSocketMessage(event) {
-    console.log('running');
     // Extract the data from the WebSocket message
     var messageData = event.data;
 
     // Process the received data as needed
-    console.log("Received data from WebSocket:", messageData);
+    //console.log("Received data from WebSocket:", messageData);
 
     // Example: Forward the received data to the background script
     chrome.runtime.sendMessage({dataFromWebSocket: messageData});
 }
 
-function send_message(message, name, write_to_sidebar = true) {
+function message_send(message, name, write_to_sidebar = true) {
 	var data = {
 		action: 'say',
 		name: name,
 		mesg: message
 	};
-	console.log(data);
+	//console.log(data);
 	websocket_send(data);
 
 	if (write_to_sidebar) {
@@ -151,14 +122,9 @@ function send_message(message, name, write_to_sidebar = true) {
 }
 
 function showCharacterSheet(adventureData, buttonPressed) {
-	try {
-		const removeOverlay = document.getElementById('customOverlay');
-		removeOverlay.remove();
-	} catch { }
-
     if (characterSheetOverlayOpen && buttonPressed == "null") {
         console.log('character sheet already open');
-	return;
+		return;
 	}
 
 	try {
@@ -170,11 +136,15 @@ function showCharacterSheet(adventureData, buttonPressed) {
     const listSkills = [{ name: "Acrobatics", ability: "Dex" },{ name: "Animal Handling", ability: "Wis" },{ name: "Arcana", ability: "Int" },{ name: "Athletics", ability: "Str" },{ name: "Deception", ability: "Cha" },{ name: "History", ability: "Int" },{ name: "Insight", ability: "Wis" },{ name: "Intimidation", ability: "Cha" },{ name: "Investigation", ability: "Int" },{ name: "Medicine", ability: "Wis" },{ name: "Nature", ability: "Int" },{ name: "Perception", ability: "Wis" },{ name: "Performance", ability: "Cha" },{ name: "Persuasion", ability: "Cha" },{ name: "Religion", ability: "Int" },{ name: "Sleight of Hand", ability: "Dex" },{ name: "Stealth", ability: "Dex" },{ name: "Survival", ability: "Wis" }];
     const savingThrowList = ["Strength", "Dexterity", "Constitution", "Intellegence", "Wisdom", "Charisma"];    
 
-    chrome.storage.local.get('characterData', function(result) {
+	chrome.storage.local.get('characterData', function (result) {
         const characterData = result.characterData;
 		const stats = getCharacterStats(characterData);
 		console.log(characterData);
-        console.log(adventureData);
+		console.log(adventureData);
+
+		chrome.storage.local.get(null, function (result) {
+			console.log('All stored data:', result);
+		});
 
         const overlayContainer = document.createElement('div');
         overlayContainer.id = 'customOverlay';
@@ -225,6 +195,7 @@ function showCharacterSheet(adventureData, buttonPressed) {
 		const conStat = Math.floor((stats.totalConstitution - 10) / 2)//ability score -10/2 to get modifier (round up)
 		const level = calculateLevel(characterData.currentXp)
 		const totalHitPoints = characterData.baseHitPoints + (Number(conStat) * Number(level));//constitustion modifier X level + base hit points = total hp
+		console.log("total: " + totalHitPoints);
 
 		// Create overlay body
 		const overlayBody = document.createElement('div');
@@ -301,9 +272,9 @@ function showCharacterSheet(adventureData, buttonPressed) {
 			console.log("Your strength:", stats.totalStrength);
 
 			//random number
-			let randomNumber = Math.floor(Math.random() * 20)+1 //this will do any number from 0 - 20
-			var message = `You made a strength check - Modifier: ${Math.floor((stats.totalStrength-10)/2)} Rolled: ${randomNumber} Total: ${randomNumber + Math.floor((stats.totalStrength-10)/2)}`;
-			send_message(message, characterData.name);
+			let randomNumber = Math.floor(Math.random() * 20)+1 //this will do any number from 1 - 20
+			var message = `strength check \nModifier: ${Math.floor((stats.totalStrength-10)/2)}\nRolled: ${randomNumber}\nTotal: [${randomNumber + Math.floor((stats.totalStrength-10)/2)}]`;
+			sendDataToSidebar(message, characterData.name);	
 		 });
 
 		const dexButton = overlayBody.querySelector('#dexButton');
@@ -312,28 +283,30 @@ function showCharacterSheet(adventureData, buttonPressed) {
 
 			//random number
 			let randomNumber = Math.floor(Math.random() * 20)+1 //this will do any number from 0 - 20
-			var message = `You made a Dexteriy check - Modifier: ${Math.floor((stats.totalDexterity-10)/2)} Rolled: ${randomNumber} Total: ${randomNumber + Math.floor((stats.totalDexterity-10)/2)}`;
-			send_message(message, characterData.name);
+			var message = `You made a Dexteriy check - Modifier: ${Math.floor((stats.totalDexterity-10)/2)} Rolled: ${randomNumber} Total: [${randomNumber + Math.floor((stats.totalDexterity-10)/2)}]`;
+			sendDataToSidebar(message, characterData.name);	
+
 		});
 	
 		const conButton = overlayBody.querySelector('#conButton');
-			conButton.addEventListener('click', function() {
-    			console.log("Your constitution:", stats.totalConstitution);
+		conButton.addEventListener('click', function() {
+    		console.log("Your constitution:", stats.totalConstitution);
 
 			//random number
 			let randomNumber = Math.floor(Math.random() * 20)+1 //this will do any number from 0 - 20
-			var message = `You made a Constitution check - Modifier: ${Math.floor((stats.totalConstitution-10)/2)} Rolled: ${randomNumber} Total: ${randomNumber + Math.floor((stats.totalConstitution-10)/2)}`;
-			send_message(message, characterData.name);
+			var message = `You made a Constitution check - Modifier: ${Math.floor((stats.totalConstitution-10)/2)} Rolled: ${randomNumber} Total: [${randomNumber + Math.floor((stats.totalConstitution-10)/2)}]`;
+			sendDataToSidebar(message, characterData.name);	
+
 		});
 
 		const intButton = overlayBody.querySelector('#intButton');
 		intButton.addEventListener('click', function() {
-    			console.log("Your intelligence:", stats.totalintellegence);
+    		console.log("Your intelligence:", stats.totalintellegence);
 
 			//random number
 			let randomNumber = Math.floor(Math.random() * 20)+1 //this will do any number from 0 - 20
-			var message = `You made a Intellegence check - Modifier: ${Math.floor((stats.totalIntellegence-10)/2)} Rolled: ${randomNumber} Total: ${randomNumber + Math.floor((stats.totalIntellegence-10)/2)}`;
-			send_message(message, characterData.name);
+			var message = `You made a Intellegence check - Modifier: ${Math.floor((stats.totalIntellegence-10)/2)} Rolled: ${randomNumber} Total: [${randomNumber + Math.floor((stats.totalIntellegence-10)/2)}]	`;
+			sendDataToSidebar(message, characterData.name);	
 		});
 
 		const wisButton = overlayBody.querySelector('#wisButton');
@@ -342,8 +315,8 @@ function showCharacterSheet(adventureData, buttonPressed) {
 
 			//random number
 			let randomNumber = Math.floor(Math.random() * 20)+1 //this will do any number from 0 - 20
-			var message = `You made a Wisdom check - Modifier: ${Math.floor((stats.totalWisdom-10)/2)} Rolled: ${randomNumber} Total: ${randomNumber + Math.floor((stats.totalWisdom-10)/2)}`;
-			send_message(message, characterData.name);
+			var message = `You made a Wisdom check - Modifier: ${Math.floor((stats.totalWisdom-10)/2)} Rolled: ${randomNumber} Total: [${randomNumber + Math.floor((stats.totalWisdom-10)/2)}]`;
+			sendDataToSidebar(message, characterData.name);	
 		});
 
 		const chaButton = overlayBody.querySelector('#chaButton');
@@ -352,21 +325,21 @@ function showCharacterSheet(adventureData, buttonPressed) {
 
 			//random number
 			let randomNumber = Math.floor(Math.random() * 20)+1 //this will do any number from 0 - 20
-			var message = `You made a Charisma check - Modifier: ${Math.floor((stats.totalCharisma-10)/2)} Rolled: ${randomNumber} Total: ${randomNumber + Math.floor((stats.totalCharisma-10)/2)}`;
-			send_message(message, characterData.name);
+			var message = `You made a Charisma check - Modifier: ${Math.floor((stats.totalCharisma-10)/2)} Rolled: ${randomNumber} Total: [${randomNumber + Math.floor((stats.totalCharisma-10)/2)}]`;
+			sendDataToSidebar(message, characterData.name);	
 		});
 
 		//event listeners for the character buttons
 		const actionButton = overlayBody.querySelector('#actions');
 		actionButton.addEventListener('click', function() {
 			console.log("action button pressed");
-			showActions(adventureData, buttonPressed);
+			showActions(adventureData, buttonPressed, characterData);
 		});
 	
 		const bioButton = overlayBody.querySelector('#bio');
 		bioButton.addEventListener('click', function() {
 			console.log("bio button pressed");
-			showBio(adventureData, buttonPressed);
+			showBio(adventureData, buttonPressed, characterData);
 		});
 
 		const characterButton = overlayBody.querySelector('#character');
@@ -377,19 +350,19 @@ function showCharacterSheet(adventureData, buttonPressed) {
 		const featuresButton = overlayBody.querySelector('#features');
 		featuresButton.addEventListener('click', function() {
 			console.log('features button pressed');
-			showFeatures(adventureData);
+			showFeatures(adventureData, buttonPressed, characterData);
 		});
 
 		const inventoryButton = overlayBody.querySelector('#inventory');
 		inventoryButton.addEventListener('click', function() {
 			console.log('inventory button pressed');
-			showInventory(adventureData);
+			showInventory(adventureData, buttonPressed, characterData);
 		});
 
 		const spellsButton = overlayBody.querySelector('#spells');
 		spellsButton.addEventListener('click', function() {
 			console.log('spells button pressed');
-			showSpells(adventureData);
+			showSpells(adventureData, buttonPressed, characterData, stats);
 		});
 
 			// Append elements to build the overlay
@@ -404,38 +377,38 @@ function showCharacterSheet(adventureData, buttonPressed) {
 
 		//loop for showing all elements for skills
 		const getSkillListElement = document.getElementById('skillList');
-		for (let i = 0; i<listSkills.length; i++) {
+		for (let i = 0; i < listSkills.length; i++) {
 			//radio button
 			const listElement = document.createElement('input');
 			listElement.type = "radio";
 			listElement.disabled = true;
-	    
+
 			for (let j = 0; j < characterData.modifiers.background.length; j++) {
-					if (characterData.modifiers.background[j].subType.includes(listSkills[i].name.toLowerCase())) {
-						listElement.checked = true;
-						break;
-					}
+				if (characterData.modifiers.background[j].subType.includes(listSkills[i].name.toLowerCase())) {
+					listElement.checked = true;
+					break;
 				}
+			}
 
 			for (let j = 0; j < characterData.modifiers.class.length; j++) {
-			if (characterData.modifiers.class[j].subType.includes(listSkills[i].name.toLowerCase())) {
-				listElement.checked = true;
-				break;
-			}
+				if (characterData.modifiers.class[j].subType.includes(listSkills[i].name.toLowerCase())) {
+					listElement.checked = true;
+					break;
+				}
 			}
 
 			for (let j = 0; j < characterData.modifiers.race.length; j++) {
-			if (characterData.modifiers.race[j].subType.includes(listSkills[i].name.toLowerCase())) {
-				listElement.checked = true;
-				break;
-			}
+				if (characterData.modifiers.race[j].subType.includes(listSkills[i].name.toLowerCase())) {
+					listElement.checked = true;
+					break;
+				}
 			}
 
 			//breakline
 			const breakLine = document.createElement('br');
 
 			//skill label
-				const skillLabel = document.createElement('label');
+			const skillLabel = document.createElement('label');
 			skillLabel.style.fontSize = "11px";
 			skillLabel.textContent = listSkills[i].name;
 
@@ -445,48 +418,49 @@ function showCharacterSheet(adventureData, buttonPressed) {
 			skillModifier.style.marginRight = "5px";
 
 			if (listElement.checked === true) {
-			let total = 0;
-			const characterProf = calculateProf(calculateLevel(characterData.currentXp));
+				let total = 0;
+				const characterProf = calculateProf(calculateLevel(characterData.currentXp));
 
-			if (listSkills[i].ability === "Str") {
-				total = Math.floor((stats.totalStrength-10)/2) + characterProf;
-			} else if (listSkills[i].ability === "Dex") {
-				total = Math.floor((stats.totalDexterity-10)/2) + characterProf;
-			} else if (listSkills[i].ability === "Int") {
-				total = Math.floor((stats.totalConstitution-10)/2) + characterProf;
-			} else if (listSkills[i].ability === "Wis") {
-				total = Math.floor((stats.totalWisdom-10)/2) + characterProf;
-			} else if (listSkills[i].ability === "Cha") {
-				total = Math.floor((stats.totalCharisma-10)/2) + characterProf;
-			}
+				if (listSkills[i].ability === "Str") {
+					total = Math.floor((stats.totalStrength - 10) / 2) + characterProf;
+				} else if (listSkills[i].ability === "Dex") {
+					total = Math.floor((stats.totalDexterity - 10) / 2) + characterProf;
+				} else if (listSkills[i].ability === "Int") {
+					total = Math.floor((stats.totalIntellegence - 10) / 2) + characterProf;
+				} else if (listSkills[i].ability === "Wis") {
+					total = Math.floor((stats.totalWisdom - 10) / 2) + characterProf;
+				} else if (listSkills[i].ability === "Cha") {
+					total = Math.floor((stats.totalCharisma - 10) / 2) + characterProf;
+				}
+				skillModifier.textContent = total >= 0 ? `+${total}` : total;
+				skillModifier.addEventListener('click', function () {
+					let randomNumber = Math.floor(Math.random() * 20) + 1
+					var message = `${listSkills[i].name} check\nModifier: ${total}\nRolled: ${randomNumber}\nTotal: [${randomNumber + total}]`;
+					sendDataToSidebar(message, characterData.name);
+				});
+			} else {
+				let total = 0;
+
+				if (listSkills[i].ability === "Str") {
+					total = Math.floor((stats.totalStrength - 10) / 2);
+				} else if (listSkills[i].ability === "Dex") {
+					total = Math.floor((stats.totalDexterity - 10) / 2);
+				} else if (listSkills[i].ability === "Int") {
+					total = Math.floor((stats.totalIntellegence - 10) / 2);
+				} else if (listSkills[i].ability === "Wis") {
+					total = Math.floor((stats.totalWisdom - 10) / 2);
+				} else if (listSkills[i].ability === "Cha") {
+					total = Math.floor((stats.totalCharisma - 10) / 2);
+				}
 				skillModifier.textContent = total >= 0 ? `+${total}` : total;
 
-			skillModifier.addEventListener('click', function () {
-        			handleSkillButtonClick(listSkills[i].name, total);
-    			});
-			} else {	
-			let total = 0;
-
-			if (listSkills[i].ability === "Str") {
-				total = Math.floor((stats.totalStrength-10)/2);
-			} else if (listSkills[i].ability === "Dex") {
-				total = Math.floor((stats.totalDexterity-10)/2);
-			} else if (listSkills[i].ability === "Con") {
-				total = Math.floor((stats.totalConstitution-10)/2);
-			} else if (listSkills[i].ability === "Int") {
-				total = Math.floor((stats.totalIntellegence-10)/2);
-			} else if (listSkills[i].ability === "Wis") {
-				total = Math.floor((stats.totalWisdom-10)/2);
-			} else if (listSkills[i].ability === "Cha") {
-				total = Math.floor((stats.totalCharisma-10)/2);
+				skillModifier.addEventListener('click', function () {
+					let randomNumber = Math.floor(Math.random() * 20) + 1
+					var message = `${listSkills[i].name} check\nModifier: ${total}\nRolled: ${randomNumber}\nTotal: [${randomNumber + total}]`;
+					sendDataToSidebar(message, characterData.name);
+				});
 			}
-			skillModifier.textContent = total >= 0 ? `+${total}` : total;
 
-			skillModifier.addEventListener('click', function () {
-       				handleSkillButtonClick(listSkills[i].name, total);
-    			});
-			}
-	    
 			//adding all elements 
 			getSkillListElement.appendChild(listElement);
 			getSkillListElement.appendChild(skillModifier);
@@ -540,8 +514,11 @@ function showCharacterSheet(adventureData, buttonPressed) {
 			savingThrowButton.textContent = total >= 0 ? `+${total}` : total;
 
 			savingThrowButton.addEventListener('click', function () {
-        			handleSkillButtonClick(savingThrowList[i], total);
-    			});
+				let randomNumber = Math.floor(Math.random() * 20) + 1
+				var message = `${listSkills[i].name} check\nModifier: ${total}\nRolled: ${randomNumber}\nTotal: [${randomNumber + total}]`;
+				sendDataToSidebar(message, characterData.name);
+			});
+				
 			} else {
 			 let total = 0;
 
@@ -562,8 +539,10 @@ function showCharacterSheet(adventureData, buttonPressed) {
 			savingThrowButton.textContent = total >= 0 ? `+${total}` : total;
 
 			savingThrowButton.addEventListener('click', function () {
-        			handleSkillButtonClick(savingThrowList[i], total);
-    			});
+				let randomNumber = Math.floor(Math.random() * 20) + 1
+				var message = `${listSkills[i].name} check\nModifier: ${total}\nRolled: ${randomNumber}\nTotal: [${randomNumber + total}]`;
+				sendDataToSidebar(message, characterData.name);
+			});
 			}
 
 			//breakline
@@ -580,12 +559,7 @@ function showCharacterSheet(adventureData, buttonPressed) {
     });
 }
 
-function showActions(adventureData, buttonPressed) {
-	try {
-		const removeOverlay = document.querySelector('.panel-body');
-		removeOverlay.remove();
-	} catch { }
-
+function showActions(adventureData, buttonPressed, characterData) {
 	if (characterSheetOverlayOpen && buttonPressed == "null") {
 		console.log('character sheet already open');
 		return;
@@ -768,8 +742,8 @@ function showActions(adventureData, buttonPressed) {
 				SecondSplitLabel.textContent = "｜";
 
 				//description
-				var description = document.createElement('label');
-				description.textContent = characterData.inventory[i].definition.description.replace(/<[^>]*>/g, '');
+				var weaponDescription = document.createElement('label');
+				weaponDescription.textContent = characterData.inventory[i].definition.description.replace(/<[^>]*>/g, '');
 
 				const breakLine = document.createElement('hr');
 
@@ -778,7 +752,7 @@ function showActions(adventureData, buttonPressed) {
 				allActionsDiv.appendChild(reachLabel);
 				allActionsDiv.appendChild(SecondSplitLabel);
 				allActionsDiv.appendChild(weaponAttackButton);
-				allActionsDiv.appendChild(description);
+				allActionsDiv.appendChild(weaponDescription);
 				allActionsDiv.appendChild(breakLine);
 
 				(function () {
@@ -786,9 +760,8 @@ function showActions(adventureData, buttonPressed) {
 					const currentWeaponButton = weaponButton;
 					const currentAttackRoll = weaponAttackButton;
 					currentWeaponButton.addEventListener('click', function () {
-						// Handle the click event for the current weapon button
-						console.log("Weapon button clicked:", currentWeaponButton.textContent);
-						// Add your custom logic here
+						message = `${currentWeaponButton.textContent}\nReach: ${reachLabel.textContent}\nTo Hit: ${weaponAttackButton.textContent}\n${weaponDescription.textContent}`;
+						sendDataToSidebar(message, characterData.name);
 					});
 
 					currentAttackRoll.addEventListener('click', function () {
@@ -956,12 +929,11 @@ function showActions(adventureData, buttonPressed) {
 		const actionButton = overlayBody.querySelector('#actions');
 		actionButton.addEventListener('click', function () {
 			console.log("action button pressed");
-			//showActions(adventureData);
 		});
 		const bioButton = overlayBody.querySelector('#bio');
 		bioButton.addEventListener('click', function () {
 			console.log("bio button pressed");
-			showBio(adventureData, buttonPressed);
+			showBio(adventureData, buttonPressed, characterData);
 		});
 
 		const characterButton = overlayBody.querySelector('#character');
@@ -975,19 +947,19 @@ function showActions(adventureData, buttonPressed) {
 		const featuresButton = overlayBody.querySelector('#features');
 		featuresButton.addEventListener('click', function () {
 			console.log('features button pressed');
-			showFeatures(adventureData, buttonPressed);
+			showFeatures(adventureData, buttonPressed, characterData);
 		});
 
 		const inventoryButton = overlayBody.querySelector('#inventory');
 		inventoryButton.addEventListener('click', function () {
 			console.log('inventory button pressed');
-			showInventory(adventureData, buttonPressed);
+			showInventory(adventureData, buttonPressed, characterData);
 		});
 
 		const spellsButton = overlayBody.querySelector('#spells');
 		spellsButton.addEventListener('click', function () {
 			console.log('spells button pressed');
-			showSpells(adventureData, buttonPressed);
+			showSpells(adventureData, buttonPressed, characterData, stats);
 		});
 
 		const unarmedStrikeButton = overlayBody.querySelector('#unarmedStrike');
@@ -1034,8 +1006,7 @@ function showActions(adventureData, buttonPressed) {
 	});
 }
 
-function showBio(adventureData, buttonPressed) {
-	
+function showBio(adventureData, buttonPressed, characterData) {
 	if (characterSheetOverlayOpen && buttonPressed == "null") {
 		console.log('character sheet already open');
 		return;
@@ -1044,406 +1015,36 @@ function showBio(adventureData, buttonPressed) {
 	const content = document.getElementById('overlayContainer');
 	content.innerHTML = ''; // Clear existing content
 
-	chrome.storage.local.get('characterData', function (result) {
-		const characterData = result.characterData;
-		const stats = getCharacterStats(characterData);
+	let characterHidden = "";
 
-		let characterHidden = "";
-
-		// get the player's character's current hp
-		// the current hp of the viewed character will be based on what the hp for their character is on cauldron
-		for (let i = 0; i < adventureData.characters.character.length; i++) {
-			if (adventureData.characters.character[i].name === characterData.name) {
-				if (adventureData.characters.character[i].hidden === "yes") {
-					characterHidden = "[hidden]";
-				}
-				break;
+	// get the player's character's current hp
+	// the current hp of the viewed character will be based on what the hp for their character is on cauldron
+	for (let i = 0; i < adventureData.characters.character.length; i++) {
+		if (adventureData.characters.character[i].name === characterData.name) {
+			if (adventureData.characters.character[i].hidden === "yes") {
+				characterHidden = "[hidden]";
 			}
+			break;
 		}
-
-		var header = document.getElementById('titleBar');
-		header.innerHTML = `${characterData.name} - Bio ${characterHidden} <span class="glyphicon glyphicon-remove close" aria-hidden="true"></span>`;
-
-		//closes the overlay on button click of the cross
-		const closeButton = header.querySelector('.close');
-		closeButton.addEventListener('click', function () {
-			//overlayContainer.style.display = 'none';
-			characterSheetOverlayOpen = false;
-
-			const characterSheetOverlay = document.getElementById('customOverlay');
-			if (characterSheetOverlay) {
-				characterSheetOverlay.remove();
-			}
-		});
-
-		const overlayBody = document.querySelector('.panel-body');
-		overlayBody.innerHTML = `
-				<div id="overlayContainer">
-					<div class="Character-menu-container" style="margin-top: -10px; height: 40px; margin-left: 465px;">
-						<div class="character-menu" style="border: 2px solid #336699; padding 5px; height: 230px; width: 110px; margin-left: -120px;">
-							<button id="actions" class="btn btn-primary btn-xs open_menu" style="font-size: 12px; margin-top: 10px; margin-left: 2px; width: 100px; height: 28px;">Actions</button>
-							<button id="bio" class="btn btn-primary btn-xs open_menu" style="font-size: 12px; margin-top: -10px; margin-left: 2px; width: 100px; height: 28px;">Bio</button>
-							<button id="character" class="btn btn-primary btn-xs open_menu" style="font-size: 12px; margin-top: -10px; margin-left: 2px; width: 100px; height: 28px;">Character</button>
-							<button id="features" class="btn btn-primary btn-xs open_menu" style="font-size: 12px; margin-top: -10px; margin-left: 2px; width: 100px; height: 28px;">Features</button>
-							<button id="inventory" class="btn btn-primary btn-xs open_menu" style="font-size: 12px; margin-top: -10px; margin-left: 2px; width: 100px; height: 28px;">Inventory</button>
-							<button id="spells" class="btn btn-primary btn-xs open_menu" style="font-size: 12px; margin-top: -10px; margin-left: 2px; width: 100px; height: 28px;">Spells</button>
-						</div>
-					</div>
-					<div class="bioDiv" style="height: 495px; width: 345px; margin-left: -10px; margin-top: -40px; overflow: auto; border: 2px solid #336699; padding: 10px;">
-						<ul id="ContentList">
-						    <button id=bioButton style="font-size: 20px;"><b>Backstory</b></button>
-							<div id="backstoryDiv" style="margin-left: 20px;">
-								<label style="font-size: 13px;">${characterData.notes.backstory ? characterData.notes.backstory : ""}</label>
-							</div>
-							<button id=bioButton style="font-size: 20px;"><b>Allies</b></button>
-							<div id="alliesDiv" style="margin-left: 20px;">
-								<label style="font-size: 13px;">${characterData.notes.allies ? characterData.notes.allies : ""}</label>
-							</div>
-							<button id=bioButton style="font-size: 20px;"><b>Enemies</b></button>
-							<div id="enemiesDiv" style="margin-left: 20px;">
-								<label style="font-size: 13px;">${characterData.notes.enemies ? characterData.notes.enemies : ""}</label>
-							</div>
-							<button id=bioButton style="font-size: 20px;"><b>Organizations</b></button>
-							<div id="organizationsDiv" style="margin-left: 20px;">
-								<label style="font-size: 13px;">${characterData.notes.organizations ? characterData.notes.organizations : ""}</label>
-							</div>
-							<button id=bioButton style="font-size: 20px;"><b>Other holdings</b></button>
-							<div id="otherHoldingsDiv" style="margin-left: 20px;">
-								<label style="font-size: 13px;">${characterData.notes.otherHoldings ? characterData.notes.otherHoldings : ""}</label>
-							</div>
-							<button id=bioButton style="font-size: 20px;"><b>Other Notes</b></button>
-							<div id="otherNotesDiv" style="margin-left: 20px;">
-								<label style="font-size: 13px;">${characterData.notes.otherNotes ? characterData.notes.otherNotes : ""}</label>
-							</div>
-							<button id=bioButton style="font-size: 20px;"><b>Personal Possessions</b></button>
-							<div id="personalPossessionsDiv" style="margin-left: 20px;">
-								<label style="font-size: 13px;">${characterData.notes.personalPossessions ? characterData.notes.personalPossessions : ""}</label>
-							</div>
-							<button id=bioButton style="font-size: 20px;"><b>Background: ${characterData.background.definition.name}</b></button>
-							<div id="backgroundDescription" style="margin-left: 20px;">
-								<label style="font-size: 13px;">${removeHtmlTags(characterData.background.definition.shortDescription)}
-							</div>
-							<button id=bioButton style="font-size: 12px;"><b>Background Feature: ${characterData.background.definition.featureName}</b></button>
-							<div id="backgroundFeature" style="margin-left: 20px;">
-							    <label style="font-size: 13px;">${removeHtmlTags(characterData.background.definition.featureDescription)}
-							</div>
-							<button id=bioButton style="font-size: 16px;"><b>Appearance</b></button>
-							<div id="apperance" style="margin-left: 20px;">
-							    <label style="font-size: 13px;">${characterData.traits.appearance ? characterData.traits.appearance : ""}
-							</div>
-							<button id=bioButton style="font-size: 16px;"><b>Bond</b></button>
-							<div id="bond" style="margin-left: 20px;">
-							    <label style="font-size: 13px;">${characterData.traits.bonds}
-							</div>
-							<button id=bioButton style="font-size: 16px;"><b>Flaws</b></button>
-							<div id="flaws" style="margin-left: 20px;">
-								<label style="font-size: 13px;">${characterData.traits.flaws}
-							</div>
-							<button id=bioButton style="font-size: 16px;"><b>Ideals</b></button>
-							<div id="ideals" style="margin-left: 20px;">
-								<label style="font-size: 13px;">${characterData.traits.ideals}
-							</div>
-							<button id=bioButton style="font-size: 16px;"><b>Personality Traits</b></button>
-							<div id="personalityTraits" style="margin-left: 20px;">
-								<label style="font-size: 13px;">${characterData.traits.personalityTraits}
-							</div>
-						</ul>
-					</div>
-				</div>
-        `;
-		//event listeners for the character buttons
-		const actionButton = overlayBody.querySelector('#actions');
-		actionButton.addEventListener('click', function () {
-			console.log("action button pressed");
-			showActions(adventureData, buttonPressed);
-		});
-
-		const bioButton = overlayBody.querySelector('#bio');
-		bioButton.addEventListener('click', function () {
-			console.log("bio button pressed");
-			//showBio(adventureData);
-		});
-
-		const characterButton = overlayBody.querySelector('#character');
-		characterButton.addEventListener('click', function () {
-			console.log('character button pressed');
-			const characterSheetOverlay = document.getElementById('customOverlay');
-			characterSheetOverlay.remove();
-			showCharacterSheet(adventureData);
-		});
-
-		const featuresButton = overlayBody.querySelector('#features');
-		featuresButton.addEventListener('click', function () {
-			console.log('features button pressed');
-			showFeatures(adventureData, buttonPressed);
-		});
-
-		const inventoryButton = overlayBody.querySelector('#inventory');
-		inventoryButton.addEventListener('click', function () {
-			console.log('inventory button pressed');
-			showInventory(adventureData, buttonPressed);
-		});
-
-		const spellsButton = overlayBody.querySelector('#spells');
-		spellsButton.addEventListener('click', function () {
-			console.log('spells button pressed');
-			showSpells(adventureData, buttonPressed);
-		});
-		content.appendChild(overlayBody);
-	});
-}
-
-function showFeatures(adventureData, buttonPressed) {
-	try {
-		const removeOverlay = document.querySelector('.panel-body');
-		removeOverlay.remove();
-	} catch { }
-
-	if (characterSheetOverlayOpen && buttonPressed == "null") {
-		console.log("character sheeta already open");
-		return;
 	}
 
-	const content = document.getElementById('overlayContainer');
-	content.innerHTML = ''; //clear existing content
+	var header = document.getElementById('titleBar');
+	header.innerHTML = `${characterData.name} - Bio ${characterHidden} <span class="glyphicon glyphicon-remove close" aria-hidden="true"></span>`;
 
-	chrome.storage.local.get('characterData', function (result) {
-		const characterData = result.characterData;
-		const stats = getCharacterStats(characterData);
+	//closes the overlay on button click of the cross
+	const closeButton = header.querySelector('.close');
+	closeButton.addEventListener('click', function () {
+		//overlayContainer.style.display = 'none';
+		characterSheetOverlayOpen = false;
 
-		let characterHidden = "";
-
-		for (let i = 0; i < adventureData.characters.character.length; i++) {
-			if (adventureData.characters.character[i].name === characterData.name) {
-				if (adventureData.characters.character[i].hidden === "yes") {
-					characterHidden = "[hidden]";
-				}
-				break;
-			}
-		}
-
-		var header = document.getElementById('titleBar');
-		header.innerHTML = `${characterData.name} - Features ${characterHidden} <span class="glyphicon glyphicon-remove close" aria-hidden="true"></span>`;
-
-		//closes the overlay on button click of the cross
-		const closeButton = header.querySelector('.close');
-		closeButton.addEventListener('click', function () {
-			//overlayContainer.style.display = 'none';
-			characterSheetOverlayOpen = false;
-
-			const characterSheetOverlay = document.getElementById('customOverlay');
-			if (characterSheetOverlay) {
-				characterSheetOverlay.remove();
-			}
-		});
-
-		const overlayBody = document.querySelector('.panel-body');
-		overlayBody.innerHTML = `
-				<div id="overlayContainer">
-					<div class="Character-menu-container" style="margin-top: -10px; height: 40px; margin-left: 465px;">
-						<div class="character-menu" style="border: 2px solid #336699; padding 5px; height: 230px; width: 110px; margin-left: -120px;">
-							<button id="actions" class="btn btn-primary btn-xs open_menu" style="font-size: 12px; margin-top: 10px; margin-left: 2px; width: 100px; height: 28px;">Actions</button>
-							<button id="bio" class="btn btn-primary btn-xs open_menu" style="font-size: 12px; margin-top: -10px; margin-left: 2px; width: 100px; height: 28px;">Bio</button>
-							<button id="character" class="btn btn-primary btn-xs open_menu" style="font-size: 12px; margin-top: -10px; margin-left: 2px; width: 100px; height: 28px;">Character</button>
-							<button id="features" class="btn btn-primary btn-xs open_menu" style="font-size: 12px; margin-top: -10px; margin-left: 2px; width: 100px; height: 28px;">Features</button>
-							<button id="inventory" class="btn btn-primary btn-xs open_menu" style="font-size: 12px; margin-top: -10px; margin-left: 2px; width: 100px; height: 28px;">Inventory</button>
-							<button id="spells" class="btn btn-primary btn-xs open_menu" style="font-size: 12px; margin-top: -10px; margin-left: 2px; width: 100px; height: 28px;">Spells</button>
-						</div>
-					</div>
-					<div class="featureDiv" style="height: 495px; width: 345px; margin-left: -10px; margin-top: -40px; overflow: auto; border: 2px solid #336699; padding: 10px;">
-						<ul id="actionList">
-							<div id="allActions">
-							</div>
-						</ul>
-					<div>
-				</div>
-		`;
-
-
-		var listFeatures = [];
-
-		const actionTypes = ['class', 'background', 'feat', 'item', 'race'];
-
-		// Iterate over each action type
-		actionTypes.forEach(actionType => {
-   		    try {
-     		       // Get the array of actions based on the current action type
-     	  	       const actions = actionType === 'class' ? characterData.actions[actionType] : characterData.actions[actionType];
-
-        	       // Loop through the actions array and add elements to the listFeatures array
-               	       actions.forEach(action => {
-                           var allActionsDiv = document.querySelector('#allActions');
-
-         	           var featureNameButton = document.createElement('button');
-         	           featureNameButton.id = "featureButton";
-         	           featureNameButton.textContent = action.name;
-
-           	           var featureDescription = document.createElement('p');
-            	           featureDescription.textContent = descriptionToCharacterData(action.snippet, characterData, stats);
-
-           	           var breakline = document.createElement('hr');
-
-            	           // Add all elements to the listFeatures array
-            	           listFeatures.push([featureNameButton, featureDescription, breakline]);
-       		       });
-    		    } catch (error) {
-        	       	console.log(`Error processing ${actionType} actions:`, error);
-    		    }
-	        });
-
-		const optionTypes = ['class', 'background', 'feat', 'item', 'race'];
-
-		// Iterate over each option type
-		optionTypes.forEach(optionType => {
-    		    try {
-        	        // Get the array of options based on the current option type
-        	        const options = characterData.options[optionType];
-
-        	        // Loop through the options array and add elements to the listFeatures array
-        	        options.forEach(option => {
-            		    var allActionsDiv = document.querySelector('#allActions');
-
-            		    var featureNameButton = document.createElement('button');
-            		    featureNameButton.id = "featureButton";
-            		    featureNameButton.textContent = option.definition.name;
-
-            		    var featureDescription = document.createElement('p');
-            		    featureDescription.textContent = descriptionToCharacterData(option.definition.snippet, characterData, stats);
-
-            		    var breakline = document.createElement('hr');
-
-            		    // Add all elements to the listFeatures array
-            		    listFeatures.push([featureNameButton, featureDescription, breakline]);
-        	        });
-    		    } catch {}
-		});
-
-		listFeatures.sort((a, b) => {
-    			// Check if either 'a' or 'b' is undefined
-    			if (!a || !a[0].innerHTML) return -1; // 'a' comes before 'b'
-    			if (!b || !b[0].innerHTML) return 1; // 'b' comes before 'a'
-    			return a[0].innerHTML.localeCompare(b[0].innerHTML);
-		    });
-
-		for (let i = 0; i<listFeatures.length; i++) {
-		    var allFeaturesDiv = document.querySelector('#allActions');
-
-		    for (let j = 0; j<listFeatures[i].length; j++) {
-		        allFeaturesDiv.appendChild(listFeatures[i][j]);
-		    }
-
-		}
-
-		//event listeners for the character buttons
-		const actionButton = overlayBody.querySelector('#actions');
-		actionButton.addEventListener('click', function () {
-			console.log("action button pressed");
-			showActions(adventureData, buttonPressed);
-		});
-
-		const bioButton = overlayBody.querySelector('#bio');
-		bioButton.addEventListener('click', function () {
-			console.log("bio button pressed");
-			showBio(adventureData, buttonPressed);
-		});
-
-		const characterButton = overlayBody.querySelector('#character');
-		characterButton.addEventListener('click', function () {
-			console.log('character button pressed');
-			const characterSheetOverlay = document.getElementById('customOverlay');
+		const characterSheetOverlay = document.getElementById('customOverlay');
+		if (characterSheetOverlay) {
 			characterSheetOverlay.remove();
-			showCharacterSheet(adventureData);
-		});
-
-		const featuresButton = overlayBody.querySelector('#features');
-		featuresButton.addEventListener('click', function () {
-			console.log('features button pressed');
-			//showFeatures(adventureData, buttonPressed);
-		});
-
-		const inventoryButton = overlayBody.querySelector('#inventory');
-		inventoryButton.addEventListener('click', function () {
-			console.log('inventory button pressed');
-			showInventory(adventureData, buttonPressed);
-		});
-
-		const spellsButton = overlayBody.querySelector('#spells');
-		spellsButton.addEventListener('click', function () {
-			console.log('spells button pressed');
-			showSpells(adventureData, buttonPressed);
-		});
-
-		content.appendChild(overlayBody);
-	});
-	
-}
-function showInventory(adventureData, buttonPressed) {
-	try {
-		const removeOverlay = document.querySelector('.panel-body');
-		removeOverlay.remove();
-	} catch { }
-
-	if (characterSheetOverlayOpen && buttonPressed == "null") {
-		console.log("character sheeta already open");
-		return;
-	}
-
-	const content = document.getElementById('overlayContainer');
-	content.innerHTML = ''; //clear existing content
-
-	chrome.storage.local.get('characterData', function (result) {
-		const characterData = result.characterData;
-		const stats = getCharacterStats(characterData);
-
-		let characterHidden = "";
-
-		for (let i = 0; i < adventureData.characters.character.length; i++) {
-			if (adventureData.characters.character[i].name === characterData.name) {
-				if (adventureData.characters.character[i].hidden === "yes") {
-					characterHidden = "[hidden]";
-				}
-				break;
-			}
 		}
+	});
 
-		var header = document.getElementById('titleBar');
-		header.innerHTML = `${characterData.name} - Inventory ${characterHidden} <span class="glyphicon glyphicon-remove close" aria-hidden="true"></span>`;
-
-		//closes the overlay on button click of the cross
-		const closeButton = header.querySelector('.close');
-		closeButton.addEventListener('click', function () {
-			//overlayContainer.style.display = 'none';
-			characterSheetOverlayOpen = false;
-
-			const characterSheetOverlay = document.getElementById('customOverlay');
-			if (characterSheetOverlay) {
-				characterSheetOverlay.remove();
-			}
-		});
-
-		const overlayBody = document.querySelector('.panel-body');
-		overlayBody.innerHTML = `
-			<style>
-			  .buttonNameWrap {
-				white-space: normal; 
-				width: 120px; 
-				font-style: italic;
-				background-color: white;
-				color: #6385C1;
-				padding: 5px;
-				border: 1px solid black;
-				border-radius: 5px;
-				cursor: pointer;
-				font-size: 15px;
-			  }
-			  buttonNameWrap:hover {
-			      background-color: white;
-			  }
-			  .hrBreakline {
-				  margin: 0;
-				  padding: 20;
-			  }
-			</style>
+	const overlayBody = document.querySelector('.panel-body');
+	overlayBody.innerHTML = `
 			<div id="overlayContainer">
 				<div class="Character-menu-container" style="margin-top: -10px; height: 40px; margin-left: 465px;">
 					<div class="character-menu" style="border: 2px solid #336699; padding 5px; height: 230px; width: 110px; margin-left: -120px;">
@@ -1455,450 +1056,1085 @@ function showInventory(adventureData, buttonPressed) {
 						<button id="spells" class="btn btn-primary btn-xs open_menu" style="font-size: 12px; margin-top: -10px; margin-left: 2px; width: 100px; height: 28px;">Spells</button>
 					</div>
 				</div>
-				<div id="currencyList" style="border: 2px solid #336699; padding 5px; height: 230px; width: 110px; margin-left: 345px; margin-top: 220px;">
-					<div style="margin-top: 25px; margin-left: 5px;">
-						<label style="margin-left: 10px;">PP&nbsp:&nbsp &nbsp ${characterData.currencies.pp}</label>
-						<hr class="hrBreakline">
-						<label style="margin-left: 10px;">GP&nbsp:&nbsp &nbsp ${characterData.currencies.gp}</label>
-						<hr class="hrBreakline">
-						<label style="margin-left: 10px;">EP&nbsp:&nbsp &nbsp ${characterData.currencies.ep}</label>
-						<hr class="hrBreakline">
-						<label style="margin-left: 10px;">SP&nbsp:&nbsp &nbsp ${characterData.currencies.sp}</label>
-						<hr class="hrBreakline">
-						<label style="margin-left: 10px;">CP&nbsp:&nbsp &nbsp ${characterData.currencies.cp}</label>
+				<div class="bioDiv" style="height: 495px; width: 345px; margin-left: -10px; margin-top: -40px; overflow: auto; border: 2px solid #336699; padding: 10px;">
+					<ul id="ContentList">
+						<button id=bioButton style="font-size: 20px;"><b>Backstory</b></button>
+						<div id="backstoryDiv" style="margin-left: 20px;">
+							<label style="font-size: 13px;">${characterData.notes.backstory ? characterData.notes.backstory : ""}</label>
+						</div>
+						<button id=bioButton style="font-size: 20px;"><b>Allies</b></button>
+						<div id="alliesDiv" style="margin-left: 20px;">
+							<label style="font-size: 13px;">${characterData.notes.allies ? characterData.notes.allies : ""}</label>
+						</div>
+						<button id=bioButton style="font-size: 20px;"><b>Enemies</b></button>
+						<div id="enemiesDiv" style="margin-left: 20px;">
+							<label style="font-size: 13px;">${characterData.notes.enemies ? characterData.notes.enemies : ""}</label>
+						</div>
+						<button id=bioButton style="font-size: 20px;"><b>Organizations</b></button>
+						<div id="organizationsDiv" style="margin-left: 20px;">
+							<label style="font-size: 13px;">${characterData.notes.organizations ? characterData.notes.organizations : ""}</label>
+						</div>
+						<button id=bioButton style="font-size: 20px;"><b>Other holdings</b></button>
+						<div id="otherHoldingsDiv" style="margin-left: 20px;">
+							<label style="font-size: 13px;">${characterData.notes.otherHoldings ? characterData.notes.otherHoldings : ""}</label>
+						</div>
+						<button id=bioButton style="font-size: 20px;"><b>Other Notes</b></button>
+						<div id="otherNotesDiv" style="margin-left: 20px;">
+							<label style="font-size: 13px;">${characterData.notes.otherNotes ? characterData.notes.otherNotes : ""}</label>
+						</div>
+						<button id=bioButton style="font-size: 20px;"><b>Personal Possessions</b></button>
+						<div id="personalPossessionsDiv" style="margin-left: 20px;">
+							<label style="font-size: 13px;">${characterData.notes.personalPossessions ? characterData.notes.personalPossessions : ""}</label>
+						</div>
+						<button id=bioButton style="font-size: 20px;"><b>Background: ${characterData.background.definition.name}</b></button>
+						<div id="backgroundDescription" style="margin-left: 20px;">
+							<label style="font-size: 13px;">${removeHtmlTags(characterData.background.definition.shortDescription)}
+						</div>
+						<button id=bioButton style="font-size: 12px;"><b>Background Feature: ${characterData.background.definition.featureName}</b></button>
+						<div id="backgroundFeature" style="margin-left: 20px;">
+							<label style="font-size: 13px;">${removeHtmlTags(characterData.background.definition.featureDescription)}
+						</div>
+						<button id=bioButton style="font-size: 16px;"><b>Appearance</b></button>
+						<div id="apperance" style="margin-left: 20px;">
+							<label style="font-size: 13px;">${characterData.traits.appearance ? characterData.traits.appearance : ""}
+						</div>
+						<button id=bioButton style="font-size: 16px;"><b>Bond</b></button>
+						<div id="bond" style="margin-left: 20px;">
+							<label style="font-size: 13px;">${characterData.traits.bonds}
+						</div>
+						<button id=bioButton style="font-size: 16px;"><b>Flaws</b></button>
+						<div id="flaws" style="margin-left: 20px;">
+							<label style="font-size: 13px;">${characterData.traits.flaws}
+						</div>
+						<button id=bioButton style="font-size: 16px;"><b>Ideals</b></button>
+						<div id="ideals" style="margin-left: 20px;">
+							<label style="font-size: 13px;">${characterData.traits.ideals}
+						</div>
+						<button id=bioButton style="font-size: 16px;"><b>Personality Traits</b></button>
+						<div id="personalityTraits" style="margin-left: 20px;">
+							<label style="font-size: 13px;">${characterData.traits.personalityTraits}
+						</div>
+					</ul>
+				</div>
+			</div>
+    `;
+	//event listeners for the character buttons
+	const actionButton = overlayBody.querySelector('#actions');
+	actionButton.addEventListener('click', function () {
+		console.log("action button pressed");
+		showActions(adventureData, buttonPressed, characterData);
+	});
+
+	const bioButton = overlayBody.querySelector('#bio');
+	bioButton.addEventListener('click', function () {
+		console.log("bio button pressed");
+		//showBio(adventureData);
+	});
+
+	const characterButton = overlayBody.querySelector('#character');
+	characterButton.addEventListener('click', function () {
+		console.log('character button pressed');
+		const characterSheetOverlay = document.getElementById('customOverlay');
+		characterSheetOverlay.remove();
+		showCharacterSheet(adventureData);
+	});
+
+	const featuresButton = overlayBody.querySelector('#features');
+	featuresButton.addEventListener('click', function () {
+		console.log('features button pressed');
+		showFeatures(adventureData, buttonPressed, characterData);
+	});
+
+	const inventoryButton = overlayBody.querySelector('#inventory');
+	inventoryButton.addEventListener('click', function () {
+		console.log('inventory button pressed');
+		showInventory(adventureData, buttonPressed);
+	});
+
+	const spellsButton = overlayBody.querySelector('#spells');
+	spellsButton.addEventListener('click', function () {
+		console.log('spells button pressed');
+		showSpells(adventureData, buttonPressed, characterData, stats);
+	});
+	content.appendChild(overlayBody);
+}
+
+function showFeatures(adventureData, buttonPressed, characterData) {
+	if (characterSheetOverlayOpen && buttonPressed == "null") {
+		console.log("character sheet already open");
+		return;
+	}
+
+	const content = document.getElementById('overlayContainer');
+	content.innerHTML = ''; //clear existing content
+
+	let characterHidden = "";
+
+	for (let i = 0; i < adventureData.characters.character.length; i++) {
+		if (adventureData.characters.character[i].name === characterData.name) {
+			if (adventureData.characters.character[i].hidden === "yes") {
+				characterHidden = "[hidden]";
+			}
+			break;
+		}
+	}
+
+	var header = document.getElementById('titleBar');
+	header.innerHTML = `${characterData.name} - Features ${characterHidden} <span class="glyphicon glyphicon-remove close" aria-hidden="true"></span>`;
+
+	//closes the overlay on button click of the cross
+	const closeButton = header.querySelector('.close');
+	closeButton.addEventListener('click', function () {
+		//overlayContainer.style.display = 'none';
+		characterSheetOverlayOpen = false;
+
+		const characterSheetOverlay = document.getElementById('customOverlay');
+		if (characterSheetOverlay) {
+			characterSheetOverlay.remove();
+		}
+	});
+
+	const overlayBody = document.querySelector('.panel-body');
+	overlayBody.innerHTML = `
+			<div id="overlayContainer">
+				<div class="Character-menu-container" style="margin-top: -10px; height: 40px; margin-left: 465px;">
+					<div class="character-menu" style="border: 2px solid #336699; padding 5px; height: 230px; width: 110px; margin-left: -120px;">
+						<button id="actions" class="btn btn-primary btn-xs open_menu" style="font-size: 12px; margin-top: 10px; margin-left: 2px; width: 100px; height: 28px;">Actions</button>
+						<button id="bio" class="btn btn-primary btn-xs open_menu" style="font-size: 12px; margin-top: -10px; margin-left: 2px; width: 100px; height: 28px;">Bio</button>
+						<button id="character" class="btn btn-primary btn-xs open_menu" style="font-size: 12px; margin-top: -10px; margin-left: 2px; width: 100px; height: 28px;">Character</button>
+						<button id="features" class="btn btn-primary btn-xs open_menu" style="font-size: 12px; margin-top: -10px; margin-left: 2px; width: 100px; height: 28px;">Features</button>
+						<button id="inventory" class="btn btn-primary btn-xs open_menu" style="font-size: 12px; margin-top: -10px; margin-left: 2px; width: 100px; height: 28px;">Inventory</button>
+						<button id="spells" class="btn btn-primary btn-xs open_menu" style="font-size: 12px; margin-top: -10px; margin-left: 2px; width: 100px; height: 28px;">Spells</button>
 					</div>
 				</div>
-				<div class="inventoryDiv" style="height: 495px; width: 345px; margin-left: -10px; margin-top: -490px; overflow: auto; border: 2px solid #336699; padding: 10px;">
-					<ul id="inventoryList">
-						<div id="allInventory">
-							<h6><b>Equipment &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp Quantity&nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp Cost(GP)</b></h6>
+				<div class="featureDiv" style="height: 495px; width: 345px; margin-left: -10px; margin-top: -40px; overflow: auto; border: 2px solid #336699; padding: 10px;">
+					<ul id="actionList">
+						<div id="allActions">
 						</div>
 					</ul>
 				<div>
 			</div>
-		`;
+	`;
 
-		for (let i = 0; i < characterData.inventory.length; i++) {
-			var allInventoryDiv = document.querySelector('#allInventory');
 
-			//button for item name
-			var itemButton = document.createElement('button');
-			itemButton.style.fontSize = '13px';
-			itemButton.style.fontWeight = 'bold';
-			itemButton.textContent = characterData.inventory[i].definition.name;
-			itemButton.classList = 'buttonNameWrap';
+	var listFeatures = [];
 
-			//quantity label
-			var quantityLabel = document.createElement('label');
-			quantityLabel.textContent = characterData.inventory[i].quantity;
-			quantityLabel.style.position = "relative";
-			quantityLabel.style.left = "40px";
+	const actionTypes = ['class', 'background', 'feat', 'item', 'race'];
 
-			//cost label
-			var costLabel = document.createElement('label');
-			costLabel.textContent = characterData.inventory[i].definition.cost;
-			costLabel.style.position = "relative";
-			costLabel.style.left = "120px";
+	// Iterate over each action type
+	actionTypes.forEach(actionType => {
+   		try {
+     		    // Get the array of actions based on the current action type
+     	  	    const actions = actionType === 'class' ? characterData.actions[actionType] : characterData.actions[actionType];
 
-			var itemDescription = document.createElement('label');
-			itemDescription.textContent = removeHtmlTags(characterData.inventory[i].definition.description);
+        	    // Loop through the actions array and add elements to the listFeatures array
+               	actions.forEach(action => {
+					var allActionsDiv = document.querySelector('#allActions');
 
-			//breakline
-			const breakline = document.createElement('hr');
+         	        var featureNameButton = document.createElement('button');
+         	        featureNameButton.id = "featureButton";
+         	        featureNameButton.textContent = action.name;
 
-			allInventoryDiv.appendChild(itemButton);
-			allInventoryDiv.appendChild(quantityLabel);
-			allInventoryDiv.appendChild(costLabel);
-			allInventoryDiv.appendChild(itemDescription);
-			allInventoryDiv.appendChild(breakline);
+           	        var featureDescription = document.createElement('p');
+            	        featureDescription.textContent = descriptionToCharacterData(action.snippet, characterData, stats);
+
+           	        var breakline = document.createElement('hr');
+
+            	    // Add all elements to the listFeatures array
+            	    listFeatures.push([featureNameButton, featureDescription, breakline]);
+       		    });
+    		} catch (error) {
+        	    console.log(`Error processing ${actionType} actions:`, error);
+    		}
+	    });
+
+	const optionTypes = ['class', 'background', 'feat', 'item', 'race'];
+
+	// Iterate over each option type
+	optionTypes.forEach(optionType => {
+    		try {
+        	    // Get the array of options based on the current option type
+        	    const options = characterData.options[optionType];
+
+        	    // Loop through the options array and add elements to the listFeatures array
+        	    options.forEach(option => {
+            		var allActionsDiv = document.querySelector('#allActions');
+
+            		var featureNameButton = document.createElement('button');
+            		featureNameButton.id = "featureButton";
+            		featureNameButton.textContent = option.definition.name;
+
+            		var featureDescription = document.createElement('p');
+            		featureDescription.textContent = descriptionToCharacterData(option.definition.snippet, characterData, stats);
+
+            		var breakline = document.createElement('hr');
+
+            		// Add all elements to the listFeatures array
+            		listFeatures.push([featureNameButton, featureDescription, breakline]);
+        	    });
+    		} catch {}
+	});
+
+	listFeatures.sort((a, b) => {
+    		// Check if either 'a' or 'b' is undefined
+    		if (!a || !a[0].innerHTML) return -1; // 'a' comes before 'b'
+    		if (!b || !b[0].innerHTML) return 1; // 'b' comes before 'a'
+    		return a[0].innerHTML.localeCompare(b[0].innerHTML);
+		});
+
+	for (let i = 0; i<listFeatures.length; i++) {
+		var allFeaturesDiv = document.querySelector('#allActions');
+
+		for (let j = 0; j<listFeatures[i].length; j++) {
+		    allFeaturesDiv.appendChild(listFeatures[i][j]);
 		}
 
-		//event listeners for the character buttons
-		const actionButton = overlayBody.querySelector('#actions');
-		actionButton.addEventListener('click', function () {
-			console.log("action button pressed");
-			showActions(adventureData, buttonPressed);
-		});
+	}
 
-		const bioButton = overlayBody.querySelector('#bio');
-		bioButton.addEventListener('click', function () {
-			console.log("bio button pressed");
-			showBio(adventureData, buttonPressed);
-		});
-
-		const characterButton = overlayBody.querySelector('#character');
-		characterButton.addEventListener('click', function () {
-			console.log('character button pressed');
-			const characterSheetOverlay = document.getElementById('customOverlay');
-			characterSheetOverlay.remove();
-			showCharacterSheet(adventureData);
-		});
-
-		const featuresButton = overlayBody.querySelector('#features');
-		featuresButton.addEventListener('click', function () {
-			console.log('features button pressed');
-			showFeatures(adventureData, buttonPressed);
-		});
-
-		const inventoryButton = overlayBody.querySelector('#inventory');
-		inventoryButton.addEventListener('click', function () {
-			console.log('inventory button pressed');
-			//showInventory(adventureData, buttonPressed);
-		});
-
-		const spellsButton = overlayBody.querySelector('#spells');
-		spellsButton.addEventListener('click', function () {
-			console.log('spells button pressed');
-			showSpells(adventureData, buttonPressed);
-		});
-
-		content.appendChild(overlayBody);
+	//event listeners for the character buttons
+	const actionButton = overlayBody.querySelector('#actions');
+	actionButton.addEventListener('click', function () {
+		console.log("action button pressed");
+		showActions(adventureData, buttonPressed, characterData);
 	});
+
+	const bioButton = overlayBody.querySelector('#bio');
+	bioButton.addEventListener('click', function () {
+		console.log("bio button pressed");
+		showBio(adventureData, buttonPressed, characterData);
+	});
+
+	const characterButton = overlayBody.querySelector('#character');
+	characterButton.addEventListener('click', function () {
+		console.log('character button pressed');
+		const characterSheetOverlay = document.getElementById('customOverlay');
+		characterSheetOverlay.remove();
+		showCharacterSheet(adventureData);
+	});
+
+	const featuresButton = overlayBody.querySelector('#features');
+	featuresButton.addEventListener('click', function () {
+		console.log('features button pressed');
+	});
+
+	const inventoryButton = overlayBody.querySelector('#inventory');
+	inventoryButton.addEventListener('click', function () {
+		console.log('inventory button pressed');
+		showInventory(adventureData, buttonPressed, characterData);
+	});
+
+	const spellsButton = overlayBody.querySelector('#spells');
+	spellsButton.addEventListener('click', function () {
+		console.log('spells button pressed');
+		showSpells(adventureData, buttonPressed, characterData, stats);
+	});
+
+	content.appendChild(overlayBody);
 }
 
-function showSpells(adventureData, buttonPressed) {
-	try {
-		const removeOverlay = document.querySelector('.panel-body');
-		removeOverlay.remove()
-	} catch { }
+function showInventory(adventureData, buttonPressed, characterData) {
+	if (characterSheetOverlayOpen && buttonPressed == "null") {
+		console.log("character sheeta already open");
+		return;
+	}
 
+	const content = document.getElementById('overlayContainer');
+	content.innerHTML = ''; //clear existing content
+
+	let characterHidden = "";
+
+	for (let i = 0; i < adventureData.characters.character.length; i++) {
+		if (adventureData.characters.character[i].name === characterData.name) {
+			if (adventureData.characters.character[i].hidden === "yes") {
+				characterHidden = "[hidden]";
+			}
+			break;
+		}
+	}
+
+	var header = document.getElementById('titleBar');
+	header.innerHTML = `${characterData.name} - Inventory ${characterHidden} <span class="glyphicon glyphicon-remove close" aria-hidden="true"></span>`;
+
+	//closes the overlay on button click of the cross
+	const closeButton = header.querySelector('.close');
+	closeButton.addEventListener('click', function () {
+		//overlayContainer.style.display = 'none';
+		characterSheetOverlayOpen = false;
+
+		const characterSheetOverlay = document.getElementById('customOverlay');
+		if (characterSheetOverlay) {
+			characterSheetOverlay.remove();
+		}
+	});
+
+	const overlayBody = document.querySelector('.panel-body');
+	overlayBody.innerHTML = `
+		<style>
+			.buttonNameWrap {
+			white-space: normal; 
+			width: 120px; 
+			font-style: italic;
+			background-color: white;
+			color: #6385C1;
+			padding: 5px;
+			border: 1px solid black;
+			border-radius: 5px;
+			cursor: pointer;
+			font-size: 15px;
+			}
+			buttonNameWrap:hover {
+			    background-color: white;
+			}
+			.hrBreakline {
+				margin: 0;
+				padding: 20;
+			}
+		</style>
+		<div id="overlayContainer">
+			<div class="Character-menu-container" style="margin-top: -10px; height: 40px; margin-left: 465px;">
+				<div class="character-menu" style="border: 2px solid #336699; padding 5px; height: 230px; width: 110px; margin-left: -120px;">
+					<button id="actions" class="btn btn-primary btn-xs open_menu" style="font-size: 12px; margin-top: 10px; margin-left: 2px; width: 100px; height: 28px;">Actions</button>
+					<button id="bio" class="btn btn-primary btn-xs open_menu" style="font-size: 12px; margin-top: -10px; margin-left: 2px; width: 100px; height: 28px;">Bio</button>
+					<button id="character" class="btn btn-primary btn-xs open_menu" style="font-size: 12px; margin-top: -10px; margin-left: 2px; width: 100px; height: 28px;">Character</button>
+					<button id="features" class="btn btn-primary btn-xs open_menu" style="font-size: 12px; margin-top: -10px; margin-left: 2px; width: 100px; height: 28px;">Features</button>
+					<button id="inventory" class="btn btn-primary btn-xs open_menu" style="font-size: 12px; margin-top: -10px; margin-left: 2px; width: 100px; height: 28px;">Inventory</button>
+					<button id="spells" class="btn btn-primary btn-xs open_menu" style="font-size: 12px; margin-top: -10px; margin-left: 2px; width: 100px; height: 28px;">Spells</button>
+				</div>
+			</div>
+			<div id="currencyList" style="border: 2px solid #336699; padding 5px; height: 230px; width: 110px; margin-left: 345px; margin-top: 220px;">
+				<div style="margin-top: 25px; margin-left: 5px;">
+					<label style="margin-left: 10px;">PP&nbsp:&nbsp &nbsp ${characterData.currencies.pp}</label>
+					<hr class="hrBreakline">
+					<label style="margin-left: 10px;">GP&nbsp:&nbsp &nbsp ${characterData.currencies.gp}</label>
+					<hr class="hrBreakline">
+					<label style="margin-left: 10px;">EP&nbsp:&nbsp &nbsp ${characterData.currencies.ep}</label>
+					<hr class="hrBreakline">
+					<label style="margin-left: 10px;">SP&nbsp:&nbsp &nbsp ${characterData.currencies.sp}</label>
+					<hr class="hrBreakline">
+					<label style="margin-left: 10px;">CP&nbsp:&nbsp &nbsp ${characterData.currencies.cp}</label>
+				</div>
+			</div>
+			<div class="inventoryDiv" style="height: 495px; width: 345px; margin-left: -10px; margin-top: -490px; overflow: auto; border: 2px solid #336699; padding: 10px;">
+				<ul id="inventoryList">
+					<div id="allInventory">
+						<h6><b>Equipment &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp Quantity&nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp &nbsp Cost(GP)</b></h6>
+					</div>
+				</ul>
+			<div>
+		</div>
+	`;
+
+	for (let i = 0; i < characterData.inventory.length; i++) {
+		var allInventoryDiv = document.querySelector('#allInventory');
+
+		//button for item name
+		var itemButton = document.createElement('button');
+		itemButton.style.fontSize = '13px';
+		itemButton.style.fontWeight = 'bold';
+		itemButton.textContent = characterData.inventory[i].definition.name;
+		itemButton.classList = 'buttonNameWrap';
+
+		//quantity label
+		var quantityLabel = document.createElement('label');
+		quantityLabel.textContent = characterData.inventory[i].quantity;
+		quantityLabel.style.position = "relative";
+		quantityLabel.style.left = "40px";
+
+		//cost label
+		var costLabel = document.createElement('label');
+		costLabel.textContent = characterData.inventory[i].definition.cost;
+		costLabel.style.position = "relative";
+		costLabel.style.left = "120px";
+
+		var itemDescription = document.createElement('label');
+		itemDescription.textContent = removeHtmlTags(characterData.inventory[i].definition.description);
+
+		//breakline
+		const breakline = document.createElement('hr');
+
+		allInventoryDiv.appendChild(itemButton);
+		allInventoryDiv.appendChild(quantityLabel);
+		allInventoryDiv.appendChild(costLabel);
+		allInventoryDiv.appendChild(itemDescription);
+		allInventoryDiv.appendChild(breakline);
+	}
+
+	//event listeners for the character buttons
+	const actionButton = overlayBody.querySelector('#actions');
+	actionButton.addEventListener('click', function () {
+		console.log("action button pressed");
+		showActions(adventureData, buttonPressed, characterData);
+	});
+
+	const bioButton = overlayBody.querySelector('#bio');
+	bioButton.addEventListener('click', function () {
+		console.log("bio button pressed");
+		showBio(adventureData, buttonPressed, characterData);
+	});
+
+	const characterButton = overlayBody.querySelector('#character');
+	characterButton.addEventListener('click', function () {
+		console.log('character button pressed');
+		const characterSheetOverlay = document.getElementById('customOverlay');
+		characterSheetOverlay.remove();
+		showCharacterSheet(adventureData);
+	});
+
+	const featuresButton = overlayBody.querySelector('#features');
+	featuresButton.addEventListener('click', function () {
+		console.log('features button pressed');
+		showFeatures(adventureData, buttonPressed, characterData);
+	});
+
+	const inventoryButton = overlayBody.querySelector('#inventory');
+	inventoryButton.addEventListener('click', function () {
+		console.log('inventory button pressed');
+	});
+
+	const spellsButton = overlayBody.querySelector('#spells');
+	spellsButton.addEventListener('click', function () {
+		console.log('spells button pressed');
+		showSpells(adventureData, buttonPressed, characterData, stats);
+	});
+
+	content.appendChild(overlayBody);
+}
+
+function showSpells(adventureData, buttonPressed, characterData, stats) {
 	if (characterSheetOverlayOpen && buttonPressed == "null") {
 		console.log("Character sheet already open");
 		return;
 	}
 
-	const content = document.getElementById('overlayContainer');
+	const content = document.querySelector('#overlayContainer');
 	content.innerHTML = '';
 
-	chrome.storage.local.get('characterData', function (result) {
-		const characterData = result.characterData
-		const stats = getCharacterStats(characterData);
+	let characterHidden = '';
 
-		let characterHidden = '';
-
-		for (let i = 0; i < adventureData.characters.character.legnth; i++) {
-			if (adventureData.characters.character[i].name === characterData.name) {
-				if (adventureData.characters.character[i].hidden === "yes") {
-					characterHidden = "[hidden]";
-				}
-				break;
+	for (let i = 0; i < adventureData.characters.character.length; i++) {
+		if (adventureData.characters.character[i].name === characterData.name) {
+			if (adventureData.characters.character[i].hidden === "yes") {
+				characterHidden = "[hidden]";
 			}
+			break;
 		}
+	}
 
-		var header = document.getElementById('titleBar');
-		header.innerHTML = `${characterData.name} - Spells ${characterHidden} <span class="glyphicon glyphicon-remove close" aria-hidden="true"></span>`;
+	const abilityScores = ['Strength', 'Dexterity', 'Constitution', 'Intelligence', 'Wisdom', 'Charisma'];
+	var header = document.getElementById('titleBar');
+	header.innerHTML = `${characterData.name} - Spells ${characterHidden} <span class="glyphicon glyphicon-remove close" aria-hidden="true"></span>`;
 
-		//closes the overlay on button click of the cross
-		const closeButton = header.querySelector('.close');
-		closeButton.addEventListener('click', function () {
-			//overlayContainer.style.display = 'none';
-			characterSheetOverlayOpen = false;
+	//closes the overlay on button click of the cross
+	const closeButton = header.querySelector('.close');
+	closeButton.addEventListener('click', function () {
+		//overlayContainer.style.display = 'none';
+		characterSheetOverlayOpen = false;
 
-			const characterSheetOverlay = document.getElementById('customOverlay');
-			if (characterSheetOverlay) {
-				characterSheetOverlay.remove();
-			}
-		});
-
-		const overlayBody = document.querySelector('.panel-body');
-		overlayBody.innerHTML = `
-		<style>
-			.buttonNameWrap {
-				white-space: normal; 
-				width: 120px; 
-				font-style: italic;
-				background-color: white;
-				color: #6385C1;
-				padding: 5px;
-				border: 1px solid black;
-				border-radius: 5px;
-				cursor: pointer;
-				font-size: 15px;
-			  }
-			  buttonNameWrap:hover {
-			      background-color: white;
-			  }
-			  .hrBreakline {
-				  margin: 0;
-				  padding: 20;
-			  }
-		</style>
-		<div id="overlayContainer">
-			<div class="Character-menu-container" style="margin-top: -10px; height: 40px; margin-left: 465px;">
-			    <div class="character-menu" style="border: 2px solid #336699; padding 5px; height: 230px; width: 110px; margin-left: -120px;">
-			    	<button id="actions" class="btn btn-primary btn-xs open_menu" style="font-size: 12px; margin-top: 10px; margin-left: 2px; width: 100px; height: 28px;">Actions</button>
-				<button id="bio" class="btn btn-primary btn-xs open_menu" style="font-size: 12px; margin-top: -10px; margin-left: 2px; width: 100px; height: 28px;">Bio</button>
-				<button id="character" class="btn btn-primary btn-xs open_menu" style="font-size: 12px; margin-top: -10px; margin-left: 2px; width: 100px; height: 28px;">Character</button>
-				<button id="features" class="btn btn-primary btn-xs open_menu" style="font-size: 12px; margin-top: -10px; margin-left: 2px; width: 100px; height: 28px;">Features</button>
-				<button id="inventory" class="btn btn-primary btn-xs open_menu" style="font-size: 12px; margin-top: -10px; margin-left: 2px; width: 100px; height: 28px;">Inventory</button>
-				<button id="spells" class="btn btn-primary btn-xs open_menu" style="font-size: 12px; margin-top: -10px; margin-left: 2px; width: 100px; height: 28px;">Spells</button>
-			    </div>
-			</div>
-			<div id="SpellInformation" style="border: 2px solid #336699; padding 5px; height: 230px; width: 110px; margin-left: 345px; margin-top: 220px;">
-			    <div style="margin-top: 25px; margin-left: 5px;">
-				<label style="margin-left: 10px;">
-				<hr class="hrBreakline">
-				<label style="margin-left: 10px;">
-				<hr class="hrBreakline">
-				<label style="margin-left: 10px;">
-			    </div>
-			</div>
-			<div class="spellDiv" style="height: 495px; width: 345px; margin-left: -10px; margin-top: -490px; overflow: auto; border: 2px solid #336699; padding: 10px;">
-			    <ul id="spellList">
-				<div id="allSpells">
-			            <h4><b>Name&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspTime</b></h4>
-				    <div id="level0">
-				        <h2><b>Cantrips</b></h2>
-				    </div>
-				    <div id="level1">
-					<h2><b>Level 1</b></h2>
-					<p>Spell Slots&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspExpended Spell Slots</p>
-					<div style="display: flex; justify-content: space-between;">
-    					    <input id="maxHitPoints" placeholder="${characterData.spellSlots[0].available}" disabled=true style="width: 40px;">
-					    <div style="width: 5px;"></div>
-    					    <input id="maxHitPoints" value="${characterData.spellSlots[0].used}" disabled=true style="width: 40px;">
-					</div>
-					<br>
-				    </div>
-				    <div id="level2">
-  				      <h2><b>Level 2</b></h2>
-				      <p>Spell Slots&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspExpended Spell Slots</p>
-					<div style="display: flex; justify-content: space-between;">
-    					    <input id="maxHitPoints" placeholder="${characterData.spellSlots[1].available}" disabled=true style="width: 40px;">
-					    <div style="width: 5px;"></div>
-    					    <input id="maxHitPoints" value="${characterData.spellSlots[1].used}" disabled=true style="width: 40px;">
-					</div>
-					<br>
-				    </div>
-				    <div id="level3">
-  				      <h2><b>Level 3</b></h2>
-					<p>Spell Slots&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspExpended Spell Slots</p>
-					<div style="display: flex; justify-content: space-between;">
-    					    <input id="maxHitPoints" placeholder="${characterData.spellSlots[2].available}" disabled=true style="width: 40px;">
-					    <div style="width: 5px;"></div>
-    					    <input id="maxHitPoints" value="${characterData.spellSlots[2].used}" disabled=true style="width: 40px;">
-					</div>
-					<br>
-				    </div>
-				    <div id="level4">
-   				     <h2><b>Level 4</b></h2>
-					<p>Spell Slots&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspExpended Spell Slots</p>
-					<div style="display: flex; justify-content: space-between;">
-    					    <input id="maxHitPoints" placeholder="${characterData.spellSlots[3].available}" disabled=true style="width: 40px;">
-					    <div style="width: 5px;"></div>
-    					    <input id="maxHitPoints" value="${characterData.spellSlots[3].used}" disabled=true style="width: 40px;">
-					</div>
-					<br>
-				    </div>
-				    <div id="level5">
-   				     <h2><b>Level 5</b></h2>
-					<p>Spell Slots&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspExpended Spell Slots</p>
-					<div style="display: flex; justify-content: space-between;">
-    					    <input id="maxHitPoints" placeholder="${characterData.spellSlots[4].available}" disabled=true style="width: 40px;">
-					    <div style="width: 5px;"></div>
-    					    <input id="maxHitPoints" value="${characterData.spellSlots[4].used}" disabled=true style="width: 40px;">
-					</div>
-					<br>
-				    </div>
-				    <div id="level6">
-  				      <h2><b>Level 6</b></h2>
-					<p>Spell Slots&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspExpended Spell Slots</p>
-					<div style="display: flex; justify-content: space-between;">
-    					    <input id="maxHitPoints" placeholder="${characterData.spellSlots[5].available}" disabled=true style="width: 40px;">
-					    <div style="width: 5px;"></div>
-    					    <input id="maxHitPoints" value="${characterData.spellSlots[5].used}" disabled=true style="width: 40px;">
-					</div>
-					<br>
-				    </div>
-				    <div id="level7">
-  				      <h2><b>Level 7</b></h2>
-					<p>Spell Slots&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspExpended Spell Slots</p>
-					<div style="display: flex; justify-content: space-between;">
-    					    <input id="maxHitPoints" placeholder="${characterData.spellSlots[6].available}" disabled=true style="width: 40px;">
-					    <div style="width: 5px;"></div>
-    					    <input id="maxHitPoints" value="${characterData.spellSlots[6].used}" disabled=true style="width: 40px;">
-					</div>
-					<br>
-				    </div>
-				    <div id="level8">
-  				      <h2><b>Level 8</b></h2>
-					<p>Spell Slots&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspExpended Spell Slots</p>
-					<div style="display: flex; justify-content: space-between;">
-    					    <input id="maxHitPoints" placeholder="${characterData.spellSlots[7].available}" disabled=true style="width: 40px;">
-					    <div style="width: 5px;"></div>
-    					    <input id="maxHitPoints" value="${characterData.spellSlots[7].used}" disabled=true style="width: 40px;">
-					</div>
-					<br>
-				    </div>
-				    <div id="level9">
-  				      <h2><b>Level 9</b></h2>
-					<p>Spell Slots&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspExpended Spell Slots</p>
-					<div style="display: flex; justify-content: space-between;">
-    					    <input id="maxHitPoints" placeholder="${characterData.spellSlots[8].available}" disabled=true style="width: 40px;">
-					    <div style="width: 5px;"></div>
-    					    <input id="maxHitPoints" value="${characterData.spellSlots[8].used}" disabled=true style="width: 40px;">
-					</div>
-					<br>
-				    </div>
-				</div>
-			    </ul>
-			</div>
-		</div>
-		`
-
-		let level = 0
-
-	        for (let l = -1; l<level; l++) {
-		    for (let i = 0; i<characterData.classSpells[0].spells.length; i++) {
-		        var allSpellDiv = document.querySelector('#allSpells');
-			var cantripsDiv = document.getElementById('level0');
-			var level1Div = document.getElementById('level1');
-			var level2Div = document.getElementById('level2');
-			var level3Div = document.getElementById('level3');
-			var level4Div = document.getElementById('level4');
-			var level5Div = document.getElementById('level5');
-			var level6Div = document.getElementById('level6');
-			var level7Div = document.getElementById('level7');
-			var level8Div = document.getElementById('level8');
-			var level9Div = document.getElementById('level9');
-			var time = characterData.classSpells[0].spells[i].activation.activationTime;
-			var type = characterData.classSpells[0].spells[i].activation.activationType;
-
-		        //name of spell button
-		        var nameButton = document.createElement('button');
-		        nameButton.style.fontSize = '13px';
-		        nameButton.style.fontWeight = 'bold';
-	
-			console.log(characterData.spellSlots[0].available);
-			if (characterData.classSpells[0].spells[i].usesSpellSlot == false) {
-		        	nameButton.textContent = characterData.classSpells[0].spells[i].definition.name + " (At Will)";
-			} else {
-			    nameButton.textContent = characterData.classSpells[0].spells[i].definition.name;
-			}
-		        nameButton.classList = 'buttonNameWrap';
-
-			timeLabel = document.createElement('label');
-			timeLabel.id = "spellTime";
-			timeLabel.style.fontSize = '13px';
-		        timeLabel.style.fontWeight = 'bold';
-			timeLabel.style.padding = '10px';
-
-			
-	
-			if (type == 1) {
-			    timeLabel.textContent = time+"A";
-			} else if (type == 3) {
-			    timeLabel.textContent = time+"BA";
-			} else if (type == 4) {
-			    timeLabel.textContent = time+"R";
-			} else if (type == 6) {
-			    timeLabel.textContent = time+"M";
-			} else if (type == 7) {
-			    timeLabel.textContent = time+"H";
-			}
-			
-
-		        //breakline
-		        const breakline = document.createElement('hr');
-		    
-			switch (characterData.classSpells[0].spells[i].definition.level) {
-			    case 0:
-			        cantripsDiv.appendChild(nameButton);
-				cantripsDiv.appendChild(timeLabel);
-				cantripsDiv.appendChild(breakline);
-				break;
-			    case 1:
-				level1Div.appendChild(nameButton);	
-				level1Div.appendChild(timeLabel);
-				level1Div.appendChild(breakline);
-				break;
-			    case 2:
-				level2Div.appendChild(nameButton);
-				level2Div.appendChild(timeLabel);
-				level2Div.appendChild(breakline);
-				break;
-			    case 3:
-				level3Div.appendChild(nameButton);
-				level3Div.appendChild(timeLabel);
-				level3Div.appendChild(breakline);
-				break;
-			    case 4:
-				level4Div.appendChild(nameButton);
-				level4Div.appendChild(timeLabel);
-				level4Div.appendChild(breakline);
-				break;
-			    case 5:
-				level5Div.appendChild(nameButton);
-				level5Div.appendChild(timeLabel);
-				level5Div.appendChild(breakline);
-				break;
-			    case 6:
-				level6Div.appendChild(nameButton);
-				level6Div.appendChild(timeLabel);
-				level6Div.appendChild(breakline);
-				break;
- 			    case 7:
-				level7Div.appendChild(nameButton);
-				level7Div.appendChild(timeLabel);
-				level7Div.appendChild(breakline);
-				break;
-			    case 8:
-				level8Div.appendChild(nameButton);
-				level8Div.appendChild(timeLabel);
-				level8Div.appendChild(breakline);
-				break;
-			    case 9:
-				level9Div.appendChild(nameButton);
-				level9Div.appendChild(timeLabel);
-				level9Div.appendChild(breakline);
-				break;
-			    default:
-		       	        allSpellDiv.appendChild(nameButton);
-		        	allSpellDiv.appendChild(breakline);
-			}
-		    }
-		}
-
-		//event listeners for the character buttons
-		const actionButton = overlayBody.querySelector('#actions');
-		actionButton.addEventListener('click', function () {
-			console.log("action button pressed");
-			showActions(adventureData, buttonPressed);
-		});
-
-		const bioButton = overlayBody.querySelector('#bio');
-		bioButton.addEventListener('click', function () {
-			console.log("bio button pressed");
-			showBio(adventureData, buttonPressed);
-		});
-
-		const characterButton = overlayBody.querySelector('#character');
-		characterButton.addEventListener('click', function () {
-			console.log('character button pressed');
-			const characterSheetOverlay = document.getElementById('customOverlay');
+		const characterSheetOverlay = document.getElementById('customOverlay');
+		if (characterSheetOverlay) {
 			characterSheetOverlay.remove();
-			showCharacterSheet(adventureData);
-		});
+		}
+	});
 
-		const featuresButton = overlayBody.querySelector('#features');
-		featuresButton.addEventListener('click', function () {
-			console.log('features button pressed');
-			showFeatures(adventureData, buttonPressed);
-		});
+	// Retrieve spell slots and assign to spellSlotData
+	getSpellSlots(function (data) {
+		if (data) {
+			const overlayBody = document.querySelector('.panel-body');
+			overlayBody.innerHTML = `
+			<style>
+				.buttonNameWrap {
+					white-space: normal; 
+					width: 120px; 
+					font-style: italic;
+					background-color: white;
+					color: #6385C1;
+					padding: 5px;
+					border: 1px solid black;
+					border-radius: 5px;
+					cursor: pointer;
+					font-size: 15px;
+					}
+					buttonNameWrap:hover {
+						background-color: white;
+					}
+					.hrBreakline {
+						margin: 0;
+						padding: 20;
+					}
+			</style>
+			<div id="overlayContainer">
+				<div class="Character-menu-container" style="margin-top: -10px; height: 40px; margin-left: 465px;">
+					<div class="character-menu" style="border: 2px solid #336699; padding 5px; height: 230px; width: 110px; margin-left: -120px;">
+			    		<button id="actions" class="btn btn-primary btn-xs open_menu" style="font-size: 12px; margin-top: 10px; margin-left: 2px; width: 100px; height: 28px;">Actions</button>
+					<button id="bio" class="btn btn-primary btn-xs open_menu" style="font-size: 12px; margin-top: -10px; margin-left: 2px; width: 100px; height: 28px;">Bio</button>
+					<button id="character" class="btn btn-primary btn-xs open_menu" style="font-size: 12px; margin-top: -10px; margin-left: 2px; width: 100px; height: 28px;">Character</button>
+					<button id="features" class="btn btn-primary btn-xs open_menu" style="font-size: 12px; margin-top: -10px; margin-left: 2px; width: 100px; height: 28px;">Features</button>
+					<button id="inventory" class="btn btn-primary btn-xs open_menu" style="font-size: 12px; margin-top: -10px; margin-left: 2px; width: 100px; height: 28px;">Inventory</button>
+					<button id="spells" class="btn btn-primary btn-xs open_menu" style="font-size: 12px; margin-top: -10px; margin-left: 2px; width: 100px; height: 28px;">Spells</button>
+					</div>
+				</div>
+				<div id="SpellInformation" style="border: 2px solid #336699; padding 5px; height: 230px; width: 110px; margin-left: 345px; margin-top: 220px;">
+					<div style="margin-top: 25px; margin-left: 5px;">
+					<label class=spellAbility>Spell Ability: ${abilityScores[characterData.classes[0].definition.spellCastingAbilityId - 1]}</label>
+					<label class=spellSaveDc>Spell Save DC: ${characterData.classes[0].definition.hitDice + calculateProf(characterData.classes[0].level) + Math.floor((stats.totalCharisma - 10) / 2)}</label>
+					<label class=SpellAttack>Spell Attack: ${calculateProf(characterData.classes[0].level) + Math.floor((stats.totalCharisma - 10) / 2)}</label>
+					<label style="margin-left: 10px;">
+					<hr class="hrBreakline">
+					<label style="margin-left: 10px;">
+					<hr class="hrBreakline">
+					<label style="margin-left: 10px;">
+					</div>
+				</div>
+				<div class="spellDiv" style="height: 495px; width: 345px; margin-left: -10px; margin-top: -490px; overflow: auto; border: 2px solid #336699; padding: 10px;">
+					<ul id="spellList">
+					<div id="allSpells">
+							<h4><b>Name&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspTime&nbsp&nbsp&nbspRange&nbsp&nbsp&nbspAoE</b></h4>
+						<div id="level0">
+							<h2><b>Cantrips</b></h2>
+						</div>
+						<div id="level1">
+						<h2><b>Level 1</b></h2>
+						<p>Spell Slots&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspExpended Spell Slots</p>
+						<div style="display: flex; justify-content: space-between;">
+    							<input class="spellSlots" placeholder="${characterData.spellSlots[0].available}" disabled=true style="width: 40px;">
+							<div style="width: 5px;"></div>
+    							<input class="maxHitPoints" value="${data[0].used}" disabled=true style="width: 40px;">
+						</div>
+						<br>
+						</div>
+						<div id="level2">
+  							<h2><b>Level 2</b></h2>
+							<p>Spell Slots&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspExpended Spell Slots</p>
+						<div style="display: flex; justify-content: space-between;">
+    							<input class="spellSlots" placeholder="${characterData.spellSlots[1].available}" disabled=true style="width: 40px;">
+							<div style="width: 5px;"></div>
+    							<input class="maxHitPoints" value="${data[1].used}" disabled=true style="width: 40px;">
+						</div>
+						<br>
+						</div>
+						<div id="level3">
+  							<h2><b>Level 3</b></h2>
+						<p>Spell Slots&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspExpended Spell Slots</p>
+						<div style="display: flex; justify-content: space-between;">
+    							<input class="spellSlots" placeholder="${characterData.spellSlots[2].available}" disabled=true style="width: 40px;">
+							<div style="width: 5px;"></div>
+    							<input class="maxHitPoints" value="${data[2].used}" disabled=true style="width: 40px;">
+						</div>
+						<br>
+						</div>
+						<div id="level4">
+   							<h2><b>Level 4</b></h2>
+						<p>Spell Slots&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspExpended Spell Slots</p>
+						<div style="display: flex; justify-content: space-between;">
+    							<input class="spellSlots" placeholder="${characterData.spellSlots[3].available}" disabled=true style="width: 40px;">
+							<div style="width: 5px;"></div>
+    							<input class="maxHitPoints" value="${data[3].used}" disabled=true style="width: 40px;">
+						</div>
+						<br>
+						</div>
+						<div id="level5">
+   							<h2><b>Level 5</b></h2>
+						<p>Spell Slots&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspExpended Spell Slots</p>
+						<div style="display: flex; justify-content: space-between;">
+    							<input class="spellSlots" placeholder="${characterData.spellSlots[4].available}" disabled=true style="width: 40px;">
+							<div style="width: 5px;"></div>
+    							<input class="usedSpellSlots" value="${data[4].used}" disabled=true style="width: 40px;">
+						</div>
+						<br>
+						</div>
+						<div id="level6">
+  							<h2><b>Level 6</b></h2>
+						<p>Spell Slots&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspExpended Spell Slots</p>
+						<div style="display: flex; justify-content: space-between;">
+    							<input class="spellSlots" placeholder="${characterData.spellSlots[5].available}" disabled=true style="width: 40px;">
+							<div style="width: 5px;"></div>
+    							<input class="usedSpellSlots" value="${data[5].used}" disabled=true style="width: 40px;">
+						</div>
+						<br>
+						</div>
+						<div id="level7">
+  							<h2><b>Level 7</b></h2>
+						<p>Spell Slots&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspExpended Spell Slots</p>
+						<div style="display: flex; justify-content: space-between;">
+    							<input class="spellSlots" placeholder="${characterData.spellSlots[6].available}" disabled=true style="width: 40px;">
+							<div style="width: 5px;"></div>
+    							<input class="usedSpellSlots" value="${data[6].used}" disabled=true style="width: 40px;">
+						</div>
+						<br>
+						</div>
+						<div id="level8">
+  							<h2><b>Level 8</b></h2>
+						<p>Spell Slots&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspExpended Spell Slots</p>
+						<div style="display: flex; justify-content: space-between;">
+    							<input class="spellSlots" placeholder="${characterData.spellSlots[7].available}" disabled=true style="width: 40px;">
+							<div style="width: 5px;"></div>
+    							<input class="usedSpellSlots" value="${data[7].used}" disabled=true style="width: 40px;">
+						</div>
+						<br>
+						</div>
+						<div id="level9">
+  							<h2><b>Level 9</b></h2>
+						<p>Spell Slots&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspExpended Spell Slots</p>
+						<div style="display: flex; justify-content: space-between;">
+    							<input class="spellSlots" placeholder="${characterData.spellSlots[8].available}" disabled=true style="width: 40px;">
+							<div style="width: 5px;"></div>
+    							<input class="usedSpellSlots" value="${data[8].used}" disabled=true style="width: 40px;">
+						</div>
+						<br>
+						</div>
+					</div>
+					</ul>
+				</div>
+			</div>
+			`;
 
-		const inventoryButton = overlayBody.querySelector('#inventory');
-		inventoryButton.addEventListener('click', function () {
-			console.log('inventory button pressed');
-			showInventory(adventureData, buttonPressed);
-		});
+			if (characterData.classes[0].definition.name === "Warlock") {
+				const characterLevel = calculateLevel(characterData.currentXp);
+				var spellSlotElements = document.getElementsByClassName('spellSlots');
+				for (var i = 0, length = spellSlotElements.length; i < length; i++) {
+					if (characterLevel === 1) {
+						spellSlotElements[i].disabled = false;
+						spellSlotElements[i].value = 1;
+						spellSlotElements[i].disabled = true;
+					} else if (characterLevel > 1 && characterLevel < 11) {
+						spellSlotElements[i].disabled = false;
+						spellSlotElements[i].value = 2;
+						spellSlotElements[i].disabled = true;
+					} else if (characterLevel > 10 && characterLevel < 17) {
+						spellSlotElements[i].disabled = false;
+						spellSlotElements[i].value = 3;
+						spellSlotElements[i].disabled = true;
+					} else if (characterLevel > 16 && characterLevel < 20) {
+						spellSlotElements[i].disabled = false;
+						spellSlotElements[i].value = 4;
+						spellSlotElements[i].disabled = true;
+					} else if (characterLevel === 20) {
+						spellSlotElements[i].disabled = false;
+						spellSlotElements[i].value = 5;
+						spellSlotElements[i].disabled = true;
+					}
+				}
+			}
 
-		const spellsButton = overlayBody.querySelector('#spells');
-		spellsButton.addEventListener('click', function () {
-			console.log('spells button pressed');
-			//showSpells(adventureData, buttonPressed);
-		});
+			//characterData.spells.items is not included as this is for items that give the player spells which in the list of spells would be confusing
+			//because spell items doesn't specif where they came from (e.g. a helment) then it isn't wise to put the spell in with the rest of them.;
+			const spellLocation = [characterData.classSpells[0].spells, characterData.spells.class, characterData.spells.race, characterData.spells.feat]
+			let = spellInformation = {};
+			let level = 0
 
-		content.appendChild(overlayBody);
+			for (let j = 0; j < spellLocation.length; j++) {
+				for (let l = -1; l < level; l++) {
+					for (let i = 0; i < spellLocation[j].length; i++) {
+						var allSpellDiv = document.querySelector('#allSpells');
+						var cantripsDiv = document.getElementById('level0');
+						var level1Div = document.getElementById('level1');
+						var level2Div = document.getElementById('level2');
+						var level3Div = document.getElementById('level3');
+						var level4Div = document.getElementById('level4');
+						var level5Div = document.getElementById('level5');
+						var level6Div = document.getElementById('level6');
+						var level7Div = document.getElementById('level7');
+						var level8Div = document.getElementById('level8');
+						var level9Div = document.getElementById('level9');
+						var time = spellLocation[j][i].activation.activationTime;
+						var type = spellLocation[j][i].activation.activationType;
+						var range = spellLocation[j][i].range.rangeValue;
+						var areaOfEffect = spellLocation[j][i].range.aoeValue;
+						var areaOfEffectShape = spellLocation[j][i].range.aoeType;
+
+						//name of spell button
+						var nameButton = document.createElement('button');
+						nameButton.style.fontSize = '13px';
+						nameButton.style.fontWeight = 'bold';
+
+						if (spellLocation[j][i].usesSpellSlot == false) {
+							nameButton.textContent = spellLocation[j][i].definition.name + " (At Will)";
+						} else {
+							nameButton.textContent = spellLocation[j][i].definition.name;
+						}
+						nameButton.classList = 'buttonNameWrap';
+
+						timeLabel = document.createElement('label');
+						timeLabel.id = "spellTime";
+						timeLabel.style.fontSize = '13px';
+						timeLabel.style.fontWeight = 'bold';
+						timeLabel.style.padding = '8px';
+
+						rangeLabel = document.createElement('label');
+						rangeLabel.id = 'spellRange';
+						rangeLabel.style.fontWeight = 'bold';
+						rangeLabel.style.padding = '8px';
+						rangeLabel.textContent = range + " ft."
+
+						aoeLabel = document.createElement('label');
+						aoeLabel.id = 'aoeRange';
+						aoeLabel.style.fontSize = '13px';
+						aoeLabel.style.fontWeight = 'bold';
+						aoeLabel.style.padding = '8px';
+
+						if (areaOfEffect != null) {
+							aoeLabel.textContent = areaOfEffect + ' ft. - ' + areaOfEffectShape;
+						} else {
+							aoeLabel.textContent = " -- ";
+						}
+
+						if (type == 1) {
+							timeLabel.textContent = time + "A";
+						} else if (type == 3) {
+							timeLabel.textContent = time + "BA";
+						} else if (type == 4) {
+							timeLabel.textContent = time + "R";
+						} else if (type == 6) {
+							timeLabel.textContent = time + "M";
+						} else if (type == 7) {
+							timeLabel.textContent = time + "H";
+						}
+
+						nameButton.addEventListener('click', function () {
+							var type = spellLocation[j][i].activation.activationType;
+							var time = spellLocation[j][i].activation.activationTime;
+
+							spellInformation["name"] = spellLocation[j][i].definition.name;//spell name
+
+							//spell school and level
+							if (spellLocation[j][i].definition.level === 0) {
+								spellInformation["school level"] = spellLocation[j][i].definition.school + " Cantrip"
+							} else {
+								if (spellLocation[j][i].definition.ritual != false) {
+									spellInformation["school level"] = spellLocation[j][i].definition.school + " Level " + spellLocation[j][i].definition.level + " (ritual)";
+								} else {
+									spellInformation["school level"] = spellLocation[j][i].definition.school + " Level " + spellLocation[j][i].definition.level;
+								}
+							}
+
+							//casting time
+							if (type == 1) {
+								spellInformation["casting time"] = "Casting Time: " + time + " Action";
+							} else if (type == 3) {
+								spellInformation["casting time"] = "Casting Time: " + time + " Bonus Action";
+							} else if (type == 4) {
+								spellInformation["casting time"] = "Casting Time: " + time + " Reaction";
+							} else if (type == 6) {
+								if (time > 1) {
+									spellInformation["casting time"] = "Casting Time: " + time + " Mintue";
+								} else {
+									spellInformation["casting time"] = "Casting Time: " + time + " Mintues";
+								}
+							} else if (type == 7) {
+								if (time > 1) {
+									spellInformation["casting time"] = "Casting Time: " + time + " Hour";
+								} else {
+									spellInformation["casting time"] = "Casting Time: " + time + " Hours";
+								}
+							}
+
+							//range
+							spellInformation["range"] = "Range: " + spellLocation[j][i].definition.range.rangeValue + " feet";
+
+
+							//components
+							let components = []
+							for (let i = 0; i < spellLocation[j][i].definition.components.length; i++) {
+								if (spellLocation[j][i].definition.components[i] == 1) {
+									components.push("V");
+								}
+
+								if (spellLocation[j][i].definition.components[i] == 2) {
+									components.push("S");
+								}
+
+								if (spellLocation[j][i].definition.components[i] == 3) {
+									components.push("M (" + spellLocation[j][i].definition.componentsDescription + ")");
+								}
+							}
+							spellInformation["components"] = "Components: " + components.toString();
+
+							//duration
+							let duration = [];
+							if (spellLocation[j][i].definition.duration.durationType != null) {
+								duration.push(spellLocation[j][i].definition.duration.durationType);
+							}
+							if (spellLocation[j][i].definition.duration.durationInterval != 0) {
+								duration.push(spellLocation[j][i].definition.duration.durationInterval);
+							}
+							if (spellLocation[j][i].definition.duration.durationUnit != null) {
+								duration.push(spellLocation[j][i].definition.duration.durationUnit);
+							}
+
+							if (duration[0] === "Concentration") {
+								spellInformation["duration"] = "Duration: " + duration[0] + ", up to " + duration[1] + " " + duration[2]
+							} else if (duration.length < 2) {
+								spellInformation["duration"] = "Duration: " + duration[0];
+							} else if (duration[0] != "Concentration") {
+								spellInformation["duration"] = "Duration: " + duration[1] + " " + duration[2];
+							}
+
+							spellInformation["cast at will"] = spellLocation[j][i].usesSpellSlot;
+
+							//description
+							spellInformation["description"] = removeHtmlTags(spellLocation[j][i].definition.description);
+
+							spellInfo(buttonPressed, adventureData, spellInformation, spellLocation[j][i].definition.level, characterData, stats);
+						})
+
+						//breakline
+						const breakline = document.createElement('hr');
+
+						switch (spellLocation[j][i].definition.level) {
+							case 0:
+								cantripsDiv.appendChild(nameButton);
+								cantripsDiv.appendChild(timeLabel);
+								cantripsDiv.appendChild(rangeLabel);
+								cantripsDiv.appendChild(aoeLabel);
+								cantripsDiv.appendChild(breakline);
+								break;
+							case 1:
+								level1Div.appendChild(nameButton);
+								level1Div.appendChild(timeLabel);
+								level1Div.appendChild(rangeLabel);
+								level1Div.appendChild(aoeLabel);
+								level1Div.appendChild(breakline);
+								break;
+							case 2:
+								level2Div.appendChild(nameButton);
+								level2Div.appendChild(timeLabel);
+								level2Div.appendChild(rangeLabel);
+								level2Div.appendChild(aoeLabel);
+								level2Div.appendChild(breakline);
+								break;
+							case 3:
+								level3Div.appendChild(nameButton);
+								level3Div.appendChild(timeLabel);
+								level3Div.appendChild(rangeLabel);
+								level3Div.appendChild(aoeLabel);
+								level3Div.appendChild(breakline);
+								break;
+							case 4:
+								level4Div.appendChild(nameButton);
+								level4Div.appendChild(timeLabel);
+								level4Div.appendChild(rangeLabel);
+								level4Div.appendChild(aoeLabel);
+								level4Div.appendChild(breakline);
+								break;
+							case 5:
+								level5Div.appendChild(nameButton);
+								level5Div.appendChild(timeLabel);
+								level5Div.appendChild(rangeLabel);
+								level5Div.appendChild(aoeLabel);
+								level5Div.appendChild(breakline);
+								break;
+							case 6:
+								level6Div.appendChild(nameButton);
+								level6Div.appendChild(timeLabel);
+								level6Div.appendChild(rangeLabel);
+								level6Div.appendChild(aoeLabel);
+								level6Div.appendChild(breakline);
+								break;
+							case 7:
+								level7Div.appendChild(nameButton);
+								level7Div.appendChild(timeLabel);
+								level7Div.appendChild(rangeLabel);
+								level7Div.appendChild(aoeLabel);
+								level7Div.appendChild(breakline);
+								break;
+							case 8:
+								level8Div.appendChild(nameButton);
+								level8Div.appendChild(timeLabel);
+								level8Div.appendChild(rangeLabel);
+								level8Div.appendChild(aoeLabel);
+								level8Div.appendChild(breakline);
+								break;
+							case 9:
+								level9Div.appendChild(nameButton);
+								level9Div.appendChild(timeLabel);
+								level9Div.appendChild(rangeLabel);
+								level9Div.appendChild(aoeLabel);
+								level9Div.appendChild(breakline);
+								break;
+							default:
+								allSpellDiv.appendChild(nameButton);
+								allSpellDiv.appendChild(breakline);
+						}
+					}
+				}
+			}
+			//event listeners for the character buttons
+			const actionButton = overlayBody.querySelector('#actions');
+			actionButton.addEventListener('click', function () {
+				console.log("action button pressed");
+				showActions(adventureData, buttonPressed, characterData);
+			});
+
+			const bioButton = overlayBody.querySelector('#bio');
+			bioButton.addEventListener('click', function () {
+				console.log("bio button pressed");
+				showBio(adventureData, buttonPressed, characterData);
+			});
+
+			const characterButton = overlayBody.querySelector('#character');
+			characterButton.addEventListener('click', function () {
+				console.log('character button pressed');
+				const characterSheetOverlay = document.getElementById('customOverlay');
+				characterSheetOverlay.remove();
+				showCharacterSheet(adventureData);
+			});
+
+			const featuresButton = overlayBody.querySelector('#features');
+			featuresButton.addEventListener('click', function () {
+				console.log('features button pressed');
+				showFeatures(adventureData, buttonPressed, characterData);
+			});
+
+			const inventoryButton = overlayBody.querySelector('#inventory');
+			inventoryButton.addEventListener('click', function () {
+				console.log('inventory button pressed');
+				showInventory(adventureData, buttonPressed);
+			});
+
+			const spellsButton = overlayBody.querySelector('#spells');
+			spellsButton.addEventListener('click', function () {
+				console.log('spells button pressed');
+			});
+
+			content.appendChild(overlayBody);
+		};
+	});
+}
+
+function spellInfo(buttonPressed, adventureData, spellInformation, spellLevel, characterData, stats) {
+	if (characterSheetOverlayOpen && buttonPressed === null) {
+		console.log("Character sheet already open");
+		return;
+	}
+
+	const content = document.querySelector('#overlayContainer');
+	content.innerHTML = '';
+
+	let characterHidden = '';
+
+	for (let i = 0; i < adventureData.characters.character.length; i++) {
+		if (adventureData.characters.character[i].name === characterData.name) {
+			if (adventureData.characters.character[i].hidden === "yes") {
+				characterHidden = "[hidden]";
+			}
+			break;
+		}
+	}
+
+	var header = document.getElementById('titleBar');
+	header.innerHTML = `${characterData.name} - Spells ${characterHidden} <span class="glyphicon glyphicon-remove close" aria-hidden="true"></span>`;
+
+	//closes the overlay on button click of the cross
+	const closeButton = header.querySelector('.close');
+	closeButton.addEventListener('click', function () {
+		characterSheetOverlayOpen = false;
+
+		const characterSheetOverlay = document.getElementById('customOverlay');
+		if (characterSheetOverlay) {
+			characterSheetOverlay.remove();
+		}
+	});
+
+	const overlayBody = document.createElement('div');
+	overlayBody.classList.add('panel-body');
+
+	overlayBody.innerHTML = `
+        <div id="overlayContainer">
+            <button id="backButton" class="btn btn-primary btn-xs open_menu" style="height=75px; width=0px; font-size: 25px; margin-top: -20px; margin-left: -20px;">🢀</button>
+            <div class="spellDiv" style="height: 400px; width: 345px; margin-left: -10px; margin-top: 25px; overflow: auto; border: 2px solid #336699; padding: 10px;">
+                <h2><b>${spellInformation['name']}</b></h2>
+                <hr>
+                <h5><b>${spellInformation['casting time']}</b></h5>
+                <h5><b>${spellInformation['range']}</b></h5>
+                <h5><b>${spellInformation['components']}</b></h5>
+                <h5><b>${spellInformation['duration']}</b></h5>
+                <h5>${spellInformation['description']}</h5>
+            </div>
+            <button id="castSpell" class="btn btn-primary btn-xs open_menu" style="font-size: 30px; margin-left: 75px; margin-top: 5px;">Cast Spell</button>
+        <div>
+    `;
+
+	const backButton = overlayBody.querySelector('#backButton');
+	backButton.addEventListener('click', function () {
+		console.log("Back button pressed");
+		showSpells(adventureData, buttonPressed, characterData, stats);
+	});
+
+	const castSpell = overlayBody.querySelector('#castSpell');
+	castSpell.addEventListener('click', function () {
+		console.log("cast spell button pressed");
+		const newline = "\n";
+		var message = spellInformation['name'] + newline + spellInformation['school level'] + newline + spellInformation['casting time'] + newline + spellInformation['range'] + newline + spellInformation['components'] + newline + spellInformation['duration'] + newline + newline + spellInformation['description'].replace(/<br><br>/g, '\n\n');
+		message_send(message, characterData.name);
+
+		getSpellSlots(function (data) {
+			if (data) {
+				switch (spellLevel) {
+					case 1:
+						if (spellInformation['cast at will'] == true) {
+							data[0].used = data[0].used + 1;
+						}
+						break
+					case 2:
+						if (spellInformation['cast at will'] == true) {
+							data[1].used = data[1].used + 1;
+						}
+						break
+					case 3:
+						if (spellInformation['cast at will'] == true) {
+							data[2].used = data[2].used + 1;
+						}
+						break
+					case 4:
+						if (spellInformation['cast at will'] == true) {
+							data[3].used = data[3].used + 1;
+						}
+						break
+					case 5:
+						if (spellInformation['cast at will'] == true) {
+							data[4].used = data[4].used + 1;
+						}
+						break
+					case 6:
+						if (spellInformation['cast at will'] == true) {
+							data[5].used = data[5].used + 1;
+						}
+						break
+					case 7:
+						if (spellInformation['cast at will'] == true) {
+							data[6].used = data[6].used + 1;
+						}
+						break
+					case 8:
+						if (spellInformation['cast at will'] == true) {
+							data[7].used = data[7].used + 1;
+						}
+						break
+					case 9:
+						if (spellInformation['cast at will'] == true) {
+							data[8].used = data[8].used + 1;
+						}
+						break
+				}
+				saveSpellSlots(data);
+				showSpells(adventureData, buttonPressed, characterData, stats);
+			}
+		});
+	});
+
+	content.appendChild(overlayBody);
+}
+
+function compareSlots2Used(spellLevelData) {
+	const spellSlotElements = document.querySelectorAll('.spellSlots');
+	spellSlotElements.forEach((element, index) => {
+		const slotValue = parseInt(element.textContent.trim(), 10);
+
+		if (slotValue === spellLevelData) {
+			console.log(`Element ${index + 1} value matches data.used: ${slotValue}`);
+		} else {
+			console.log(`Element ${index + 1} value does not match data.used: ${slotValue}`);
+		}
 	});
 }
 
@@ -1937,8 +2173,6 @@ function calculateLevel(xp) {
 }
 
 function getCharacterStats(characterData) {
-    const savingThrowList = ["Strength", "Dexterity", "Constitution", "Intellegence", "Wisdom", "Charisma"];    
-
     let totalStrength = characterData.stats[0].value;
     let totalDexterity = characterData.stats[1].value;
     let totalConstitution = characterData.stats[2].value;
@@ -2030,8 +2264,46 @@ function getUserCharacter(callback) {
 }
 
 function removeHtmlTags(htmlString) {
-	var doc = new DOMParser().parseFromString(htmlString, 'text/html');
-	return doc.body.textContent || "";
+	const doc = new DOMParser().parseFromString(htmlString, 'text/html');
+	const paragraphs = doc.body.getElementsByTagName('p');
+	let result = "";
+
+	for (const paragraph of paragraphs) {
+		result += (paragraph.textContent + '<br><br>');
+	}
+
+	return result;
+}
+
+function getSpellSlots(callback) {
+	chrome.storage.local.get('currentSpellSlots', function (result) {
+		if (result.currentSpellSlots) {
+			console.log('Retrieved currentSpellSlots');
+			callback(result.currentSpellSlots);
+		} else {
+			console.log("Can't load currentSpellSlots");
+			callback(null);
+		}
+	});
+}
+
+function saveSpellSlots(spellSlots) {
+	chrome.storage.local.get('currentSpellSlots', function (result) {
+		if (result.currentSpellSlots != null && spellSlots != null) {
+			console.log('spell slot Data already exists');
+			chrome.storage.local.set({ 'currentSpellSlots': spellSlots }, function () {
+				console.log("Spell Slots stored");
+			});
+		} else {
+			console.log('spell slot Data does not exist.');
+			chrome.storage.local.get('characterData', function (result) {
+				const characterData = result.characterData;
+				chrome.storage.local.set({ 'currentSpellSlots': characterData.spellSlots }, function () {
+					console.log("Spell Slots stored from characterData");
+				});
+			});
+		}
+	});
 }
 
 function descriptionToCharacterData(description, characterData, stats) {
@@ -2065,10 +2337,20 @@ function descriptionToCharacterData(description, characterData, stats) {
     let rePatternSum = /(\d+)\s*\+\s*(\d+)/g;
     description = description.replace(rePatternSum, (match, x, y) => parseInt(x) + parseInt(y));
 
-//need to get rid of the ( in (+23
-
     return description;
 }
 
+function sendDataToSidebar(information, characterName) {
+	let script = document.createElement('script');
 
-	
+	script.textContent = `
+			  // Call the page's function with the provided arguments
+			  send_message(${JSON.stringify(information)}, '${characterName}');
+			`;
+
+	(document.head || document.documentElement).appendChild(script);
+}
+
+//after the above then add the compareSlots2Used function to switch case
+//in spell description give option to cast at higher level where possible, otherwise just offer "cast spell" button
+// remove all the previous copied functions as they are no longer needed
