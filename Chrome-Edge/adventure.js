@@ -7,27 +7,28 @@ setTimeout(function () {
 	    console.error("Error:", error);
 	    return;
 	}
-    	if (adventureData['@is_dm'] === "yes") {
-            console.log('You are the DM, there is no character button for you!');
-        } else {
-            changePlayArea(); //resizes playarea   
+	try {
+    	    if (adventureData['@is_dm'] === "yes") {
+                console.log('You are the DM, there is no character button for you!');
+            } else {
+                changePlayArea(); //resizes playarea   
 
-            const container = document.querySelector('.container');//contains each section of the page (playArea, chat, header, etc.)
+                const container = document.querySelector('.container');//contains each section of the page (playArea, chat, header, etc.)
 
-            const divCharacterTools = document.createElement('div');
-            divCharacterTools.className = "charactertools";//This is where all the character's infomation will be.
-            container.appendChild(divCharacterTools);
+                const divCharacterTools = document.createElement('div');
+                divCharacterTools.className = "charactertools";//This is where all the character's infomation will be.
+                container.appendChild(divCharacterTools);
 
-            const viewCharacter = document.createElement('button');
-            viewCharacter.textContent = "View Character Sheet";
-            viewCharacter.classList.add('btn', 'btn-default');
-            viewCharacter.style.position = 'fixed';
-            viewCharacter.style.bottom = '10px';
-            viewCharacter.style.left = '15px';
-            divCharacterTools.appendChild(viewCharacter); // Appended the button to the container
+                const viewCharacter = document.createElement('button');
+                viewCharacter.textContent = "View Character Sheet";
+                viewCharacter.classList.add('btn', 'btn-default');
+                viewCharacter.style.position = 'fixed';
+                viewCharacter.style.bottom = '10px';
+                viewCharacter.style.left = '15px';
+                divCharacterTools.appendChild(viewCharacter); // Appended the button to the container
 
-            viewCharacter.addEventListener('click', function(event) {
-                event.preventDefault();
+                viewCharacter.addEventListener('click', function(event) {
+                    event.preventDefault();
 				getUserCharacter((error, adventureData) => {
   					if (error) {
     					console.error('Error:', error);
@@ -35,7 +36,34 @@ setTimeout(function () {
   					}
 					showCharacterSheet(adventureData);
 				});
-            });
+                });
+	    } catch {
+		
+                const container = document.querySelector('.container');//contains each section of the page (playArea, chat, header, etc.)
+
+                const divCharacterTools = document.createElement('div');
+                divCharacterTools.className = "charactertools";//This is where all the character's infomation will be.
+                container.appendChild(divCharacterTools);
+
+                const viewCharacter = document.createElement('button');
+                viewCharacter.textContent = "View Character Sheet";
+                viewCharacter.classList.add('btn', 'btn-default');
+                viewCharacter.style.position = 'fixed';
+                viewCharacter.style.bottom = '10px';
+                viewCharacter.style.left = '15px';
+                divCharacterTools.appendChild(viewCharacter); // Appended the button to the container
+
+                viewCharacter.addEventListener('click', function(event) {
+                    event.preventDefault();
+				getUserCharacter((error, adventureData) => {
+  					if (error) {
+    					console.error('Error:', error);
+    					return;
+  					}
+					showCharacterSheet(adventureData);
+				});
+                });
+	    }
         }
     });
 }, 0);
