@@ -2,152 +2,58 @@ let characterSheetOverlayOpen = false;
 saveSpellSlots(null);
 
 setTimeout(function () {
-    getUserCharacter((error, adventureData) => {
-        if (error) {
-	    console.error("Error:", error);
-	    return;
-	}
 	try {
-    	    if (adventureData['@is_dm'] === "yes") {
-                console.log('You are the DM, there is no character button for you!');
-            } else {
-                changePlayArea(); //resizes playarea   
-
-                const container = document.querySelector('.container');//contains each section of the page (playArea, chat, header, etc.)
-
-                const divCharacterTools = document.createElement('div');
-                divCharacterTools.className = "charactertools";//This is where all the character's infomation will be.
-                container.appendChild(divCharacterTools);
-
-                const viewCharacter = document.createElement('button');
-                viewCharacter.textContent = "View Character Sheet";
-                viewCharacter.classList.add('btn', 'btn-default');
-                viewCharacter.style.position = 'fixed';
-                viewCharacter.style.bottom = '10px';
-                viewCharacter.style.left = '15px';
-                divCharacterTools.appendChild(viewCharacter); // Appended the button to the container
-
-                viewCharacter.addEventListener('click', function(event) {
-                    event.preventDefault();
-				getUserCharacter((error, adventureData) => {
-  					if (error) {
-    					console.error('Error:', error);
-    					return;
-  					}
-					showCharacterSheet(adventureData);
-				});
-                });
-	    } catch {
-		
-                const container = document.querySelector('.container');//contains each section of the page (playArea, chat, header, etc.)
-
-                const divCharacterTools = document.createElement('div');
-                divCharacterTools.className = "charactertools";//This is where all the character's infomation will be.
-                container.appendChild(divCharacterTools);
-
-                const viewCharacter = document.createElement('button');
-                viewCharacter.textContent = "View Character Sheet";
-                viewCharacter.classList.add('btn', 'btn-default');
-                viewCharacter.style.position = 'fixed';
-                viewCharacter.style.bottom = '10px';
-                viewCharacter.style.left = '15px';
-                divCharacterTools.appendChild(viewCharacter); // Appended the button to the container
-
-                viewCharacter.addEventListener('click', function(event) {
-                    event.preventDefault();
-				getUserCharacter((error, adventureData) => {
-  					if (error) {
-    					console.error('Error:', error);
-    					return;
-  					}
-					showCharacterSheet(adventureData);
-				});
-                });
-	    }
-        }
-    });
-}, 0);
-
-function changePlayArea() {
-    const playArea = document.querySelector('.playarea');
-    playArea.style.bottom = '50px';
-}
-
-function write_sidebar(message) {
-    var sidebar = document.querySelector('.sidebar');
-    message = message.replace(/\n/g, '<br />');
-    sidebar.innerHTML += '<p>' + message + '</p>';
-    sidebar.scrollTop = sidebar.scrollHeight;
-}
-
-function message_to_sidebar(name, message) {
-	if ((message.substring(0, 7) == 'http://') || (message.substring(0, 8) == 'https://')) {
-		var parts = message.split('.');
-		var extension = parts.pop();
-		var images = ['gif', 'jpg', 'jpeg', 'png', 'webp'];
-
-		if (images.includes(extension)) {
-			message = '<img src="' + message + '" style="cursor:pointer;" onClick="javascript:show_image(this)" />';
+		if (adventureData['@is_dm'] === "yes") {
+			console.log('You are the DM, there is no character button for you!');
 		} else {
-			message = '<a href="' + message + '" target="_blank">' + message + '</a>';
+			const container = document.querySelector('.btn-group');//contains each section of the page (playArea, chat, header, etc.)
+
+			const viewCharacter = document.createElement('button');
+			viewCharacter.textContent = "View Character Sheet";
+			viewCharacter.classList.add('btn', 'btn-primary', 'btn-xs', 'open_menu');//btn btn-primary btn-xs open_menu
+			viewCharacter.display = 'inline-block';
+			viewCharacter.style.position = 'fixed';
+			viewCharacter.style.height = '19.6px';
+			viewCharacter.style.top = '7px';
+			viewCharacter.style.right = '100px';
+			container.appendChild(viewCharacter); // Appended the button to the container
+
+			viewCharacter.addEventListener('click', function (event) {
+				event.preventDefault();
+				getUserCharacter((error, adventureData) => {
+					if (error) {
+						console.error('Error:', error);
+						return;
+					}
+					showCharacterSheet(adventureData);
+				});
+			});
 		}
-	} else {
-		message = message.replace(/</g, '&lt;').replace(/\n/g, '<br />');
+	} catch {
+		const container = document.querySelector('.btn-group');//contains each section of the page (playArea, chat, header, etc.)
+
+		const viewCharacter = document.createElement('button');
+		viewCharacter.textContent = "View Character Sheet";
+		viewCharacter.classList.add('btn', 'btn-primary', 'btn-xs', 'open_menu');//btn btn-primary btn-xs open_menu
+		viewCharacter.display = 'inline-block';
+		viewCharacter.style.position = 'fixed';
+		viewCharacter.style.height = '19.6px';
+		viewCharacter.style.top = '7px';
+		viewCharacter.style.right = '100px';
+		container.appendChild(viewCharacter); // Appended the button to the container
+
+		viewCharacter.addEventListener('click', function (event) {
+			event.preventDefault();
+			getUserCharacter((error, adventureData) => {
+				if (error) {
+					console.error('Error:', error);
+					return;
+				}
+				showCharacterSheet(adventureData);
+			});
+		});
 	}
-
-	if (name != null) {
-		message = '<b>' + name + ':</b><span style="display:block; margin-left:15px;">' + message + '</span>';
-	}
-	write_sidebar(message);
-}
-
-function websocket_send(data) {
-    // Inject script into webpage context to access window.websocket
-    var script = document.createElement('script');
-    script.textContent = `
-        // Access the WebSocket object from the webpage
-        var websiteWebSocket = window.websocket;
-        
-        // Log the WebSocket object
-        //console.log("WebSocket object from website:", websiteWebSocket);
-
-        // Once you have access to the WebSocket object, perform further actions
-        if (websiteWebSocket == null || websiteWebSocket.readyState !== WebSocket.OPEN) {
-            //console.log("Not open");
-        }
-
-        var data = ${JSON.stringify(data)};
-	//console.log(data);
-        websiteWebSocket.send(data);
-    `;
-    (document.head || document.documentElement).appendChild(script);
-    script.remove(); // Clean up injected script after use
-}
-
-function handleWebSocketMessage(event) {
-    // Extract the data from the WebSocket message
-    var messageData = event.data;
-
-    // Process the received data as needed
-    //console.log("Received data from WebSocket:", messageData);
-
-    // Example: Forward the received data to the background script
-    chrome.runtime.sendMessage({dataFromWebSocket: messageData});
-}
-
-function message_send(message, name, write_to_sidebar = true) {
-	var data = {
-		action: 'say',
-		name: name,
-		mesg: message
-	};
-	//console.log(data);
-	websocket_send(data);
-
-	if (write_to_sidebar) {
-		message_to_sidebar(name, message);
-	}
-}
+}, 0);
 
 function showCharacterSheet(adventureData, buttonPressed) {
     if (characterSheetOverlayOpen && buttonPressed == "null") {
@@ -361,13 +267,13 @@ function showCharacterSheet(adventureData, buttonPressed) {
 		const actionButton = overlayBody.querySelector('#actions');
 		actionButton.addEventListener('click', function() {
 			console.log("action button pressed");
-			showActions(adventureData, buttonPressed, characterData);
+			showActions(adventureData, buttonPressed, characterData, stats);
 		});
 	
 		const bioButton = overlayBody.querySelector('#bio');
 		bioButton.addEventListener('click', function() {
 			console.log("bio button pressed");
-			showBio(adventureData, buttonPressed, characterData);
+			showBio(adventureData, buttonPressed, characterData, stats);
 		});
 
 		const characterButton = overlayBody.querySelector('#character');
@@ -378,13 +284,13 @@ function showCharacterSheet(adventureData, buttonPressed) {
 		const featuresButton = overlayBody.querySelector('#features');
 		featuresButton.addEventListener('click', function() {
 			console.log('features button pressed');
-			showFeatures(adventureData, buttonPressed, characterData);
+			showFeatures(adventureData, buttonPressed, characterData, stats);
 		});
 
 		const inventoryButton = overlayBody.querySelector('#inventory');
 		inventoryButton.addEventListener('click', function() {
 			console.log('inventory button pressed');
-			showInventory(adventureData, buttonPressed, characterData);
+			showInventory(adventureData, buttonPressed, characterData, stats);
 		});
 
 		const spellsButton = overlayBody.querySelector('#spells');
@@ -587,7 +493,7 @@ function showCharacterSheet(adventureData, buttonPressed) {
     });
 }
 
-function showActions(adventureData, buttonPressed, characterData) {
+function showActions(adventureData, buttonPressed, characterData, stats) {
 	if (characterSheetOverlayOpen && buttonPressed == "null") {
 		console.log('character sheet already open');
 		return;
@@ -961,7 +867,7 @@ function showActions(adventureData, buttonPressed, characterData) {
 		const bioButton = overlayBody.querySelector('#bio');
 		bioButton.addEventListener('click', function () {
 			console.log("bio button pressed");
-			showBio(adventureData, buttonPressed, characterData);
+			showBio(adventureData, buttonPressed, characterData, stats);
 		});
 
 		const characterButton = overlayBody.querySelector('#character');
@@ -975,13 +881,13 @@ function showActions(adventureData, buttonPressed, characterData) {
 		const featuresButton = overlayBody.querySelector('#features');
 		featuresButton.addEventListener('click', function () {
 			console.log('features button pressed');
-			showFeatures(adventureData, buttonPressed, characterData);
+			showFeatures(adventureData, buttonPressed, characterData, stats);
 		});
 
 		const inventoryButton = overlayBody.querySelector('#inventory');
 		inventoryButton.addEventListener('click', function () {
 			console.log('inventory button pressed');
-			showInventory(adventureData, buttonPressed, characterData);
+			showInventory(adventureData, buttonPressed, characterData, stats);
 		});
 
 		const spellsButton = overlayBody.querySelector('#spells');
@@ -1034,7 +940,7 @@ function showActions(adventureData, buttonPressed, characterData) {
 	});
 }
 
-function showBio(adventureData, buttonPressed, characterData) {
+function showBio(adventureData, buttonPressed, characterData, stats) {
 	if (characterSheetOverlayOpen && buttonPressed == "null") {
 		console.log('character sheet already open');
 		return;
@@ -1045,8 +951,6 @@ function showBio(adventureData, buttonPressed, characterData) {
 
 	let characterHidden = "";
 
-	// get the player's character's current hp
-	// the current hp of the viewed character will be based on what the hp for their character is on cauldron
 	for (let i = 0; i < adventureData.characters.character.length; i++) {
 		if (adventureData.characters.character[i].name === characterData.name) {
 			if (adventureData.characters.character[i].hidden === "yes") {
@@ -1150,13 +1054,12 @@ function showBio(adventureData, buttonPressed, characterData) {
 	const actionButton = overlayBody.querySelector('#actions');
 	actionButton.addEventListener('click', function () {
 		console.log("action button pressed");
-		showActions(adventureData, buttonPressed, characterData);
+		showActions(adventureData, buttonPressed, characterData, stats);
 	});
 
 	const bioButton = overlayBody.querySelector('#bio');
 	bioButton.addEventListener('click', function () {
 		console.log("bio button pressed");
-		//showBio(adventureData);
 	});
 
 	const characterButton = overlayBody.querySelector('#character');
@@ -1170,13 +1073,13 @@ function showBio(adventureData, buttonPressed, characterData) {
 	const featuresButton = overlayBody.querySelector('#features');
 	featuresButton.addEventListener('click', function () {
 		console.log('features button pressed');
-		showFeatures(adventureData, buttonPressed, characterData);
+		showFeatures(adventureData, buttonPressed, characterData, stats);
 	});
 
 	const inventoryButton = overlayBody.querySelector('#inventory');
 	inventoryButton.addEventListener('click', function () {
 		console.log('inventory button pressed');
-		showInventory(adventureData, buttonPressed);
+		showInventory(adventureData, buttonPressed, stats);
 	});
 
 	const spellsButton = overlayBody.querySelector('#spells');
@@ -1187,7 +1090,7 @@ function showBio(adventureData, buttonPressed, characterData) {
 	content.appendChild(overlayBody);
 }
 
-function showFeatures(adventureData, buttonPressed, characterData) {
+function showFeatures(adventureData, buttonPressed, characterData, stats) {
 	if (characterSheetOverlayOpen && buttonPressed == "null") {
 		console.log("character sheet already open");
 		return;
@@ -1213,7 +1116,6 @@ function showFeatures(adventureData, buttonPressed, characterData) {
 	//closes the overlay on button click of the cross
 	const closeButton = header.querySelector('.close');
 	closeButton.addEventListener('click', function () {
-		//overlayContainer.style.display = 'none';
 		characterSheetOverlayOpen = false;
 
 		const characterSheetOverlay = document.getElementById('customOverlay');
@@ -1249,66 +1151,62 @@ function showFeatures(adventureData, buttonPressed, characterData) {
 
 	const actionTypes = ['class', 'background', 'feat', 'item', 'race'];
 
-	// Iterate over each action type
-	actionTypes.forEach(actionType => {
-   		try {
-     		    // Get the array of actions based on the current action type
-     	  	    const actions = actionType === 'class' ? characterData.actions[actionType] : characterData.actions[actionType];
+	try {
+		// Iterate over each action type
+		actionTypes.forEach(actionType => {
+			// Get the array of actions based on the current action type
+			const actions = actionType === 'class' ? characterData.actions[actionType] : characterData.actions[actionType];
 
-        	    // Loop through the actions array and add elements to the listFeatures array
-               	actions.forEach(action => {
-					var allActionsDiv = document.querySelector('#allActions');
+			// Loop through the actions array and add elements to the listFeatures array
+			actions.forEach(action => {
+				var featureNameButton = document.createElement('button');
+				featureNameButton.id = "featureButton";
+				featureNameButton.textContent = action.name;
 
-         	        var featureNameButton = document.createElement('button');
-         	        featureNameButton.id = "featureButton";
-         	        featureNameButton.textContent = action.name;
+				var featureDescription = document.createElement('p');
+				featureDescription.textContent = descriptionToCharacterData(action.snippet, characterData, stats);
 
-           	        var featureDescription = document.createElement('p');
-            	        featureDescription.textContent = descriptionToCharacterData(action.snippet, characterData, stats);
+				var breakline = document.createElement('hr');
 
-           	        var breakline = document.createElement('hr');
-
-            	    // Add all elements to the listFeatures array
-            	    listFeatures.push([featureNameButton, featureDescription, breakline]);
-       		    });
-    		} catch (error) {
-        	    console.log(`Error processing ${actionType} actions:`, error);
-    		}
-	    });
+				// Add all elements to the listFeatures array
+				listFeatures.push([featureNameButton, featureDescription, breakline]);
+			});
+		});
+	} catch { }
 
 	const optionTypes = ['class', 'background', 'feat', 'item', 'race'];
 
 	// Iterate over each option type
 	optionTypes.forEach(optionType => {
-    		try {
-        	    // Get the array of options based on the current option type
-        	    const options = characterData.options[optionType];
+    	try {
+        	// Get the array of options based on the current option type
+        	const options = characterData.options[optionType];
 
-        	    // Loop through the options array and add elements to the listFeatures array
-        	    options.forEach(option => {
-            		var allActionsDiv = document.querySelector('#allActions');
+        	// Loop through the options array and add elements to the listFeatures array
+        	options.forEach(option => {
+            	var allActionsDiv = document.querySelector('#allActions');
 
-            		var featureNameButton = document.createElement('button');
-            		featureNameButton.id = "featureButton";
-            		featureNameButton.textContent = option.definition.name;
+            	var featureNameButton = document.createElement('button');
+            	featureNameButton.id = "featureButton";
+            	featureNameButton.textContent = option.definition.name;
 
-            		var featureDescription = document.createElement('p');
-            		featureDescription.textContent = descriptionToCharacterData(option.definition.snippet, characterData, stats);
+            	var featureDescription = document.createElement('p');
+            	featureDescription.textContent = descriptionToCharacterData(option.definition.snippet, characterData, stats);
 
-            		var breakline = document.createElement('hr');
+            	var breakline = document.createElement('hr');
 
-            		// Add all elements to the listFeatures array
-            		listFeatures.push([featureNameButton, featureDescription, breakline]);
-        	    });
-    		} catch {}
+            	// Add all elements to the listFeatures array
+            	listFeatures.push([featureNameButton, featureDescription, breakline]);
+        	});
+    	} catch {}
 	});
 
 	listFeatures.sort((a, b) => {
-    		// Check if either 'a' or 'b' is undefined
-    		if (!a || !a[0].innerHTML) return -1; // 'a' comes before 'b'
-    		if (!b || !b[0].innerHTML) return 1; // 'b' comes before 'a'
-    		return a[0].innerHTML.localeCompare(b[0].innerHTML);
-		});
+    	// Check if either 'a' or 'b' is undefined
+    	if (!a || !a[0].innerHTML) return -1; // 'a' comes before 'b'
+    	if (!b || !b[0].innerHTML) return 1; // 'b' comes before 'a'
+    	return a[0].innerHTML.localeCompare(b[0].innerHTML);
+	});
 
 	for (let i = 0; i<listFeatures.length; i++) {
 		var allFeaturesDiv = document.querySelector('#allActions');
@@ -1316,20 +1214,19 @@ function showFeatures(adventureData, buttonPressed, characterData) {
 		for (let j = 0; j<listFeatures[i].length; j++) {
 		    allFeaturesDiv.appendChild(listFeatures[i][j]);
 		}
-
 	}
 
 	//event listeners for the character buttons
 	const actionButton = overlayBody.querySelector('#actions');
 	actionButton.addEventListener('click', function () {
 		console.log("action button pressed");
-		showActions(adventureData, buttonPressed, characterData);
+		showActions(adventureData, buttonPressed, characterData, stats);
 	});
 
 	const bioButton = overlayBody.querySelector('#bio');
 	bioButton.addEventListener('click', function () {
 		console.log("bio button pressed");
-		showBio(adventureData, buttonPressed, characterData);
+		showBio(adventureData, buttonPressed, characterData, stats);
 	});
 
 	const characterButton = overlayBody.querySelector('#character');
@@ -1348,7 +1245,7 @@ function showFeatures(adventureData, buttonPressed, characterData) {
 	const inventoryButton = overlayBody.querySelector('#inventory');
 	inventoryButton.addEventListener('click', function () {
 		console.log('inventory button pressed');
-		showInventory(adventureData, buttonPressed, characterData);
+		showInventory(adventureData, buttonPressed, characterData, stats);
 	});
 
 	const spellsButton = overlayBody.querySelector('#spells');
@@ -1360,7 +1257,7 @@ function showFeatures(adventureData, buttonPressed, characterData) {
 	content.appendChild(overlayBody);
 }
 
-function showInventory(adventureData, buttonPressed, characterData) {
+function showInventory(adventureData, buttonPressed, characterData, stats) {
 	if (characterSheetOverlayOpen && buttonPressed == "null") {
 		console.log("character sheeta already open");
 		return;
@@ -1394,7 +1291,7 @@ function showInventory(adventureData, buttonPressed, characterData) {
 			characterSheetOverlay.remove();
 		}
 	});
-
+	
 	const overlayBody = document.querySelector('.panel-body');
 	overlayBody.innerHTML = `
 		<style>
@@ -1491,13 +1388,13 @@ function showInventory(adventureData, buttonPressed, characterData) {
 	const actionButton = overlayBody.querySelector('#actions');
 	actionButton.addEventListener('click', function () {
 		console.log("action button pressed");
-		showActions(adventureData, buttonPressed, characterData);
+		showActions(adventureData, buttonPressed, characterData, stats);
 	});
 
 	const bioButton = overlayBody.querySelector('#bio');
 	bioButton.addEventListener('click', function () {
 		console.log("bio button pressed");
-		showBio(adventureData, buttonPressed, characterData);
+		showBio(adventureData, buttonPressed, characterData, stats);
 	});
 
 	const characterButton = overlayBody.querySelector('#character');
@@ -1511,7 +1408,7 @@ function showInventory(adventureData, buttonPressed, characterData) {
 	const featuresButton = overlayBody.querySelector('#features');
 	featuresButton.addEventListener('click', function () {
 		console.log('features button pressed');
-		showFeatures(adventureData, buttonPressed, characterData);
+		showFeatures(adventureData, buttonPressed, characterData, stats);
 	});
 
 	const inventoryButton = overlayBody.querySelector('#inventory');
@@ -1990,13 +1887,13 @@ function showSpells(adventureData, buttonPressed, characterData, stats) {
 			const actionButton = overlayBody.querySelector('#actions');
 			actionButton.addEventListener('click', function () {
 				console.log("action button pressed");
-				showActions(adventureData, buttonPressed, characterData);
+				showActions(adventureData, buttonPressed, characterData, stats);
 			});
 
 			const bioButton = overlayBody.querySelector('#bio');
 			bioButton.addEventListener('click', function () {
 				console.log("bio button pressed");
-				showBio(adventureData, buttonPressed, characterData);
+				showBio(adventureData, buttonPressed, characterData, stats);
 			});
 
 			const characterButton = overlayBody.querySelector('#character');
@@ -2010,13 +1907,13 @@ function showSpells(adventureData, buttonPressed, characterData, stats) {
 			const featuresButton = overlayBody.querySelector('#features');
 			featuresButton.addEventListener('click', function () {
 				console.log('features button pressed');
-				showFeatures(adventureData, buttonPressed, characterData);
+				showFeatures(adventureData, buttonPressed, characterData, stats);
 			});
 
 			const inventoryButton = overlayBody.querySelector('#inventory');
 			inventoryButton.addEventListener('click', function () {
 				console.log('inventory button pressed');
-				showInventory(adventureData, buttonPressed);
+				showInventory(adventureData, buttonPressed, characterData, stats);
 			});
 
 			const spellsButton = overlayBody.querySelector('#spells');

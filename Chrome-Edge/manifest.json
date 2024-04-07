@@ -22,7 +22,7 @@
     },
     "content_scripts": [
         {
-            "matches": ["https://www.cauldron-vtt.net/character/new","https://www.cauldron-vtt.net/character/*"],
+          "matches": [ "https://www.cauldron-vtt.net/character/new", "https://www.cauldron-vtt.net/character/**"],
             "js": ["cauldronNewCharacter.js"]
         },
         {
