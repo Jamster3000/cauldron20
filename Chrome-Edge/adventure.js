@@ -1505,7 +1505,7 @@ function showFeatures(adventureData, buttonPressed, characterData, stats) {
 	content.appendChild(overlayBody);
 }
 
-	function showInventory(adventureData, buttonPressed, characterData, stats) {
+function showInventory(adventureData, buttonPressed, characterData, stats) {
 		if (characterSheetOverlayOpen && buttonPressed == "null") {
 			console.log("character sheeta already open");
 			return;
@@ -1620,7 +1620,7 @@ function showFeatures(adventureData, buttonPressed, characterData, stats) {
 			costLabel.style.left = "120px";
 
 			var itemDescription = document.createElement('label');
-			itemDescription.textContent = removeHtmlTags(characterData.inventory[i].definition.description);
+			itemDescription.textContent = removeHtmlTags(characterData.inventory[i].definition.description).replace(/<br><br>/g, '');
 
 			//breakline
 			const breakline = document.createElement('hr');
@@ -2557,14 +2557,14 @@ function getCharacterStats(characterData) {
 		if (characterData.modifiers.race[i].friendlyTypeName === "Bonus") {
 			const abilityIncrease = characterData.modifiers.race[i].friendlySubtypeName.replace(" Score", "");
 			if (abilityIncrease === "Strength") {
-			totalStrength += characterData.modifiers.race[i].value;
+				totalStrength += characterData.modifiers.race[i].value;
 			} else if (abilityIncrease === "Dexterity") {
-			totalDexterity += characterData.modifiers.race[i].value;
+				totalDexterity += characterData.modifiers.race[i].value;
 			} else if (abilityIncrease === "Constitution") {
-			totalConstitution += characterData.modifiers.race[i].value;
-			} else if (abilityIncrease === "Intelligence") {
-					totalIntelligence += characterData.modifiers.race[i].value;
-				}
+				totalConstitution += characterData.modifiers.race[i].value;
+			} else if (abilityIncrease === "Intellegence") {
+				totalIntelligence += characterData.modifiers.race[i].value;
+			}
 		}
 	}
 
