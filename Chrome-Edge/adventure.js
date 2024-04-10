@@ -1723,8 +1723,6 @@ function showSpells(adventureData, buttonPressed, characterData, stats) {
 			chrome.storage.local.get(null, function (result) {
 				console.log('All stored data:', result);
 			});
-			console.log("======");
-			console.log(data);
 			const overlayBody = document.querySelector('.panel-body');
 			overlayBody.innerHTML = `
 			<style>
@@ -1782,9 +1780,9 @@ function showSpells(adventureData, buttonPressed, characterData, stats) {
 						<h2><b>Level 1</b></h2>
 						<p>Spell Slots&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspExpended Spell Slots</p>
 						<div style="display: flex; justify-content: space-between;">
-    							<input class="spellSlots1" placeholder="${characterData.spellSlots[0].available}" disabled=true style="width: 40px;">
+    							<input class="spellSlots1" value="${characterData.spellSlots[0].available}" disabled=true style="width: 40px;">
 							<div style="width: 5px;"></div>
-    							<input class="spellSlotsUsed" value="${data[0].used}" disabled=true style="width: 40px;">
+    							<input class="spellSlotsUsed1" value="${data[0].used}" disabled=true style="width: 40px;">
 						</div>
 						<br>
 						</div>
@@ -2146,7 +2144,20 @@ function showSpells(adventureData, buttonPressed, characterData, stats) {
 							//description
 							spellInformation["description"] = removeHtmlTags(spellLocation[j][i].definition.description);
 
-							spellInfo(buttonPressed, adventureData, spellInformation, spellLocation[j][i].definition.level, characterData, stats);
+							if (spellInformation['school level'].split(' Level ')[1] == 1) {
+								const maxSpellSlot = document.querySelector('.spellSlots1');
+								const avaliableSpellSlots = document.querySelector('.spellSlotsUsed1');
+
+								if (avaliableSpellSlots.value != maxSpellSlot.value) {
+									spellInfo(buttonPressed, adventureData, spellInformation, spellLocation[j][i].definition.level, characterData, stats, true);
+								} else {
+									spellInfo(buttonPressed, adventureData, spellInformation, spellLocation[j][i].definition.level, characterData, stats, false);
+								}
+							} else {
+								spellInfo(buttonPressed, adventureData, spellInformation, spellLocation[j][i].definition.level, characterData, stats, true);
+							}
+
+							
 						})
 
 						//breakline
@@ -2274,7 +2285,7 @@ function showSpells(adventureData, buttonPressed, characterData, stats) {
 	});
 }
 
-function spellInfo(buttonPressed, adventureData, spellInformation, spellLevel, characterData, stats) {
+function spellInfo(buttonPressed, adventureData, spellInformation, spellLevel, characterData, stats, saveSpells) {
 	if (characterSheetOverlayOpen && buttonPressed === null) {
 		console.log("Character sheet already open");
 		return;
@@ -2295,7 +2306,7 @@ function spellInfo(buttonPressed, adventureData, spellInformation, spellLevel, c
 	}
 
 	var header = document.getElementById('titleBar');
-	header.innerHTML = `${characterData.name} - Spells ${characterHidden} <span class="glyphicon glyphicon-remove close" aria-hidden="true"></span>`;
+	header.innerHTML = `${characterData.name} - ${spellInformation['name']} ${characterHidden} <span class="glyphicon glyphicon-remove close" aria-hidden="true"></span>`;
 
 	//closes the overlay on button click of the cross
 	const closeButton = header.querySelector('.close');
@@ -2327,6 +2338,7 @@ function spellInfo(buttonPressed, adventureData, spellInformation, spellLevel, c
 			</div>
         <div>
     `;
+	let highestSpellLevel = 0;
 
 	if (characterData.classes[0].definition.name === "Warlock") {
 		var castButton = document.createElement('button');
@@ -2339,7 +2351,6 @@ function spellInfo(buttonPressed, adventureData, spellInformation, spellLevel, c
 
 		overlayBody.appendChild(castButton);
 
-		let highestSpellLevel = 0;
 		for (let i = 0; i < characterData.classSpells[0].spells.length; i++) {
 			if (characterData.classSpells[0].spells[i].definition.level > highestSpellLevel) {
 				highestSpellLevel = characterData.classSpells[0].spells[i].definition.level;
@@ -2351,6 +2362,16 @@ function spellInfo(buttonPressed, adventureData, spellInformation, spellLevel, c
 		} else {
 			castButton.textContent = `Cast Spell At Highest Level (${highestSpellLevel})`;
 		}
+	} else {
+		var castButton = document.createElement('button');
+		castButton.id = "castSpell";
+		castButton.className = "btn btn-primary btn-xs open_menu";
+		castButton.style.fontSize = '25px';
+		castButton.style.marginLeft = '75px';
+		castButton.style.marginTop = '5px';
+		castButton.textContent = "Cast Spell";
+
+		overlayBody.appendChild(castButton);
 	}
 
 	const backButton = overlayBody.querySelector('#backButton');
@@ -2376,66 +2397,107 @@ function spellInfo(buttonPressed, adventureData, spellInformation, spellLevel, c
 
 		if (characterData.classes[0].definition.name === "Warlock") {
 			sendDataToSidebar(message + `\n\n[Cast at highest level]`, characterData.name);
-		} else {
-			sendDataToSidebar(message, characterData.name);
-		}
 
-		getSpellSlots(function (data) {
-			if (data) {
-				console.log(data);
-				console.log(data[0].used);
-				switch (spellLevel) {
-					case 1:
+			getSpellSlots(function (data) {
+				if (data) {
+					if (highestSpellLevel == 1) {
+						const maxSpellSlots = document.querySelector(`.spellSlots1`);
 						if (spellInformation["cast at will"]) {
 							data[0].used = data[0].used + 1;
 						}
-						break;
-					case 2:
+					} else if (highestSpellLevel == 2) {
+						const maxSpellSlots = document.querySelector('.spellSlots2');
 						if (spellInformation["cast at will"]) {
 							data[1].used = data[1].used + 1;
 						}
-						break;
-					case 3:
+					} else if (highestSpellLevel == 3) {
+						const maxSpellSlots = document.querySelector('.spellSlots3');
 						if (spellInformation["cast at will"]) {
 							data[2].used = data[2].used + 1;
 						}
-						break;
-					case 4:
+					} else if (highestSpellLevel == 4) {
+						const maxSpellSlots = document.querySelector('.spellSlots4');
 						if (spellInformation["cast at will"]) {
 							data[3].used = data[3].used + 1;
 						}
-						break;
-					case 5:
+					} else if (highestSpellLevel == 5) {
+						const maxSpellSlots = document.querySelector('.spellSlots5');
 						if (spellInformation["cast at will"]) {
 							data[4].used = data[4].used + 1;
 						}
-						break;
-					case 6:
-						if (spellInformation["cast at will"]) {
-							data[5].used = data[5].used + 1;
-						}
-						break;
-					case 7:
-						if (spellInformation["cast at will"]) {
-							data[6].used = data[6].used + 1;
-						}
-						break;
-					case 8:
-						if (spellInformation["cast at will"]) {
-							data[7].used = data[7].used + 1;
-						}
-						break;
-					case 9:
-						if (spellInformation["cast at will"]) {
-							data[8].used = data[8].used + 1;
-						}
-						break;
+					}
+
+					if (saveSpells === true) {
+						saveSpellSlots(data, function () {
+							showSpells(adventureData, buttonPressed, characterData, stats);
+						});
+					}
 				}
-				saveSpellSlots(data);
-				console.log(data);
-				showSpells(adventureData, buttonPressed, characterData, stats);
-			}
-		});
+			});
+
+		} else {
+			sendDataToSidebar(message, characterData.name);
+
+			getSpellSlots(function (data) {
+				if (data) {
+					console.log(data);
+					console.log(data[0].used);
+					switch (spellLevel) {
+						case 1:
+							if (spellInformation["cast at will"]) {
+								data[0].used = data[0].used + 1;
+							}
+							break;
+						case 2:
+							if (spellInformation["cast at will"]) {
+								data[1].used = data[1].used + 1;
+							}
+							break;
+						case 3:
+							if (spellInformation["cast at will"]) {
+								data[2].used = data[2].used + 1;
+							}
+							break;
+						case 4:
+							if (spellInformation["cast at will"]) {
+								data[3].used = data[3].used + 1;
+							}
+							break;
+						case 5:
+							if (spellInformation["cast at will"]) {
+								data[4].used = data[4].used + 1;
+							}
+							break;
+						case 6:
+							if (spellInformation["cast at will"]) {
+								data[5].used = data[5].used + 1;
+							}
+							break;
+						case 7:
+							if (spellInformation["cast at will"]) {
+								data[6].used = data[6].used + 1;
+							}
+							break;
+						case 8:
+							if (spellInformation["cast at will"]) {
+								data[7].used = data[7].used + 1;
+							}
+							break;
+						case 9:
+							if (spellInformation["cast at will"]) {
+								data[8].used = data[8].used + 1;
+							}
+							break;
+					}
+
+					if (saveSpells === true) {
+						saveSpellSlots(data, function () {
+							showSpells(adventureData, buttonPressed, characterData, stats);
+						});
+					}
+				}
+			});
+		}
 	});
 	content.appendChild(overlayBody);
 }
@@ -2585,7 +2647,7 @@ function removeHtmlTags(htmlString) {
 
 	return result;
 }
-timeing issue here as it gets the spells before the updated spells are updated
+//timeing issue here as it gets the spells before the updated spells are updated
 function getSpellSlots(callback) {
 	chrome.storage.local.get('currentSpellSlots', function (result) {
 		if (result.currentSpellSlots) {
@@ -2598,12 +2660,13 @@ function getSpellSlots(callback) {
 	});
 }
 
-function saveSpellSlots(spellSlots) {
+function saveSpellSlots(spellSlots, callback = () => { }) {
 	chrome.storage.local.get('currentSpellSlots', function (result) {
 		if (result.currentSpellSlots != null && spellSlots != null) {
 			console.log('spell slot Data already exists');
 			chrome.storage.local.set({ 'currentSpellSlots': spellSlots }, function () {
 				console.log("Spell Slots stored");
+				callback();
 			});
 		} else {
 			console.log('spell slot Data does not exist.');
@@ -2611,6 +2674,7 @@ function saveSpellSlots(spellSlots) {
 				const characterData = result.characterData;
 				chrome.storage.local.set({ 'currentSpellSlots': characterData.spellSlots }, function () {
 					console.log("Spell Slots stored from characterData");
+					callback();
 				});
 			});
 		}
@@ -2685,4 +2749,5 @@ function calculateDamage(dice, modifier) {
 /*things that have been updated##################################
 - The unarmed strike can now make both attack and damage rolls, attack rolls, or damage rolls. It takes into account monks can deal more damage on unarmed strikes than most other characters.
 - All buttons on charactersheet, actions, bio, features, inventory now roll approperatly and working as they should.
+- You can now cast spells and it will expend a spell slot for you, once reaching the maximum amount of spell slots have been expended it will allow you to view spells but not cast them.
 */
