@@ -2,62 +2,60 @@ let characterSheetOverlayOpen = false;
 saveSpellSlots(null);
 
 setTimeout(function () {
-	try {
-		if (adventureData['@is_dm'] === "yes") {
-			console.log('You are the DM, there is no character button for you!');
-		} else {
-			const container = document.querySelector('.btn-group');//contains each section of the page (playArea, chat, header, etc.)
+	const urlWithJsonOutput = window.location.href + "?output=json";
+	fetchJsonDataFromUrl(urlWithJsonOutput)
+		.then(adventureData => {
+			adventureData = adventureData.adventure;
+			console.log(adventureData);
+			try {
+				if (adventureData['@is_dm'] === "yes") {
+					console.log('You are the DM, there is no character button for you!');
+				} else {
+					const container = document.querySelector('.btn-group');//contains each section of the page (playArea, chat, header, etc.)
 
-			const viewCharacter = document.createElement('button');
-			viewCharacter.textContent = "View Character Sheet";
-			viewCharacter.classList.add('btn', 'btn-primary', 'btn-xs', 'open_menu');//btn btn-primary btn-xs open_menu
-			viewCharacter.display = 'inline-block';
-			viewCharacter.style.position = 'fixed';
-			viewCharacter.style.height = '19.6px';
-			viewCharacter.style.top = '7px';
-			viewCharacter.style.right = '100px';
-			container.appendChild(viewCharacter); // Appended the button to the container
+					const viewCharacter = document.createElement('button');
+					viewCharacter.textContent = "View Character Sheet";
+					viewCharacter.classList.add('btn', 'btn-primary', 'btn-xs', 'open_menu');//btn btn-primary btn-xs open_menu
+					viewCharacter.display = 'inline-block';
+					viewCharacter.style.position = 'fixed';
+					viewCharacter.style.height = '19.6px';
+					viewCharacter.style.top = '7px';
+					viewCharacter.style.right = '100px';
+					container.appendChild(viewCharacter); // Appended the button to the container
 
-			viewCharacter.addEventListener('click', function (event) {
-				event.preventDefault();
-				getUserCharacter((error, adventureData) => {
-					if (error) {
-						console.error('Error:', error);
-						return;
-					}
+
+					viewCharacter.addEventListener('click', function (event) {
+						event.preventDefault();
+						showCharacterSheet(adventureData);
+					});
+				}
+			} catch {
+				const container = document.querySelector('.btn-group');//contains each section of the page (playArea, chat, header, etc.)
+
+				const viewCharacter = document.createElement('button');
+				viewCharacter.textContent = "View Character Sheet";
+				viewCharacter.classList.add('btn', 'btn-primary', 'btn-xs', 'open_menu');//btn btn-primary btn-xs open_menu
+				viewCharacter.display = 'inline-block';
+				viewCharacter.style.position = 'fixed';
+				viewCharacter.style.height = '19.6px';
+				viewCharacter.style.top = '7px';
+				viewCharacter.style.right = '100px';
+				container.appendChild(viewCharacter); // Appended the button to the container
+
+
+				viewCharacter.addEventListener('click', function (event) {
+					event.preventDefault();
 					showCharacterSheet(adventureData);
 				});
-			});
-		}
-	} catch {
-		const container = document.querySelector('.btn-group');//contains each section of the page (playArea, chat, header, etc.)
-
-		const viewCharacter = document.createElement('button');
-		viewCharacter.textContent = "View Character Sheet";
-		viewCharacter.classList.add('btn', 'btn-primary', 'btn-xs', 'open_menu');//btn btn-primary btn-xs open_menu
-		viewCharacter.display = 'inline-block';
-		viewCharacter.style.position = 'fixed';
-		viewCharacter.style.height = '19.6px';
-		viewCharacter.style.top = '7px';
-		viewCharacter.style.right = '100px';
-		container.appendChild(viewCharacter); // Appended the button to the container
-
-		viewCharacter.addEventListener('click', function (event) {
-			event.preventDefault();
-			getUserCharacter((error, adventureData) => {
-				if (error) {
-					console.error('Error:', error);
-					return;
-				}
-				showCharacterSheet(adventureData);
-			});
+			}
+		})
+		.catch(error => {
+			console.error('Error fetching JSON data:', error);
 		});
-	}
 }, 0);
 
 function showCharacterSheet(adventureData, buttonPressed) {
     if (characterSheetOverlayOpen && buttonPressed == "null") {
-        console.log('character sheet already open');
 		return;
 	}
 
@@ -70,431 +68,431 @@ function showCharacterSheet(adventureData, buttonPressed) {
     const listSkills = [{ name: "Acrobatics", ability: "Dex" },{ name: "Animal Handling", ability: "Wis" },{ name: "Arcana", ability: "Int" },{ name: "Athletics", ability: "Str" },{ name: "Deception", ability: "Cha" },{ name: "History", ability: "Int" },{ name: "Insight", ability: "Wis" },{ name: "Intimidation", ability: "Cha" },{ name: "Investigation", ability: "Int" },{ name: "Medicine", ability: "Wis" },{ name: "Nature", ability: "Int" },{ name: "Perception", ability: "Wis" },{ name: "Performance", ability: "Cha" },{ name: "Persuasion", ability: "Cha" },{ name: "Religion", ability: "Int" },{ name: "Sleight of Hand", ability: "Dex" },{ name: "Stealth", ability: "Dex" },{ name: "Survival", ability: "Wis" }];
     const savingThrowList = ["Strength", "Dexterity", "Constitution", "Intellegence", "Wisdom", "Charisma"];    
 
-	chrome.storage.local.get('characterData', function (result) {
-        const characterData = result.characterData;
-		const stats = getCharacterStats(characterData);
-		console.log(characterData);
-		console.log(adventureData);
+	const urlWithJsonOutput = window.location.href + "?output=json";
+	fetchJsonDataFromUrl(urlWithJsonOutput)
+		.then(adventureData => {
+			adventureData = adventureData.adventure;
+			chrome.storage.local.get('characterData', function (result) {
+				const characterData = result.characterData;
+				const stats = getCharacterStats(characterData);
+				//console.log(characterData); //uncomment this to output all the data from the dndbeyond api
 
-		chrome.storage.local.get(null, function (result) {
-			console.log('All stored data:', result);
-		});
+				chrome.storage.local.get(null, function (result) {
+					//console.log('All stored data:', result);//uncomment this to get all data stored in the user's local chrome storage for this extension
+				});
 
-        const overlayContainer = document.createElement('div');
-        overlayContainer.id = 'customOverlay';
-        overlayContainer.classList.add('panel', 'panel-primary');
-        overlayContainer.style.display = 'none';
-        overlayContainer.style.position = 'fixed';
-        overlayContainer.style.top = '40px';
-        overlayContainer.style.left = '15px';
-        overlayContainer.style.backgroundColor = 'rgba(255,255,255, 1)';
-        overlayContainer.style.zIndex = '10010';
+				const overlayContainer = document.createElement('div');
+				overlayContainer.id = 'customOverlay';
+				overlayContainer.classList.add('panel', 'panel-primary');
+				overlayContainer.style.display = 'none';
+				overlayContainer.style.position = 'fixed';
+				overlayContainer.style.top = '40px';
+				overlayContainer.style.left = '15px';
+				overlayContainer.style.backgroundColor = 'rgba(255,255,255, 1)';
+				overlayContainer.style.zIndex = '10010';
 
-		let currentCauldronHitPoints = 0;
-		let currentArmourClass = 0;
-		let characterHidden = "";
+				let currentCauldronHitPoints = 0;
+				let currentArmourClass = 0;
+				let characterHidden = "";
 
-		//get the player's character's current hp
-		// the current hp of the viewd character will be based on what the hp for their charatcer is on cauldron
-		for (let i = 0; i<adventureData.characters.character.length; i++) {
-			if (adventureData.characters.character[i].name === characterData.name) {
-			currentCauldronHitPoints = (Number(adventureData.characters.character[i].hitpoints) - Number(adventureData.characters.character[i].damage));
-			currentArmourClass = (Number(adventureData.characters.character[i].armor_class));
+				if (adventureData.characters.character.length != null) {
+					for (let i = 0; i < adventureData.characters.character.length; i++) {
+						if (adventureData.characters.character[i].name === characterData.name) {
+							currentCauldronHitPoints = (Number(adventureData.characters.character[i].hitpoints) - Number(adventureData.characters.character[i].damage));
+							currentArmourClass = (Number(adventureData.characters.character[i].armor_class));
 
-			if (adventureData.characters.character[i].hidden === "yes") {
-				characterHidden = "[hidden]";
-			}
-			break;
-			}
-		}
+							if (adventureData.characters.character[i].hidden === "yes") {
+								characterHidden = "[hidden]";
+							}
+							break;
+						}
+					}
+				} else {
+					currentCauldronHitPoints = (Number(adventureData.characters.character.hitpoints) - Number(adventureData.characters.character.damage));
+					currentArmourClass = (Number(adventureData.characters.character.armor_class));
 
-			// Create overlay header
-			const overlayHeader = document.createElement('div');
-			overlayHeader.classList.add('panel-heading');
-			overlayHeader.id = "titleBar";
-			overlayHeader.innerHTML = `${characterData.name} - Character ${characterHidden} <span class="glyphicon glyphicon-remove close" aria-hidden="true"></span>`;
+					if (adventureData.characters.character.hidden === "yes") {
+						characterHidden = "[hidden]";
+					}
+				}
 
-		const closeButton = overlayHeader.querySelector('.close');
-		closeButton.addEventListener('click', function() {
-			overlayContainer.style.display = 'none';
-			characterSheetOverlayOpen = false;
+					// Create overlay header
+					const overlayHeader = document.createElement('div');
+					overlayHeader.classList.add('panel-heading');
+					overlayHeader.id = "titleBar";
+					overlayHeader.innerHTML = `${characterData.name} - Character ${characterHidden} <span class="glyphicon glyphicon-remove close" aria-hidden="true"></span>`;
 
-			const characterSheetOverlay = document.getElementById('customOverlay');
-			if (characterSheetOverlay) {
-	   		characterSheetOverlay.remove();
-			}
-		});
+				const closeButton = overlayHeader.querySelector('.close');
+				closeButton.addEventListener('click', function() {
+					overlayContainer.style.display = 'none';
+					characterSheetOverlayOpen = false;
 
-		//working out the total character hp
-		const conStat = Math.floor((stats.totalConstitution - 10) / 2)//ability score -10/2 to get modifier (round up)
-		const level = calculateLevel(characterData.currentXp)
-		const totalHitPoints = characterData.baseHitPoints + (Number(conStat) * Number(level));//constitustion modifier X level + base hit points = total hp
-		console.log("total: " + totalHitPoints);
+					const characterSheetOverlay = document.getElementById('customOverlay');
+					if (characterSheetOverlay) {
+	   				characterSheetOverlay.remove();
+					}
+				});
 
-		// Create overlay body
-		const overlayBody = document.createElement('div');
-		overlayBody.classList.add('panel-body');
+				//working out the total character hp
+				const conStat = Math.floor((stats.totalConstitution - 10) / 2)//ability score -10/2 to get modifier (round up)
+				const level = calculateLevel(characterData.currentXp)
+				const totalHitPoints = characterData.baseHitPoints + (Number(conStat) * Number(level));//constitustion modifier X level + base hit points = total hp
 
-		//html for the main page of the character sheet
-		overlayBody.innerHTML = `
-				<style>
-        				.character-menu {
-            				display: grid;
-            				grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); /* Adjust minmax values as needed */
-            				gap: 10px; /* Adjust gap as needed */
-        				}
-    				</style>
-				<div id="overlayContainer" style="display: flex;">
-    					<div style="border: 2px solid #336699; padding: 10px; margin-right: 10px; height: 515px;">
-						<br>
-       		            			<h5 style="font-weight: bold;">STR</h5>
-        					<button id="strButton" style="margin-right: 5px;">${stats.totalStrength} (${stats.totalStrength >= 10 ? '+' : ''}${Math.floor((stats.totalStrength-10)/2)})</button>
-						<h5 style="font-weight: bold;">DEX</h5>
-        					<button id="dexButton" style="margin-right: 5px;">${stats.totalDexterity} (${stats.totalDexterity >= 10 ? '+' : ''}${Math.floor((stats.totalDexterity-10)/2)})</button>
-        					<h5 style="font-weight: bold;">CON</h5>
-        					<button id="conButton" style="margin-right: 5px;">${stats.totalConstitution} (${stats.totalConstitution >= 10 ? '+' : ''}${Math.floor((stats.totalConstitution-10)/2)})</button>
-  						<h5 style="font-weight: bold;">INT</h5>
-        					<button id="intButton" style="margin-right: 5px;">${stats.totalIntellegence} (${stats.totalIntellegence >= 10 ? '+' : ''}${Math.floor((stats.totalIntellegence-10)/2)})</button>
-						<h5 style="font-weight: bold;">WIS</h5>
-        					<button id="wisButton" style="margin-right: 5px;">${stats.totalWisdom} (${stats.totalWisdom >= 10 ? '+' : ''}${Math.floor((stats.totalWisdom-10)/2)})</button>
-						<h5 style="font-weight: bold;">CHA</h5>
-        					<button id="chaButton" style="margin-right: 5px;">${stats.totalCharisma} (${stats.totalCharisma >= 10 ? '+' : ''}${Math.floor((stats.totalCharisma-10)/2)})</button>
-    			    			<h3 style="margin-top: 50px; font-size: 20px;">ᴬᵇᶦˡᶦᵗʸ ˢᶜᵒʳᵉ</h3>
-					</div>
-					<div id=SkillListDiv style="border: 2px solid #336699; padding: 15px; margin-right: 10px; height: 515px;">
-					<ul id="skillList">
-					</ul>
-					<h3 style="margin-top: -10px; font-size: 20px; margin-left: 45px;">ˢᵏᶦˡˡˢ</h3>
-					</div>
-					<div style="border: 2px solid #336699; padding 15px; margin-right: 1px; height: 185px; margin-top: 330px; width: 110px;">
-					<ul id="savingThrowElement">
-						</ul>
-					<h3 style="margin-top: -8px; font-size: 20px; margin-left: 10px;">ˢᵃᵛᶦⁿᵍ ᵀʰʳᵒʷˢ</h3>
-					</div>
-					<div class="Character-menu-container" style="margin-top: 95px; height: 40px; margin-left: 9px;">
-						<div class="character-menu" style="border: 2px solid #336699; padding 5px; height: 230px; width: 110px; margin-left: -120px;">
-						<button id="actions" class="btn btn-primary btn-xs open_menu" style="font-size: 12px; margin-top: 10px; margin-left: 2px; width: 100px; height: 28px;">Actions</button>
-						<button id="bio" class="btn btn-primary btn-xs open_menu" style="font-size: 12px; margin-top: -10px; margin-left: 2px; width: 100px; height: 28px;">Bio</button>
-						<button id="character" class="btn btn-primary btn-xs open_menu" style="font-size: 12px; margin-top: -10px; margin-left: 2px; width: 100px; height: 28px;">Character</button>
-						<button id="features" class="btn btn-primary btn-xs open_menu" style="font-size: 12px; margin-top: -10px; margin-left: 2px; width: 100px; height: 28px;">Features</button>	
-						<button id="inventory" class="btn btn-primary btn-xs open_menu" style="font-size: 12px; margin-top: -10px; margin-left: 2px; width: 100px; height: 28px;">Inventory</button>
-						<button id="spells" class="btn btn-primary btn-xs open_menu" style="font-size: 12px; margin-top: -10px; margin-left: 2px; width: 100px; height: 28px;">Spells</button>
+				// Create overlay body
+				const overlayBody = document.createElement('div');
+				overlayBody.classList.add('panel-body');
+
+				//html for the main page of the character sheet
+				overlayBody.innerHTML = `
+						<style>
+        						.character-menu {
+            						display: grid;
+            						grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); /* Adjust minmax values as needed */
+            						gap: 10px; /* Adjust gap as needed */
+        						}
+    						</style>
+						<div id="overlayContainer" style="display: flex;">
+    							<div style="border: 2px solid #336699; padding: 10px; margin-right: 10px; height: 515px;">
+								<br>
+       		            					<h5 style="font-weight: bold;">STR</h5>
+        							<button id="strButton" style="margin-right: 5px;">${stats.totalStrength} (${stats.totalStrength >= 10 ? '+' : ''}${Math.floor((stats.totalStrength-10)/2)})</button>
+								<h5 style="font-weight: bold;">DEX</h5>
+        							<button id="dexButton" style="margin-right: 5px;">${stats.totalDexterity} (${stats.totalDexterity >= 10 ? '+' : ''}${Math.floor((stats.totalDexterity-10)/2)})</button>
+        							<h5 style="font-weight: bold;">CON</h5>
+        							<button id="conButton" style="margin-right: 5px;">${stats.totalConstitution} (${stats.totalConstitution >= 10 ? '+' : ''}${Math.floor((stats.totalConstitution-10)/2)})</button>
+  								<h5 style="font-weight: bold;">INT</h5>
+        							<button id="intButton" style="margin-right: 5px;">${stats.totalIntellegence} (${stats.totalIntellegence >= 10 ? '+' : ''}${Math.floor((stats.totalIntellegence-10)/2)})</button>
+								<h5 style="font-weight: bold;">WIS</h5>
+        							<button id="wisButton" style="margin-right: 5px;">${stats.totalWisdom} (${stats.totalWisdom >= 10 ? '+' : ''}${Math.floor((stats.totalWisdom-10)/2)})</button>
+								<h5 style="font-weight: bold;">CHA</h5>
+        							<button id="chaButton" style="margin-right: 5px;">${stats.totalCharisma} (${stats.totalCharisma >= 10 ? '+' : ''}${Math.floor((stats.totalCharisma-10)/2)})</button>
+    			    					<h3 style="margin-top: 50px; font-size: 20px;">ᴬᵇᶦˡᶦᵗʸ ˢᶜᵒʳᵉ</h3>
+							</div>
+							<div id=SkillListDiv style="border: 2px solid #336699; padding: 15px; margin-right: 10px; height: 515px;">
+							<ul id="skillList">
+							</ul>
+							<h3 style="margin-top: -10px; font-size: 20px; margin-left: 45px;">ˢᵏᶦˡˡˢ</h3>
+							</div>
+							<div style="border: 2px solid #336699; padding 15px; margin-right: 1px; height: 185px; margin-top: 330px; width: 110px;">
+							<ul id="savingThrowElement">
+								</ul>
+							<h3 style="margin-top: -8px; font-size: 20px; margin-left: 10px;">ˢᵃᵛᶦⁿᵍ ᵀʰʳᵒʷˢ</h3>
+							</div>
+							<div class="Character-menu-container" style="margin-top: 95px; height: 40px; margin-left: 9px;">
+								<div class="character-menu" style="border: 2px solid #336699; padding 5px; height: 230px; width: 110px; margin-left: -120px;">
+								<button id="actions" class="btn btn-primary btn-xs open_menu" style="font-size: 12px; margin-top: 10px; margin-left: 2px; width: 100px; height: 28px;">Actions</button>
+								<button id="bio" class="btn btn-primary btn-xs open_menu" style="font-size: 12px; margin-top: -10px; margin-left: 2px; width: 100px; height: 28px;">Bio</button>
+								<button id="character" class="btn btn-primary btn-xs open_menu" style="font-size: 12px; margin-top: -10px; margin-left: 2px; width: 100px; height: 28px;">Character</button>
+								<button id="features" class="btn btn-primary btn-xs open_menu" style="font-size: 12px; margin-top: -10px; margin-left: 2px; width: 100px; height: 28px;">Features</button>	
+								<button id="inventory" class="btn btn-primary btn-xs open_menu" style="font-size: 12px; margin-top: -10px; margin-left: 2px; width: 100px; height: 28px;">Inventory</button>
+								<button id="spells" class="btn btn-primary btn-xs open_menu" style="font-size: 12px; margin-top: -10px; margin-left: 2px; width: 100px; height: 28px;">Spells</button>
+								</div>
+							</div>
+							<div>
+							<input type="text" id="maxHitPoints" disabled="true" value="${totalHitPoints}" style="width: 30px; height: 30px; margin-left: -35px;">
+  			    				<input type="text" id="CurrentHitPoints" disabled=true value="${String(currentCauldronHitPoints)}" style="width: 30px; height: 30px; margin-left: -78px;">
+							<label style="margin-left: -6px; font-size: 20px;">／</label>
+								<label style="width: 30px; height: 30px; margin-left: -80px; font-size: 14px;">Hit Points</label>
+							</div>
+							<div>
+							<input type="text" id="armourClass" disabled="true" value="${currentArmourClass}" style="margin-left: -65px; margin-top: 55px; width: 40px; height: 30px;">
+							<label style="width: 30px; height: 30px; margin-left: -95px; margin-top: 55px; font-size: 14px;">AC</label>
 						</div>
-					</div>
-					<div>
-					<input type="text" id="maxHitPoints" disabled="true" value="${totalHitPoints}" style="width: 30px; height: 30px; margin-left: -35px;">
-  			    		<input type="text" id="CurrentHitPoints" disabled=true value="${String(currentCauldronHitPoints)}" style="width: 30px; height: 30px; margin-left: -78px;">
-					<label style="margin-left: -6px; font-size: 20px;">／</label>
-						<label style="width: 30px; height: 30px; margin-left: -80px; font-size: 14px;">Hit Points</label>
-					</div>
-					<div>
-					<input type="text" id="armourClass" disabled="true" value="${currentArmourClass}" style="margin-left: -65px; margin-top: 55px; width: 40px; height: 30px;">
-					<label style="width: 30px; height: 30px; margin-left: -95px; margin-top: 55px; font-size: 14px;">AC</label>
-				</div>
-	`;
+			`;
 
-		//All the css that is in control of the format of character sheets
-		const link = document.createElement('link');
-		link.rel = 'stylesheet';
-		link.type = 'text/html';
-		link.href = 'characterSheet.css';
-		document.head.appendChild(link);
+				//All the css that is in control of the format of character sheets
+				const link = document.createElement('link');
+				link.rel = 'stylesheet';
+				link.type = 'text/html';
+				link.href = 'characterSheet.css';
+				document.head.appendChild(link);
 
-		//event listeners for the ability buttons
-		const strButton = overlayBody.querySelector('#strButton');
-		strButton.addEventListener('click', function() {
-			console.log("Your strength:", stats.totalStrength);
+				//event listeners for the ability buttons
+				const strButton = overlayBody.querySelector('#strButton');
+				strButton.addEventListener('click', function() {
 
-			//random number
-			let randomNumber = Math.floor(Math.random() * 20)+1 //this will do any number from 1 - 20
-			var message = `Dexterity Check: ${randomNumber + Math.floor((stats.totalStrength - 10) / 2)} [${Math.floor((stats.totalStrength - 10) / 2) >= 0 ? `+${Math.floor((stats.totalStrength - 10) / 2)}` : Math.floor((stats.totalStrength - 10) / 2)}]`;			sendDataToSidebar(message, characterData.name);	
-		 });
+					//random number
+					let randomNumber = Math.floor(Math.random() * 20)+1 //this will do any number from 1 - 20
+					var message = `Dexterity Check: ${randomNumber + Math.floor((stats.totalStrength - 10) / 2)} [${Math.floor((stats.totalStrength - 10) / 2) >= 0 ? `+${Math.floor((stats.totalStrength - 10) / 2)}` : Math.floor((stats.totalStrength - 10) / 2)}]`;			sendDataToSidebar(message, characterData.name);	
+				 });
 
-		const dexButton = overlayBody.querySelector('#dexButton');
-		dexButton.addEventListener('click', function() {
-			console.log("Your dexterity:", stats.totalDexterity);
+				const dexButton = overlayBody.querySelector('#dexButton');
+				dexButton.addEventListener('click', function() {
 
-			//random number
-			let randomNumber = Math.floor(Math.random() * 20)+1 //this will do any number from 0 - 20
-			var message = `Dexterity Check: ${randomNumber + Math.floor((stats.totalDexterity - 10) / 2)} [${Math.floor((stats.totalDexterity - 10) / 2) >= 0 ? `+${Math.floor((stats.totalDexterity - 10) / 2)}` : Math.floor((stats.totalDexterity - 10) / 2)}]`;
-			sendDataToSidebar(message, characterData.name);	
+					//random number
+					let randomNumber = Math.floor(Math.random() * 20)+1 //this will do any number from 0 - 20
+					var message = `Dexterity Check: ${randomNumber + Math.floor((stats.totalDexterity - 10) / 2)} [${Math.floor((stats.totalDexterity - 10) / 2) >= 0 ? `+${Math.floor((stats.totalDexterity - 10) / 2)}` : Math.floor((stats.totalDexterity - 10) / 2)}]`;
+					sendDataToSidebar(message, characterData.name);	
 
-		});
-	
-		const conButton = overlayBody.querySelector('#conButton');
-		conButton.addEventListener('click', function() {
-    		console.log("Your constitution:", stats.totalConstitution);
-
-			//random number
-			let randomNumber = Math.floor(Math.random() * 20) + 1 //this will do any number from 0 - 20
-			var message = `Dexterity Check: ${randomNumber + Math.floor((stats.totalConstitution - 10) / 2)} [${Math.floor((stats.totalConstitution - 10) / 2) >= 0 ? `+${Math.floor((stats.totalConstitution - 10) / 2)}` : Math.floor((stats.totalConstitution - 10) / 2)}]`;
-			sendDataToSidebar(message, characterData.name);	
-
-		});
-
-		const intButton = overlayBody.querySelector('#intButton');
-		intButton.addEventListener('click', function() {
-    		console.log("Your intelligence:", stats.totalintellegence);
-
-			//random number
-			let randomNumber = Math.floor(Math.random() * 20) + 1 //this will do any number from 0 - 20
-			var message = `Dexterity Check: ${randomNumber + Math.floor((stats.totalIntellegence - 10) / 2)} [${Math.floor((stats.totalIntellegence - 10) / 2) >= 0 ? `+${Math.floor((stats.totalIntellegence - 10) / 2)}` : Math.floor((stats.totalIntellegence - 10) / 2)}]`;
-			sendDataToSidebar(message, characterData.name);	
-		});
-
-		const wisButton = overlayBody.querySelector('#wisButton');
-		wisButton.addEventListener('click', function() {
-			console.log("Your wisdom:", stats.totalWisdom);
-
-			//random number
-			let randomNumber = Math.floor(Math.random() * 20) + 1 //this will do any number from 0 - 20
-			var message = `Dexterity Check: ${randomNumber + Math.floor((stats.totalWisdom - 10) / 2)} [${Math.floor((stats.totalWisdom - 10) / 2) >= 0 ? `+${Math.floor((stats.totalWisdom - 10) / 2)}` : Math.floor((stats.totalWisdom - 10) / 2)}]`;
-			sendDataToSidebar(message, characterData.name);	
-		});
-
-		const chaButton = overlayBody.querySelector('#chaButton');
-		chaButton.addEventListener('click', function() {
-  		  	console.log("Your charisma:", stats.totalCharisma);
-
-			//random number
-			let randomNumber = Math.floor(Math.random() * 20) + 1 //this will do any number from 0 - 20
-			var message = `Dexterity Check: ${randomNumber + Math.floor((stats.totalCharisma - 10) / 2)} [${Math.floor((stats.totalCharisma - 10) / 2) >= 0 ? `+${Math.floor((stats.totalCharisma - 10) / 2)}` : Math.floor((stats.totalCharisma - 10) / 2)}]`;
-			sendDataToSidebar(message, characterData.name);	
-		});
-
-		//event listeners for the character buttons
-		const actionButton = overlayBody.querySelector('#actions');
-		actionButton.addEventListener('click', function() {
-			console.log("action button pressed");
-			showActions(adventureData, buttonPressed, characterData, stats);
-		});
-	
-		const bioButton = overlayBody.querySelector('#bio');
-		bioButton.addEventListener('click', function() {
-			console.log("bio button pressed");
-			showBio(adventureData, buttonPressed, characterData, stats);
-		});
-
-		const characterButton = overlayBody.querySelector('#character');
-		characterButton.addEventListener('click', function() {
-			console.log('character button pressed');
-		});
-
-		const featuresButton = overlayBody.querySelector('#features');
-		featuresButton.addEventListener('click', function() {
-			console.log('features button pressed');
-			showFeatures(adventureData, buttonPressed, characterData, stats);
-		});
-
-		const inventoryButton = overlayBody.querySelector('#inventory');
-		inventoryButton.addEventListener('click', function() {
-			console.log('inventory button pressed');
-			showInventory(adventureData, buttonPressed, characterData, stats);
-		});
-
-		const spellsButton = overlayBody.querySelector('#spells');
-		spellsButton.addEventListener('click', function() {
-			console.log('spells button pressed');
-			showSpells(adventureData, buttonPressed, characterData, stats);
-		});
-
-		// Append elements to build the overlay
-		overlayContainer.appendChild(overlayHeader);
-		overlayContainer.appendChild(overlayBody);
-
-		// Append overlay container to the body
-		document.body.appendChild(overlayContainer);
-
-		// Show overlay
-		overlayContainer.style.display = 'block';
-
-		//loop for showing all elements for skills
-		const getSkillListElement = document.getElementById('skillList');
-		for (let i = 0; i < listSkills.length; i++) {
-			//radio button
-			const listElement = document.createElement('input');
-			listElement.type = "radio";
-			listElement.disabled = true;
-
-			for (let j = 0; j < characterData.modifiers.background.length; j++) {
-				if (characterData.modifiers.background[j].subType.includes(listSkills[i].name.toLowerCase())) {
-					listElement.checked = true;
-					break;
-				}
-			}
-
-			for (let j = 0; j < characterData.modifiers.class.length; j++) {
-				if (characterData.modifiers.class[j].subType.includes(listSkills[i].name.toLowerCase())) {
-					listElement.checked = true;
-					break;
-				}
-			}
-
-			for (let j = 0; j < characterData.modifiers.race.length; j++) {
-				if (characterData.modifiers.race[j].subType.includes(listSkills[i].name.toLowerCase())) {
-					listElement.checked = true;
-					break;
-				}
-			}
-
-			//breakline
-			const breakLine = document.createElement('br');
-
-			//skill label
-			const skillLabel = document.createElement('label');
-			skillLabel.style.fontSize = "11px";
-			skillLabel.textContent = listSkills[i].name;
-
-			//skill number button
-			const skillModifier = document.createElement('button');
-			skillModifier.id = "modifierButton";
-			skillModifier.style.marginRight = "5px";
-
-			if (listElement.checked === true) {
-				let total = 0;
-				const characterProf = calculateProf(calculateLevel(characterData.currentXp));
-
-				if (listSkills[i].ability === "Str") {
-					total = Math.floor((stats.totalStrength - 10) / 2) + characterProf;
-				} else if (listSkills[i].ability === "Dex") {
-					total = Math.floor((stats.totalDexterity - 10) / 2) + characterProf;
-				} else if (listSkills[i].ability === "Int") {
-					total = Math.floor((stats.totalIntellegence - 10) / 2) + characterProf;
-				} else if (listSkills[i].ability === "Wis") {
-					total = Math.floor((stats.totalWisdom - 10) / 2) + characterProf;
-				} else if (listSkills[i].ability === "Cha") {
-					total = Math.floor((stats.totalCharisma - 10) / 2) + characterProf;
-				}
-				skillModifier.textContent = total >= 0 ? `+${total}` : total;
-				skillModifier.addEventListener('click', function () {
-					let randomNumber = Math.floor(Math.random() * 20) + 1
-					var message = `${listSkills[i].name} Check: ${randomNumber + total} [${total >= 0 ? `+${total}` : total}]`;
-					sendDataToSidebar(message, characterData.name);
 				});
-			} else {
-				let total = 0;
+	
+				const conButton = overlayBody.querySelector('#conButton');
+				conButton.addEventListener('click', function() {
 
-				if (listSkills[i].ability === "Str") {
-					total = Math.floor((stats.totalStrength - 10) / 2);
-				} else if (listSkills[i].ability === "Dex") {
-					total = Math.floor((stats.totalDexterity - 10) / 2);
-				} else if (listSkills[i].ability === "Int") {
-					total = Math.floor((stats.totalIntellegence - 10) / 2);
-				} else if (listSkills[i].ability === "Wis") {
-					total = Math.floor((stats.totalWisdom - 10) / 2);
-				} else if (listSkills[i].ability === "Cha") {
-					total = Math.floor((stats.totalCharisma - 10) / 2);
-				}
-				skillModifier.textContent = total >= 0 ? `+${total}` : total;
+					//random number
+					let randomNumber = Math.floor(Math.random() * 20) + 1 //this will do any number from 0 - 20
+					var message = `Dexterity Check: ${randomNumber + Math.floor((stats.totalConstitution - 10) / 2)} [${Math.floor((stats.totalConstitution - 10) / 2) >= 0 ? `+${Math.floor((stats.totalConstitution - 10) / 2)}` : Math.floor((stats.totalConstitution - 10) / 2)}]`;
+					sendDataToSidebar(message, characterData.name);	
 
-				skillModifier.addEventListener('click', function () {
-					let randomNumber = Math.floor(Math.random() * 20) + 1
-					var message = `${listSkills[i].name} Check: ${randomNumber + total} [${total >= 0 ? `+${total}` : total}]`;
-					sendDataToSidebar(message, characterData.name);
 				});
-			}
 
-			//adding all elements 
-			getSkillListElement.appendChild(listElement);
-			getSkillListElement.appendChild(skillModifier);
-			getSkillListElement.appendChild(skillLabel);
-			getSkillListElement.appendChild(breakLine);
-		}
+				const intButton = overlayBody.querySelector('#intButton');
+				intButton.addEventListener('click', function() {
 
-		//saving throw loop
-		const getSavingThrowElement = document.getElementById('savingThrowElement');
-		for (let i = 0; i<savingThrowList.length; i++){
-			//radio button
-			const listElement = document.createElement('input');
-			listElement.type = "radio";
-			listElement.disabled = true;
+					//random number
+					let randomNumber = Math.floor(Math.random() * 20) + 1 //this will do any number from 0 - 20
+					var message = `Dexterity Check: ${randomNumber + Math.floor((stats.totalIntellegence - 10) / 2)} [${Math.floor((stats.totalIntellegence - 10) / 2) >= 0 ? `+${Math.floor((stats.totalIntellegence - 10) / 2)}` : Math.floor((stats.totalIntellegence - 10) / 2)}]`;
+					sendDataToSidebar(message, characterData.name);	
+				});
 
-			//getting profs in different saving throws
-			for (let j = 0; j < characterData.modifiers.class.length; j++) {
-				if (characterData.modifiers.class[j].friendlySubtypeName.replace('Saving Throws', '').includes(savingThrowList[i])) {
-					listElement.checked = true;
+				const wisButton = overlayBody.querySelector('#wisButton');
+				wisButton.addEventListener('click', function() {
+
+					//random number
+					let randomNumber = Math.floor(Math.random() * 20) + 1 //this will do any number from 0 - 20
+					var message = `Dexterity Check: ${randomNumber + Math.floor((stats.totalWisdom - 10) / 2)} [${Math.floor((stats.totalWisdom - 10) / 2) >= 0 ? `+${Math.floor((stats.totalWisdom - 10) / 2)}` : Math.floor((stats.totalWisdom - 10) / 2)}]`;
+					sendDataToSidebar(message, characterData.name);	
+				});
+
+				const chaButton = overlayBody.querySelector('#chaButton');
+				chaButton.addEventListener('click', function() {
+
+					//random number
+					let randomNumber = Math.floor(Math.random() * 20) + 1 //this will do any number from 0 - 20
+					var message = `Dexterity Check: ${randomNumber + Math.floor((stats.totalCharisma - 10) / 2)} [${Math.floor((stats.totalCharisma - 10) / 2) >= 0 ? `+${Math.floor((stats.totalCharisma - 10) / 2)}` : Math.floor((stats.totalCharisma - 10) / 2)}]`;
+					sendDataToSidebar(message, characterData.name);	
+				});
+
+				//event listeners for the character buttons
+				const actionButton = overlayBody.querySelector('#actions');
+				actionButton.addEventListener('click', function() {
+					showActions(adventureData, buttonPressed, characterData, stats);
+				});
+	
+				const bioButton = overlayBody.querySelector('#bio');
+				bioButton.addEventListener('click', function() {
+					showBio(adventureData, buttonPressed, characterData, stats);
+				});
+
+				const characterButton = overlayBody.querySelector('#character');
+				characterButton.addEventListener('click', function() {
+				});
+
+				const featuresButton = overlayBody.querySelector('#features');
+				featuresButton.addEventListener('click', function() {
+					showFeatures(adventureData, buttonPressed, characterData, stats);
+				});
+
+				const inventoryButton = overlayBody.querySelector('#inventory');
+				inventoryButton.addEventListener('click', function() {
+					showInventory(adventureData, buttonPressed, characterData, stats);
+				});
+
+				const spellsButton = overlayBody.querySelector('#spells');
+				spellsButton.addEventListener('click', function() {
+					showSpells(adventureData, buttonPressed, characterData, stats);
+				});
+
+				// Append elements to build the overlay
+				overlayContainer.appendChild(overlayHeader);
+				overlayContainer.appendChild(overlayBody);
+
+				// Append overlay container to the body
+				document.body.appendChild(overlayContainer);
+
+				// Show overlay
+				overlayContainer.style.display = 'block';
+
+				//loop for showing all elements for skills
+				const getSkillListElement = document.getElementById('skillList');
+				for (let i = 0; i < listSkills.length; i++) {
+					//radio button
+					const listElement = document.createElement('input');
+					listElement.type = "radio";
+					listElement.disabled = true;
+
+					for (let j = 0; j < characterData.modifiers.background.length; j++) {
+						if (characterData.modifiers.background[j].subType.includes(listSkills[i].name.toLowerCase())) {
+							listElement.checked = true;
+							break;
+						}
+					}
+
+					for (let j = 0; j < characterData.modifiers.class.length; j++) {
+						if (characterData.modifiers.class[j].subType.includes(listSkills[i].name.toLowerCase())) {
+							listElement.checked = true;
+							break;
+						}
+					}
+
+					for (let j = 0; j < characterData.modifiers.race.length; j++) {
+						if (characterData.modifiers.race[j].subType.includes(listSkills[i].name.toLowerCase())) {
+							listElement.checked = true;
+							break;
+						}
+					}
+
+					//breakline
+					const breakLine = document.createElement('br');
+
+					//skill label
+					const skillLabel = document.createElement('label');
+					skillLabel.style.fontSize = "11px";
+					skillLabel.textContent = listSkills[i].name;
+
+					//skill number button
+					const skillModifier = document.createElement('button');
+					skillModifier.id = "modifierButton";
+					skillModifier.style.marginRight = "5px";
+
+					if (listElement.checked === true) {
+						let total = 0;
+						const characterProf = calculateProf(calculateLevel(characterData.currentXp));
+
+						if (listSkills[i].ability === "Str") {
+							total = Math.floor((stats.totalStrength - 10) / 2) + characterProf;
+						} else if (listSkills[i].ability === "Dex") {
+							total = Math.floor((stats.totalDexterity - 10) / 2) + characterProf;
+						} else if (listSkills[i].ability === "Int") {
+							total = Math.floor((stats.totalIntellegence - 10) / 2) + characterProf;
+						} else if (listSkills[i].ability === "Wis") {
+							total = Math.floor((stats.totalWisdom - 10) / 2) + characterProf;
+						} else if (listSkills[i].ability === "Cha") {
+							total = Math.floor((stats.totalCharisma - 10) / 2) + characterProf;
+						}
+						skillModifier.textContent = total >= 0 ? `+${total}` : total;
+						skillModifier.addEventListener('click', function () {
+							let randomNumber = Math.floor(Math.random() * 20) + 1
+							var message = `${listSkills[i].name} Check: ${randomNumber + total} [${total >= 0 ? `+${total}` : total}]`;
+							sendDataToSidebar(message, characterData.name);
+						});
+					} else {
+						let total = 0;
+
+						if (listSkills[i].ability === "Str") {
+							total = Math.floor((stats.totalStrength - 10) / 2);
+						} else if (listSkills[i].ability === "Dex") {
+							total = Math.floor((stats.totalDexterity - 10) / 2);
+						} else if (listSkills[i].ability === "Int") {
+							total = Math.floor((stats.totalIntellegence - 10) / 2);
+						} else if (listSkills[i].ability === "Wis") {
+							total = Math.floor((stats.totalWisdom - 10) / 2);
+						} else if (listSkills[i].ability === "Cha") {
+							total = Math.floor((stats.totalCharisma - 10) / 2);
+						}
+						skillModifier.textContent = total >= 0 ? `+${total}` : total;
+
+						skillModifier.addEventListener('click', function () {
+							let randomNumber = Math.floor(Math.random() * 20) + 1
+							var message = `${listSkills[i].name} Check: ${randomNumber + total} [${total >= 0 ? `+${total}` : total}]`;
+							sendDataToSidebar(message, characterData.name);
+						});
+					}
+
+					//adding all elements 
+					getSkillListElement.appendChild(listElement);
+					getSkillListElement.appendChild(skillModifier);
+					getSkillListElement.appendChild(skillLabel);
+					getSkillListElement.appendChild(breakLine);
 				}
-			}
 
-			//text label
-			const savingThrowLabel = document.createElement('label');
-			savingThrowLabel.style.fontSize = "11px";
-			savingThrowLabel.textContent = savingThrowList[i];
+				//saving throw loop
+				const getSavingThrowElement = document.getElementById('savingThrowElement');
+				for (let i = 0; i<savingThrowList.length; i++){
+					//radio button
+					const listElement = document.createElement('input');
+					listElement.type = "radio";
+					listElement.disabled = true;
 
-			//button
-			savingThrowButton = document.createElement('button');
-			savingThrowButton.id = "modifierButton";
-			savingThrowButton.style.marginRight = "5px";
+					//getting profs in different saving throws
+					for (let j = 0; j < characterData.modifiers.class.length; j++) {
+						if (characterData.modifiers.class[j].friendlySubtypeName.replace('Saving Throws', '').includes(savingThrowList[i])) {
+							listElement.checked = true;
+						}
+					}
 
-			if (listElement.checked === true) {
-				let total = 0;
-				const characterProf = calculateProf(calculateLevel(characterData.currentXp));
+					//text label
+					const savingThrowLabel = document.createElement('label');
+					savingThrowLabel.style.fontSize = "11px";
+					savingThrowLabel.textContent = savingThrowList[i];
 
-				if (savingThrowList[i] === "Strength") {
-					total = Math.floor((stats.totalStrength-10)/2) + characterProf;
-				} else if (savingThrowList[i] === "Dexterity") {
-        			total = Math.floor((stats.totalDexterity - 10) / 2) + characterProf;
-    			} else if (savingThrowList[i] === "Constitution") {
-        			total = Math.floor((stats.totalConstitution - 10) / 2) + characterProf;
-    			} else if (savingThrowList[i] === "Intelligence") {
-        			total = Math.floor((stats.totalIntellegence - 10) / 2) + characterProf;
-    			} else if (savingThrowList[i] === "Wisdom") {
-        			total = Math.floor((stats.totalWisdom - 10) / 2) + characterProf;
-    			} else if (savingThrowList[i] === "Charisma") {
-        			total = Math.floor((stats.totalCharisma - 10) / 2) + characterProf;
-   			}
+					//button
+					savingThrowButton = document.createElement('button');
+					savingThrowButton.id = "modifierButton";
+					savingThrowButton.style.marginRight = "5px";
+
+					if (listElement.checked === true) {
+						let total = 0;
+						const characterProf = calculateProf(calculateLevel(characterData.currentXp));
+
+						if (savingThrowList[i] === "Strength") {
+							total = Math.floor((stats.totalStrength-10)/2) + characterProf;
+						} else if (savingThrowList[i] === "Dexterity") {
+        					total = Math.floor((stats.totalDexterity - 10) / 2) + characterProf;
+    					} else if (savingThrowList[i] === "Constitution") {
+        					total = Math.floor((stats.totalConstitution - 10) / 2) + characterProf;
+    					} else if (savingThrowList[i] === "Intelligence") {
+        					total = Math.floor((stats.totalIntellegence - 10) / 2) + characterProf;
+    					} else if (savingThrowList[i] === "Wisdom") {
+        					total = Math.floor((stats.totalWisdom - 10) / 2) + characterProf;
+    					} else if (savingThrowList[i] === "Charisma") {
+        					total = Math.floor((stats.totalCharisma - 10) / 2) + characterProf;
+   					}
 		
-			savingThrowButton.textContent = total >= 0 ? `+${total}` : total;
+					savingThrowButton.textContent = total >= 0 ? `+${total}` : total;
 
-			savingThrowButton.addEventListener('click', function () {
-				let randomNumber = Math.floor(Math.random() * 20) + 1
-				var message = `${savingThrowList[i]} Check: ${randomNumber + total} [${total >= 0 ? `+${total}` : total}]`;
-				sendDataToSidebar(message, characterData.name);
-			});
+					savingThrowButton.addEventListener('click', function () {
+						let randomNumber = Math.floor(Math.random() * 20) + 1
+						var message = `${savingThrowList[i]} Check: ${randomNumber + total} [${total >= 0 ? `+${total}` : total}]`;
+						sendDataToSidebar(message, characterData.name);
+					});
 				
-			} else {
-			 let total = 0;
+					} else {
+					 let total = 0;
 
-				if (savingThrowList[i] === "Strength") {
-				total = Math.floor((stats.totalStrength-10) / 2)
-			} else if (savingThrowList[i] === "Dexterity") {
-        			total = Math.floor((stats.totalDexterity - 10) / 2); 	 
-    				} else if (savingThrowList[i] === "Constitution") {
-        			total = Math.floor((stats.totalConstitution - 10) / 2);
-    			} else if (savingThrowList[i] === "Intelligence") {
-        			total = Math.floor((stats.totalIntellegence - 10) / 2);
-    			} else if (savingThrowList[i] === "Wisdom") {
-        			total = Math.floor((stats.totalWisdom - 10) / 2);
-    			} else if (savingThrowList[i] === "Charisma") {
-        			total = Math.floor((stats.totalCharisma - 10) / 2);
-   			}
+						if (savingThrowList[i] === "Strength") {
+						total = Math.floor((stats.totalStrength-10) / 2)
+					} else if (savingThrowList[i] === "Dexterity") {
+        					total = Math.floor((stats.totalDexterity - 10) / 2); 	 
+    						} else if (savingThrowList[i] === "Constitution") {
+        					total = Math.floor((stats.totalConstitution - 10) / 2);
+    					} else if (savingThrowList[i] === "Intelligence") {
+        					total = Math.floor((stats.totalIntellegence - 10) / 2);
+    					} else if (savingThrowList[i] === "Wisdom") {
+        					total = Math.floor((stats.totalWisdom - 10) / 2);
+    					} else if (savingThrowList[i] === "Charisma") {
+        					total = Math.floor((stats.totalCharisma - 10) / 2);
+   					}
 		
-			savingThrowButton.textContent = total >= 0 ? `+${total}` : total;
+					savingThrowButton.textContent = total >= 0 ? `+${total}` : total;
 
-			savingThrowButton.addEventListener('click', function () {
-				let randomNumber = Math.floor(Math.random() * 20) + 1
-				var message = `${savingThrowList[i]} Check: ${randomNumber + total} [${total >= 0 ? `+${total}` : total}]`;
-				sendDataToSidebar(message, characterData.name);
+					savingThrowButton.addEventListener('click', function () {
+						let randomNumber = Math.floor(Math.random() * 20) + 1
+						var message = `${savingThrowList[i]} Check: ${randomNumber + total} [${total >= 0 ? `+${total}` : total}]`;
+						sendDataToSidebar(message, characterData.name);
+					});
+					}
+
+					//breakline
+					const breakLine = document.createElement('br');
+
+					//adding all elements
+					getSavingThrowElement.appendChild(listElement);
+					getSavingThrowElement.appendChild(savingThrowButton);
+					getSavingThrowElement.appendChild(savingThrowLabel);
+					getSavingThrowElement.appendChild(breakLine);
+				}
+
+					characterSheetOverlayOpen = true;
 			});
-			}
-
-			//breakline
-			const breakLine = document.createElement('br');
-
-			//adding all elements
-			getSavingThrowElement.appendChild(listElement);
-			getSavingThrowElement.appendChild(savingThrowButton);
-			getSavingThrowElement.appendChild(savingThrowLabel);
-			getSavingThrowElement.appendChild(breakLine);
-		}
-
-			characterSheetOverlayOpen = true;
-    });
+		})
+		.catch(error => {
+			console.error('Error fetching JSON data:', error);
+		});
 }
 
 function showActions(adventureData, buttonPressed, characterData, stats) {
 	if (characterSheetOverlayOpen && buttonPressed == "null") {
-		console.log('character sheet already open');
 		return;
 	}
 
@@ -941,17 +939,14 @@ function showActions(adventureData, buttonPressed, characterData, stats) {
 		//event listeners for the character buttons
 		const actionButton = overlayBody.querySelector('#actions');
 		actionButton.addEventListener('click', function () {
-			console.log("action button pressed");
 		});
 		const bioButton = overlayBody.querySelector('#bio');
 		bioButton.addEventListener('click', function () {
-			console.log("bio button pressed");
 			showBio(adventureData, buttonPressed, characterData, stats);
 		});
 
 		const characterButton = overlayBody.querySelector('#character');
 		characterButton.addEventListener('click', function () {
-			console.log('character button pressed');
 			const characterSheetOverlay = document.getElementById('customOverlay');
 			characterSheetOverlay.remove();
 			showCharacterSheet(adventureData);
@@ -959,19 +954,16 @@ function showActions(adventureData, buttonPressed, characterData, stats) {
 
 		const featuresButton = overlayBody.querySelector('#features');
 		featuresButton.addEventListener('click', function () {
-			console.log('features button pressed');
 			showFeatures(adventureData, buttonPressed, characterData, stats);
 		});
 
 		const inventoryButton = overlayBody.querySelector('#inventory');
 		inventoryButton.addEventListener('click', function () {
-			console.log('inventory button pressed');
 			showInventory(adventureData, buttonPressed, characterData, stats);
 		});
 
 		const spellsButton = overlayBody.querySelector('#spells');
 		spellsButton.addEventListener('click', function () {
-			console.log('spells button pressed');
 			showSpells(adventureData, buttonPressed, characterData, stats);
 		});
 
@@ -1029,9 +1021,6 @@ function showActions(adventureData, buttonPressed, characterData, stats) {
 		for (let i = 0; i < characterData.inventory.length; i++) {
 			var ammoDiv = overlayBody.querySelector('#ammoList');
 			if (ammoList.includes(characterData.inventory[i].definition.name)) {
-				console.log(characterData.inventory[i].definition.name);
-				console.log(characterData.inventory[i].quantity);
-
 				//name label
 				var nameLabel = document.createElement('label');
 				nameLabel.textContent = characterData.inventory[i].definition.name;
@@ -1064,7 +1053,6 @@ function showActions(adventureData, buttonPressed, characterData, stats) {
 
 function showBio(adventureData, buttonPressed, characterData, stats) {
 	if (characterSheetOverlayOpen && buttonPressed == "null") {
-		console.log('character sheet already open');
 		return;
 	}
 
@@ -1291,18 +1279,15 @@ function showBio(adventureData, buttonPressed, characterData, stats) {
 	//event listeners for the character buttons
 	const actionButton = overlayBody.querySelector('#actions');
 	actionButton.addEventListener('click', function () {
-		console.log("action button pressed");
 		showActions(adventureData, buttonPressed, characterData, stats);
 	});
 
 	const bioButton = overlayBody.querySelector('#bio');
 	bioButton.addEventListener('click', function () {
-		console.log("bio button pressed");
 	});
 
 	const characterButton = overlayBody.querySelector('#character');
 	characterButton.addEventListener('click', function () {
-		console.log('character button pressed');
 		const characterSheetOverlay = document.getElementById('customOverlay');
 		characterSheetOverlay.remove();
 		showCharacterSheet(adventureData);
@@ -1310,19 +1295,16 @@ function showBio(adventureData, buttonPressed, characterData, stats) {
 
 	const featuresButton = overlayBody.querySelector('#features');
 	featuresButton.addEventListener('click', function () {
-		console.log('features button pressed');
 		showFeatures(adventureData, buttonPressed, characterData, stats);
 	});
 
 	const inventoryButton = overlayBody.querySelector('#inventory');
 	inventoryButton.addEventListener('click', function () {
-		console.log('inventory button pressed');
 		showInventory(adventureData, buttonPressed, stats);
 	});
 
 	const spellsButton = overlayBody.querySelector('#spells');
 	spellsButton.addEventListener('click', function () {
-		console.log('spells button pressed');
 		showSpells(adventureData, buttonPressed, characterData, stats);
 	});
 	content.appendChild(overlayBody);
@@ -1330,7 +1312,6 @@ function showBio(adventureData, buttonPressed, characterData, stats) {
 
 function showFeatures(adventureData, buttonPressed, characterData, stats) {
 	if (characterSheetOverlayOpen && buttonPressed == "null") {
-		console.log("character sheet already open");
 		return;
 	}
 
@@ -1467,19 +1448,16 @@ function showFeatures(adventureData, buttonPressed, characterData, stats) {
 	//event listeners for the character buttons
 	const actionButton = overlayBody.querySelector('#actions');
 	actionButton.addEventListener('click', function () {
-		console.log("action button pressed");
 		showActions(adventureData, buttonPressed, characterData, stats);
 	});
 
 	const bioButton = overlayBody.querySelector('#bio');
 	bioButton.addEventListener('click', function () {
-		console.log("bio button pressed");
 		showBio(adventureData, buttonPressed, characterData, stats);
 	});
 
 	const characterButton = overlayBody.querySelector('#character');
 	characterButton.addEventListener('click', function () {
-		console.log('character button pressed');
 		const characterSheetOverlay = document.getElementById('customOverlay');
 		characterSheetOverlay.remove();
 		showCharacterSheet(adventureData);
@@ -1487,18 +1465,15 @@ function showFeatures(adventureData, buttonPressed, characterData, stats) {
 
 	const featuresButton = overlayBody.querySelector('#features');
 	featuresButton.addEventListener('click', function () {
-		console.log('features button pressed');
 	});
 
 	const inventoryButton = overlayBody.querySelector('#inventory');
 	inventoryButton.addEventListener('click', function () {
-		console.log('inventory button pressed');
 		showInventory(adventureData, buttonPressed, characterData, stats);
 	});
 
 	const spellsButton = overlayBody.querySelector('#spells');
 	spellsButton.addEventListener('click', function () {
-		console.log('spells button pressed');
 		showSpells(adventureData, buttonPressed, characterData, stats);
 	});
 
@@ -1507,7 +1482,6 @@ function showFeatures(adventureData, buttonPressed, characterData, stats) {
 
 function showInventory(adventureData, buttonPressed, characterData, stats) {
 		if (characterSheetOverlayOpen && buttonPressed == "null") {
-			console.log("character sheeta already open");
 			return;
 		}
 
@@ -1642,19 +1616,16 @@ function showInventory(adventureData, buttonPressed, characterData, stats) {
 		//event listeners for the character buttons
 		const actionButton = overlayBody.querySelector('#actions');
 		actionButton.addEventListener('click', function () {
-			console.log("action button pressed");
 			showActions(adventureData, buttonPressed, characterData, stats);
 		});
 
 		const bioButton = overlayBody.querySelector('#bio');
 		bioButton.addEventListener('click', function () {
-			console.log("bio button pressed");
 			showBio(adventureData, buttonPressed, characterData, stats);
 		});
 
 		const characterButton = overlayBody.querySelector('#character');
 		characterButton.addEventListener('click', function () {
-			console.log('character button pressed');
 			const characterSheetOverlay = document.getElementById('customOverlay');
 			characterSheetOverlay.remove();
 			showCharacterSheet(adventureData);
@@ -1662,18 +1633,15 @@ function showInventory(adventureData, buttonPressed, characterData, stats) {
 
 		const featuresButton = overlayBody.querySelector('#features');
 		featuresButton.addEventListener('click', function () {
-			console.log('features button pressed');
 			showFeatures(adventureData, buttonPressed, characterData, stats);
 		});
 
 		const inventoryButton = overlayBody.querySelector('#inventory');
 		inventoryButton.addEventListener('click', function () {
-			console.log('inventory button pressed');
 		});
 
 		const spellsButton = overlayBody.querySelector('#spells');
 		spellsButton.addEventListener('click', function () {
-			console.log('spells button pressed');
 			showSpells(adventureData, buttonPressed, characterData, stats);
 		});
 
@@ -1682,7 +1650,6 @@ function showInventory(adventureData, buttonPressed, characterData, stats) {
 
 function showSpells(adventureData, buttonPressed, characterData, stats) {
 	if (characterSheetOverlayOpen && buttonPressed == "null") {
-		console.log("Character sheet already open");
 		return;
 	}
 
@@ -1719,10 +1686,6 @@ function showSpells(adventureData, buttonPressed, characterData, stats) {
 	// Retrieve spell slots and assign to spellSlotData
 	getSpellSlots(function (data) {
 		if (data) {
-
-			chrome.storage.local.get(null, function (result) {
-				console.log('All stored data:', result);
-			});
 			const overlayBody = document.querySelector('.panel-body');
 			overlayBody.innerHTML = `
 			<style>
@@ -2245,19 +2208,16 @@ function showSpells(adventureData, buttonPressed, characterData, stats) {
 			//event listeners for the character buttons
 			const actionButton = overlayBody.querySelector('#actions');
 			actionButton.addEventListener('click', function () {
-				console.log("action button pressed");
 				showActions(adventureData, buttonPressed, characterData, stats);
 			});
 
 			const bioButton = overlayBody.querySelector('#bio');
 			bioButton.addEventListener('click', function () {
-				console.log("bio button pressed");
 				showBio(adventureData, buttonPressed, characterData, stats);
 			});
 
 			const characterButton = overlayBody.querySelector('#character');
 			characterButton.addEventListener('click', function () {
-				console.log('character button pressed');
 				const characterSheetOverlay = document.getElementById('customOverlay');
 				characterSheetOverlay.remove();
 				showCharacterSheet(adventureData);
@@ -2265,19 +2225,16 @@ function showSpells(adventureData, buttonPressed, characterData, stats) {
 
 			const featuresButton = overlayBody.querySelector('#features');
 			featuresButton.addEventListener('click', function () {
-				console.log('features button pressed');
 				showFeatures(adventureData, buttonPressed, characterData, stats);
 			});
 
 			const inventoryButton = overlayBody.querySelector('#inventory');
 			inventoryButton.addEventListener('click', function () {
-				console.log('inventory button pressed');
 				showInventory(adventureData, buttonPressed, characterData, stats);
 			});
 
 			const spellsButton = overlayBody.querySelector('#spells');
 			spellsButton.addEventListener('click', function () {
-				console.log('spells button pressed');
 			});
 
 			content.appendChild(overlayBody);
@@ -2287,7 +2244,6 @@ function showSpells(adventureData, buttonPressed, characterData, stats) {
 
 function spellInfo(buttonPressed, adventureData, spellInformation, spellLevel, characterData, stats, saveSpells) {
 	if (characterSheetOverlayOpen && buttonPressed === null) {
-		console.log("Character sheet already open");
 		return;
 	}
 
@@ -2376,13 +2332,11 @@ function spellInfo(buttonPressed, adventureData, spellInformation, spellLevel, c
 
 	const backButton = overlayBody.querySelector('#backButton');
 	backButton.addEventListener('click', function () {
-		console.log("Back button pressed");
 		showSpells(adventureData, buttonPressed, characterData, stats);
 	});
 
 	const castSpell = overlayBody.querySelector('#castSpell');
 	castSpell.addEventListener('click', function () {
-		console.log("cast spell button pressed");
 		const newline = "\n";
 		var message = (
 			spellInformation.name + newline +
@@ -2440,8 +2394,6 @@ function spellInfo(buttonPressed, adventureData, spellInformation, spellLevel, c
 
 			getSpellSlots(function (data) {
 				if (data) {
-					console.log(data);
-					console.log(data[0].used);
 					switch (spellLevel) {
 						case 1:
 							if (spellInformation["cast at will"]) {
@@ -2500,19 +2452,6 @@ function spellInfo(buttonPressed, adventureData, spellInformation, spellLevel, c
 		}
 	});
 	content.appendChild(overlayBody);
-}
-
-function compareSlots2Used(spellLevelData) {
-	const spellSlotElements = document.querySelectorAll('.spellSlots');
-	spellSlotElements.forEach((element, index) => {
-		const slotValue = parseInt(element.textContent.trim(), 10);
-
-		if (slotValue === spellLevelData) {
-			console.log(`Element ${index + 1} value matches data.used: ${slotValue}`);
-		} else {
-			console.log(`Element ${index + 1} value does not match data.used: ${slotValue}`);
-		}
-	});
 }
 
 function calculateProf(characterLevel) {
@@ -2619,23 +2558,6 @@ function totalHitPoints(hitPoints) {
     return totalHitPoints;
 }
 
-function getUserCharacter(callback) {
-  chrome.storage.local.get('url', function (result) {
-    const cauldronURL = result.url;
-
-    fetch(cauldronURL + "?output=json")
-      .then(response => response.json())
-      .then(data => {
-        callback(null, data.adventure);
-      })
-      .catch(error => {
-        console.error('Error fetching cauldron JSON data:', error);
-        // Invoke the callback with the error
-        callback(error);
-      });
-  });
-}
-
 function removeHtmlTags(htmlString) {
 	const doc = new DOMParser().parseFromString(htmlString, 'text/html');
 	const paragraphs = doc.body.getElementsByTagName('p');
@@ -2651,10 +2573,8 @@ function removeHtmlTags(htmlString) {
 function getSpellSlots(callback) {
 	chrome.storage.local.get('currentSpellSlots', function (result) {
 		if (result.currentSpellSlots) {
-			console.log('Retrieved currentSpellSlots');
 			callback(result.currentSpellSlots);
 		} else {
-			console.log("Can't load currentSpellSlots");
 			callback(null);
 		}
 	});
@@ -2663,17 +2583,13 @@ function getSpellSlots(callback) {
 function saveSpellSlots(spellSlots, callback = () => { }) {
 	chrome.storage.local.get('currentSpellSlots', function (result) {
 		if (result.currentSpellSlots != null && spellSlots != null) {
-			console.log('spell slot Data already exists');
 			chrome.storage.local.set({ 'currentSpellSlots': spellSlots }, function () {
-				console.log("Spell Slots stored");
 				callback();
 			});
 		} else {
-			console.log('spell slot Data does not exist.');
 			chrome.storage.local.get('characterData', function (result) {
 				const characterData = result.characterData;
 				chrome.storage.local.set({ 'currentSpellSlots': characterData.spellSlots }, function () {
-					console.log("Spell Slots stored from characterData");
 					callback();
 				});
 			});
@@ -2734,20 +2650,27 @@ function rollDice(numberOfDice, sides) {
 	return total;
 }
 
+function fetchJsonDataFromUrl(url) {
+	return new Promise((resolve, reject) => {
+		fetch(url)
+			.then(response => {
+				if (!response.ok) {
+					throw new Error('Network response was not ok');
+				}
+				return response.json();
+			})
+			.then(jsonData => {
+				resolve(jsonData);
+			})
+			.catch(error => {
+				reject(error);
+			});
+	});
+}
+
 function calculateDamage(dice, modifier) {
 	const [numberOfDice, sides] = dice.split('d').map(Number);
 	const damageRoll = rollDice(numberOfDice, sides);
 	const totalDamage = damageRoll + modifier;
 	return `${totalDamage}`;
 }
-
-//after the above then add the compareSlots2Used function to switch case
-//in spell description give option to cast at higher level where possible, otherwise just offer "cast spell" button
-// remove all the previous copied functions as they are no longer needed
-
-
-/*things that have been updated##################################
-- The unarmed strike can now make both attack and damage rolls, attack rolls, or damage rolls. It takes into account monks can deal more damage on unarmed strikes than most other characters.
-- All buttons on charactersheet, actions, bio, features, inventory now roll approperatly and working as they should.
-- You can now cast spells and it will expend a spell slot for you, once reaching the maximum amount of spell slots have been expended it will allow you to view spells but not cast them.
-*/
