@@ -6,7 +6,6 @@ setTimeout(function () {
 	fetchJsonDataFromUrl(urlWithJsonOutput)
 		.then(adventureData => {
 			adventureData = adventureData.adventure;
-			console.log(adventureData);
 			try {
 				if (adventureData['@is_dm'] === "yes") {
 					console.log('You are the DM, there is no character button for you!');
