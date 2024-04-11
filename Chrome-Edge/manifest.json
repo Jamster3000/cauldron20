@@ -18,10 +18,6 @@
         "default_icon": "icon128.png",
         "default_popup": "popup.html"
     },
-        "background": {
-        "scripts": ["background.js"],
-        "persistent": false
-    },
     "content_scripts": [
         {
           "matches": [ "https://www.cauldron-vtt.net/character/new", "https://www.cauldron-vtt.net/character/**"],
