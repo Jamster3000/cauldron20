@@ -1752,7 +1752,7 @@ function showSpells(adventureData, buttonPressed, characterData, stats) {
   							<h2><b>Level 2</b></h2>
 							<p>Spell Slots&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspExpended Spell Slots</p>
 						<div style="display: flex; justify-content: space-between;">
-    							<input class="spellSlots2" placeholder="${characterData.spellSlots[1].available}" disabled=true style="width: 40px;">
+    							<input class="spellSlots2" value="${characterData.spellSlots[1].available}" disabled=true style="width: 40px;">
 							<div style="width: 5px;"></div>
     							<input class="spellSlotsUsed" value="${data[1].used}" disabled=true style="width: 40px;">
 						</div>
@@ -1762,7 +1762,7 @@ function showSpells(adventureData, buttonPressed, characterData, stats) {
   							<h2><b>Level 3</b></h2>
 						<p>Spell Slots&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspExpended Spell Slots</p>
 						<div style="display: flex; justify-content: space-between;">
-    							<input class="spellSlots3" placeholder="${characterData.spellSlots[2].available}" disabled=true style="width: 40px;">
+    							<input class="spellSlots3" value="${characterData.spellSlots[2].available}" disabled=true style="width: 40px;">
 							<div style="width: 5px;"></div>
     							<input class="spellSlotsUsed" value="${data[2].used}" disabled=true style="width: 40px;">
 						</div>
@@ -1772,7 +1772,7 @@ function showSpells(adventureData, buttonPressed, characterData, stats) {
    							<h2><b>Level 4</b></h2>
 						<p>Spell Slots&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspExpended Spell Slots</p>
 						<div style="display: flex; justify-content: space-between;">
-    							<input class="spellSlots4" placeholder="${characterData.spellSlots[3].available}" disabled=true style="width: 40px;">
+    							<input class="spellSlots4" value="${characterData.spellSlots[3].available}" disabled=true style="width: 40px;">
 							<div style="width: 5px;"></div>
     							<input class="spellSlotsUsed" value="${data[3].used}" disabled=true style="width: 40px;">
 						</div>
@@ -1782,7 +1782,7 @@ function showSpells(adventureData, buttonPressed, characterData, stats) {
    							<h2><b>Level 5</b></h2>
 						<p>Spell Slots&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspExpended Spell Slots</p>
 						<div style="display: flex; justify-content: space-between;">
-    							<input class="spellSlots5" placeholder="${characterData.spellSlots[4].available}" disabled=true style="width: 40px;">
+    							<input class="spellSlots5" value="${characterData.spellSlots[4].available}" disabled=true style="width: 40px;">
 							<div style="width: 5px;"></div>
     							<input class="spellSlotsUsed" value="${data[4].used}" disabled=true style="width: 40px;">
 						</div>
@@ -1792,7 +1792,7 @@ function showSpells(adventureData, buttonPressed, characterData, stats) {
   							<h2><b>Level 6</b></h2>
 						<p>Spell Slots&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspExpended Spell Slots</p>
 						<div style="display: flex; justify-content: space-between;">
-    							<input class="spellSlots" placeholder="${characterData.spellSlots[5].available}" disabled=true style="width: 40px;">
+    							<input class="spellSlots6" value="${characterData.spellSlots[5].available}" disabled=true style="width: 40px;">
 							<div style="width: 5px;"></div>
     							<input class="spellSlotsUsed" value="${data[5].used}" disabled=true style="width: 40px;">
 						</div>
@@ -1802,7 +1802,7 @@ function showSpells(adventureData, buttonPressed, characterData, stats) {
   							<h2><b>Level 7</b></h2>
 						<p>Spell Slots&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspExpended Spell Slots</p>
 						<div style="display: flex; justify-content: space-between;">
-    							<input class="spellSlots" placeholder="${characterData.spellSlots[6].available}" disabled=true style="width: 40px;">
+    							<input class="spellSlots7" value="${characterData.spellSlots[6].available}" disabled=true style="width: 40px;">
 							<div style="width: 5px;"></div>
     							<input class="spellSlotsUsed" value="${data[6].used}" disabled=true style="width: 40px;">
 						</div>
@@ -1812,7 +1812,7 @@ function showSpells(adventureData, buttonPressed, characterData, stats) {
   							<h2><b>Level 8</b></h2>
 						<p>Spell Slots&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspExpended Spell Slots</p>
 						<div style="display: flex; justify-content: space-between;">
-    							<input class="spellSlots" placeholder="${characterData.spellSlots[7].available}" disabled=true style="width: 40px;">
+    							<input class="spellSlots8" value="${characterData.spellSlots[7].available}" disabled=true style="width: 40px;">
 							<div style="width: 5px;"></div>
     							<input class="spellSlotsUsed" value="${data[7].used}" disabled=true style="width: 40px;">
 						</div>
@@ -1822,7 +1822,7 @@ function showSpells(adventureData, buttonPressed, characterData, stats) {
   							<h2><b>Level 9</b></h2>
 						<p>Spell Slots&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspExpended Spell Slots</p>
 						<div style="display: flex; justify-content: space-between;">
-    							<input class="spellSlots" placeholder="${characterData.spellSlots[8].available}" disabled=true style="width: 40px;">
+    							<input class="spellSlots9" value="${characterData.spellSlots[8].available}" disabled=true style="width: 40px;">
 							<div style="width: 5px;"></div>
     							<input class="spellSlotsUsed" value="${data[8].used}" disabled=true style="width: 40px;">
 						</div>
@@ -1833,6 +1833,32 @@ function showSpells(adventureData, buttonPressed, characterData, stats) {
 				</div>
 			</div>
 			`;
+
+			var spellSlotElement9 = document.querySelector('.spellSlots9');
+			var spellSlotElement8 = document.querySelector('.spellSlots8');
+			var spellSlotElement7 = document.querySelector('.spellSlots7');
+			var spellSlotElement6 = document.querySelector('.spellSlots6');
+			var spellSlotElement5 = document.querySelector('.spellSlots5');
+			var spellSlotElement4 = document.querySelector('.spellSlots4');
+			var spellSlotElement3 = document.querySelector('.spellSlots3');
+			var spellSlotElement2 = document.querySelector('.spellSlots2');
+			var spellSlotElement1 = document.querySelector('.spellSlots1');
+			
+			const characterLevel = calculateLevel(characterData.currentXp);
+
+  			// Get the spell slot values based on the character's level
+  			const spellSlotValues = characterData.classes[0].definition.spellRules.levelSpellSlots[characterLevel];
+
+			// Set the spell slot values
+  			spellSlotElement1.value = spellSlotValues[0];
+  			spellSlotElement2.value = spellSlotValues[1];
+  			spellSlotElement3.value = spellSlotValues[2];
+  			spellSlotElement4.value = spellSlotValues[3];
+ 			spellSlotElement5.value = spellSlotValues[4];
+ 			spellSlotElement6.value = spellSlotValues[5];
+ 		        spellSlotElement7.value = spellSlotValues[6];
+ 			spellSlotElement8.value = spellSlotValues[7];
+ 			spellSlotElement9.value = spellSlotValues[8];			
 
 			//warlocks spells are different to other characters as they always cast at highest spell slots avaliable, so they only have set spell slots for the highest spell level avaliable to them
 			if (characterData.classes[0].definition.name === "Warlock") {
@@ -1846,9 +1872,9 @@ function showSpells(adventureData, buttonPressed, characterData, stats) {
 				let highestSpellLevel = 0;
 
 				for (let i = 0; i < characterData.classSpells[0].spells.length; i++) {
-					if (characterData.classSpells[0].spells[i].definition.level > highestSpellLevel) {
-						highestSpellLevel = characterData.classSpells[0].spells[i].definition.level;
-					}
+				    if (characterData.classSpells[0].spells[i].definition.level > highestSpellLevel) {
+				 	highestSpellLevel = characterData.classSpells[0].spells[i].definition.level;
+				    }
 				}
 
 				if (highestSpellLevel === 1) {
@@ -2237,7 +2263,7 @@ function showSpells(adventureData, buttonPressed, characterData, stats) {
 			});
 
 			content.appendChild(overlayBody);
-		};
+		}
 	});
 }
 
