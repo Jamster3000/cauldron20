@@ -92,7 +92,8 @@ function showCharacterSheet(adventureData, buttonPressed) {
 				overlayContainer.style.top = '40px';
 				overlayContainer.style.left = '15px';
 				overlayContainer.style.backgroundColor = 'rgba(255,255,255, 1)';
-				overlayContainer.style.zIndex = '10010';
+				overlayContainer.style.zIndex = '1010';
+				overlayContainer.style.width = "410px";
 
 				let currentCauldronHitPoints = 0;
 				let currentArmourClass = 0;
@@ -143,7 +144,7 @@ function showCharacterSheet(adventureData, buttonPressed) {
 
 				// Create overlay body
 				const overlayBody = document.createElement('div');
-				overlayBody.classList.add('panel-body');
+				overlayBody.classList.add('panel-body', 'body');
 
 				//html for the main page of the character sheet
 				overlayBody.innerHTML = `
@@ -497,6 +498,9 @@ function showActions(adventureData, buttonPressed, characterData, stats) {
 		return;
 	}
 
+	const characterSheetOverlay = document.getElementById('customOverlay');
+	characterSheetOverlay.style.width = "500px";
+
 	const content = document.getElementById('overlayContainer');
 	content.innerHTML = ''; // Clear existing content
 
@@ -523,7 +527,6 @@ function showActions(adventureData, buttonPressed, characterData, stats) {
 		//closes the overlay on button click of the cross
 		const closeButton = header.querySelector('.close');
 		closeButton.addEventListener('click', function () {
-			//overlayContainer.style.display = 'none';
 			characterSheetOverlayOpen = false;
 
 			const characterSheetOverlay = document.getElementById('customOverlay');
@@ -532,20 +535,11 @@ function showActions(adventureData, buttonPressed, characterData, stats) {
 			}
 		});
 
-		const overlayBody = document.querySelector('.panel-body');
+		const overlayBody = content;//= characterSheetOverlay.querySelector('.panel-body body');
 		overlayBody.innerHTML = `
 			<div>
-				<div class="Character-menu-container" style="margin-top: -10px; height: 40px; margin-left: 490px;">
-					<div class="character-menu" style="border: 2px solid #336699; height: 230px; width: 110px; margin-left: -140px;">
-						<button id="actions" class="btn btn-primary btn-xs" style="font-size: 12px; margin-top: 10px; margin-left: 2px; width: 100px; height: 28px;">Actions</button>
-						<button id="bio" class="btn btn-primary btn-xs" style="font-size: 12px; margin-top: -10px; margin-left: 2px; width: 100px; height: 28px;">Bio</button>
-						<button id="character" class="btn btn-primary btn-xs" style="font-size: 12px; margin-top: -10px; margin-left: 2px; width: 100px; height: 28px;">Character</button>
-						<button id="features" class="btn btn-primary btn-xs" style="font-size: 12px; margin-top: -10px; margin-left: 2px; width: 100px; height: 28px;">Features</button>
-						<button id="inventory" class="btn btn-primary btn-xs" style="font-size: 12px; margin-top: -10px; margin-left: 2px; width: 100px; height: 28px;">Inventory</button>
-						<button id="spells" class="btn btn-primary btn-xs" style="font-size: 12px; margin-top: -10px; margin-left: 2px; width: 100px; height: 28px;">Spells</button>
-					</div>
-				</div>
-				<div id="actionsList" style="height: 495px; width: 350px; margin-left: -25px; margin-top: -50px; overflow: auto; border: 2px solid #336699; padding: 10px;">
+				
+				<div id="actionsList" style="height: 495px; width: 350px; margin-left: 0px; margin-top: 0px; overflow: auto; border: 2px solid #336699; padding: 10px;">
 					<ul id="ContentList">
 						<p style="font-size: 20px;"><b>Actions</b></p>
 						<div style="margin-left: 20px;">
@@ -567,7 +561,17 @@ function showActions(adventureData, buttonPressed, characterData, stats) {
 					</ul>
 				</div>
 			</div>
-			<div id="ammoList" style="border: 2px solid #336699; padding 5px; height: 230px; width: 110px; margin-left: 350px; margin-top: -230px;"></div>	
+			<div class="Character-menu-container" style="margin-top: 0px; height: 40px; margin-left: 150px;">
+					<div class="character-menu" style="border: 2px solid #336699; height: 230px; width: 110px; margin-left: -140px;">
+						<button id="actions" class="btn btn-primary btn-xs" style="font-size: 12px; margin-top: 10px; margin-left: 2px; width: 100px; height: 28px;">Actions</button>
+						<button id="bio" class="btn btn-primary btn-xs" style="font-size: 12px; margin-top: -10px; margin-left: 2px; width: 100px; height: 28px;">Bio</button>
+						<button id="character" class="btn btn-primary btn-xs" style="font-size: 12px; margin-top: -10px; margin-left: 2px; width: 100px; height: 28px;">Character</button>
+						<button id="features" class="btn btn-primary btn-xs" style="font-size: 12px; margin-top: -10px; margin-left: 2px; width: 100px; height: 28px;">Features</button>
+						<button id="inventory" class="btn btn-primary btn-xs" style="font-size: 12px; margin-top: -10px; margin-left: 2px; width: 100px; height: 28px;">Inventory</button>
+						<button id="spells" class="btn btn-primary btn-xs" style="font-size: 12px; margin-top: -10px; margin-left: 2px; width: 100px; height: 28px;">Spells</button>
+					</div>
+				</div>
+			<div id="ammoList" style="border: 2px solid #336699; padding 5px; height: 230px; width: 110px; margin-left: -140px; margin-top: 240px;"></div>	
         `;
 
 		//there should be two daggers, show one as melee stats, and one as ranged
@@ -1046,9 +1050,6 @@ function showActions(adventureData, buttonPressed, characterData, stats) {
 				ammoDiv.appendChild(breakLine);
 			}
 		}
-
-		// Append overlayBody to the document body
-		content.appendChild(overlayBody);
 	});
 }
 
@@ -1056,6 +1057,9 @@ function showBio(adventureData, buttonPressed, characterData, stats) {
 	if (characterSheetOverlayOpen && buttonPressed == "null") {
 		return;
 	}
+
+	const characterSheetOverlay = document.getElementById('customOverlay');
+	characterSheetOverlay.style.width = "500px";
 
 	const content = document.getElementById('overlayContainer');
 	content.innerHTML = ''; // Clear existing content
@@ -1086,7 +1090,7 @@ function showBio(adventureData, buttonPressed, characterData, stats) {
 		}
 	});
 
-	const overlayBody = document.querySelector('.panel-body');
+	const overlayBody = content;
 	overlayBody.innerHTML = `
 			<div id="overlayContainer">
 				<div class="Character-menu-container" style="margin-top: -10px; height: 40px; margin-left: 465px;">
@@ -1308,13 +1312,15 @@ function showBio(adventureData, buttonPressed, characterData, stats) {
 	spellsButton.addEventListener('click', function () {
 		showSpells(adventureData, buttonPressed, characterData, stats);
 	});
-	content.appendChild(overlayBody);
 }
 
 function showFeatures(adventureData, buttonPressed, characterData, stats) {
 	if (characterSheetOverlayOpen && buttonPressed == "null") {
 		return;
 	}
+
+	const characterSheetOverlay = document.getElementById('customOverlay');
+	characterSheetOverlay.style.width = "500px";
 
 	const content = document.getElementById('overlayContainer');
 	content.innerHTML = ''; //clear existing content
@@ -1344,7 +1350,7 @@ function showFeatures(adventureData, buttonPressed, characterData, stats) {
 		}
 	});
 
-	const overlayBody = document.querySelector('.panel-body');
+	const overlayBody = content; //document.querySelector('.panel-body');
 	overlayBody.innerHTML = `
 			<div id="overlayContainer">
 				<div class="Character-menu-container" style="margin-top: -10px; height: 40px; margin-left: 465px;">
@@ -1477,14 +1483,15 @@ function showFeatures(adventureData, buttonPressed, characterData, stats) {
 	spellsButton.addEventListener('click', function () {
 		showSpells(adventureData, buttonPressed, characterData, stats);
 	});
-
-	content.appendChild(overlayBody);
 }
 
 function showInventory(adventureData, buttonPressed, characterData, stats) {
 		if (characterSheetOverlayOpen && buttonPressed == "null") {
 			return;
 		}
+
+		const characterSheetOverlay = document.getElementById('customOverlay');
+		characterSheetOverlay.style.width = "500px";
 
 		const content = document.getElementById('overlayContainer');
 		content.innerHTML = ''; //clear existing content
@@ -1515,7 +1522,7 @@ function showInventory(adventureData, buttonPressed, characterData, stats) {
 			}
 		});
 	
-		const overlayBody = document.querySelector('.panel-body');
+		const overlayBody = content;//document.querySelector('.panel-body');
 		overlayBody.innerHTML = `
 			<style>
 				.buttonNameWrap {
@@ -1645,8 +1652,6 @@ function showInventory(adventureData, buttonPressed, characterData, stats) {
 		spellsButton.addEventListener('click', function () {
 			showSpells(adventureData, buttonPressed, characterData, stats);
 		});
-
-		content.appendChild(overlayBody);
 	}
 
 function showSpells(adventureData, buttonPressed, characterData, stats) {
@@ -1654,7 +1659,10 @@ function showSpells(adventureData, buttonPressed, characterData, stats) {
 		return;
 	}
 
-	const content = document.querySelector('#overlayContainer');
+	const characterSheetOverlay = document.getElementById('customOverlay');
+	characterSheetOverlay.style.width = "500px";
+
+	const content = document.getElementById('overlayContainer');
 	content.innerHTML = '';
 
 	let characterHidden = '';
@@ -1687,7 +1695,7 @@ function showSpells(adventureData, buttonPressed, characterData, stats) {
 	// Retrieve spell slots and assign to spellSlotData
 	getSpellSlots(function (data) {
 		if (data) {
-			const overlayBody = document.querySelector('.panel-body');
+			const overlayBody = content;
 			overlayBody.innerHTML = `
 			<style>
 				.buttonNameWrap {
@@ -1858,7 +1866,7 @@ function showSpells(adventureData, buttonPressed, characterData, stats) {
   			spellSlotElement4.value = spellSlotValues[3];
  			spellSlotElement5.value = spellSlotValues[4];
  			spellSlotElement6.value = spellSlotValues[5];
- 		        spellSlotElement7.value = spellSlotValues[6];
+ 		    spellSlotElement7.value = spellSlotValues[6];
  			spellSlotElement8.value = spellSlotValues[7];
  			spellSlotElement9.value = spellSlotValues[8];			
 
@@ -2263,8 +2271,6 @@ function showSpells(adventureData, buttonPressed, characterData, stats) {
 			const spellsButton = overlayBody.querySelector('#spells');
 			spellsButton.addEventListener('click', function () {
 			});
-
-			content.appendChild(overlayBody);
 		}
 	});
 }
@@ -2478,7 +2484,6 @@ function spellInfo(buttonPressed, adventureData, spellInformation, spellLevel, c
 			});
 		}
 	});
-	content.appendChild(overlayBody);
 }
 
 function calculateProf(characterLevel) {
