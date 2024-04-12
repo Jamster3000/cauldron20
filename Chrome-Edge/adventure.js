@@ -93,7 +93,7 @@ function showCharacterSheet(adventureData, buttonPressed) {
 				overlayContainer.style.left = '15px';
 				overlayContainer.style.backgroundColor = 'rgba(255,255,255, 1)';
 				overlayContainer.style.zIndex = '1010';
-				overlayContainer.style.width = "410px";
+				overlayContainer.style.width = "415px";
 
 				let currentCauldronHitPoints = 0;
 				let currentArmourClass = 0;
@@ -217,7 +217,7 @@ function showCharacterSheet(adventureData, buttonPressed) {
 
 					//random number
 					let randomNumber = Math.floor(Math.random() * 20)+1 //this will do any number from 1 - 20
-					var message = `Dexterity Check: ${randomNumber + Math.floor((stats.totalStrength - 10) / 2)} [${Math.floor((stats.totalStrength - 10) / 2) >= 0 ? `+${Math.floor((stats.totalStrength - 10) / 2)}` : Math.floor((stats.totalStrength - 10) / 2)}]`;			sendDataToSidebar(message, characterData.name);	
+					var message = `Strength Check: ${randomNumber + Math.floor((stats.totalStrength - 10) / 2)} [${Math.floor((stats.totalStrength - 10) / 2) >= 0 ? `+${Math.floor((stats.totalStrength - 10) / 2)}` : Math.floor((stats.totalStrength - 10) / 2)}]`;			sendDataToSidebar(message, characterData.name);	
 				 });
 
 				const dexButton = overlayBody.querySelector('#dexButton');
@@ -235,7 +235,7 @@ function showCharacterSheet(adventureData, buttonPressed) {
 
 					//random number
 					let randomNumber = Math.floor(Math.random() * 20) + 1 //this will do any number from 0 - 20
-					var message = `Dexterity Check: ${randomNumber + Math.floor((stats.totalConstitution - 10) / 2)} [${Math.floor((stats.totalConstitution - 10) / 2) >= 0 ? `+${Math.floor((stats.totalConstitution - 10) / 2)}` : Math.floor((stats.totalConstitution - 10) / 2)}]`;
+					var message = `Constitution Check: ${randomNumber + Math.floor((stats.totalConstitution - 10) / 2)} [${Math.floor((stats.totalConstitution - 10) / 2) >= 0 ? `+${Math.floor((stats.totalConstitution - 10) / 2)}` : Math.floor((stats.totalConstitution - 10) / 2)}]`;
 					sendDataToSidebar(message, characterData.name);	
 
 				});
@@ -245,7 +245,7 @@ function showCharacterSheet(adventureData, buttonPressed) {
 
 					//random number
 					let randomNumber = Math.floor(Math.random() * 20) + 1 //this will do any number from 0 - 20
-					var message = `Dexterity Check: ${randomNumber + Math.floor((stats.totalIntellegence - 10) / 2)} [${Math.floor((stats.totalIntellegence - 10) / 2) >= 0 ? `+${Math.floor((stats.totalIntellegence - 10) / 2)}` : Math.floor((stats.totalIntellegence - 10) / 2)}]`;
+					var message = `Intellegence Check: ${randomNumber + Math.floor((stats.totalIntellegence - 10) / 2)} [${Math.floor((stats.totalIntellegence - 10) / 2) >= 0 ? `+${Math.floor((stats.totalIntellegence - 10) / 2)}` : Math.floor((stats.totalIntellegence - 10) / 2)}]`;
 					sendDataToSidebar(message, characterData.name);	
 				});
 
@@ -254,7 +254,7 @@ function showCharacterSheet(adventureData, buttonPressed) {
 
 					//random number
 					let randomNumber = Math.floor(Math.random() * 20) + 1 //this will do any number from 0 - 20
-					var message = `Dexterity Check: ${randomNumber + Math.floor((stats.totalWisdom - 10) / 2)} [${Math.floor((stats.totalWisdom - 10) / 2) >= 0 ? `+${Math.floor((stats.totalWisdom - 10) / 2)}` : Math.floor((stats.totalWisdom - 10) / 2)}]`;
+					var message = `Wisdom Check: ${randomNumber + Math.floor((stats.totalWisdom - 10) / 2)} [${Math.floor((stats.totalWisdom - 10) / 2) >= 0 ? `+${Math.floor((stats.totalWisdom - 10) / 2)}` : Math.floor((stats.totalWisdom - 10) / 2)}]`;
 					sendDataToSidebar(message, characterData.name);	
 				});
 
@@ -263,7 +263,7 @@ function showCharacterSheet(adventureData, buttonPressed) {
 
 					//random number
 					let randomNumber = Math.floor(Math.random() * 20) + 1 //this will do any number from 0 - 20
-					var message = `Dexterity Check: ${randomNumber + Math.floor((stats.totalCharisma - 10) / 2)} [${Math.floor((stats.totalCharisma - 10) / 2) >= 0 ? `+${Math.floor((stats.totalCharisma - 10) / 2)}` : Math.floor((stats.totalCharisma - 10) / 2)}]`;
+					var message = `Charisma Check: ${randomNumber + Math.floor((stats.totalCharisma - 10) / 2)} [${Math.floor((stats.totalCharisma - 10) / 2) >= 0 ? `+${Math.floor((stats.totalCharisma - 10) / 2)}` : Math.floor((stats.totalCharisma - 10) / 2)}]`;
 					sendDataToSidebar(message, characterData.name);	
 				});
 
@@ -699,12 +699,12 @@ function showActions(adventureData, buttonPressed, characterData, stats) {
 						var damageModifier = "0";
 						var damageDice = "";
 
-						if (damageButton.includes('+')) {
-							const tempVar = damageButton.split('+');
+						if (damageButton.textContent.includes('+')) {
+							const tempVar = damageButton.textContent.split('+');
 							damageDice = tempVar[0];
 							damageModifier = +tempVar[1];
-						} else if (damageButton.includes('-')) {
-							const tempVar = damageButton.split('-');
+						} else if (damageButton.textContent.includes('-')) {
+							const tempVar = damageButton.textContent.split('-');
 							damageDice = tempVar[0];
 							damageModifier = -tempVar[1];
 						} else {
@@ -733,12 +733,12 @@ function showActions(adventureData, buttonPressed, characterData, stats) {
 						var damageModifier = "0";
 						var damageDice = "";
 
-						if (damageButton.includes('+')) {
-							const tempVar = damageButton.split('+');
+						if (damageButton.textContent.includes('+')) {
+							const tempVar = damageButton.textContent.split('+');
 							damageDice = tempVar[0];
 							damageModifier = +tempVar[1];
-						} else if (damageButton.includes('-')) {
-							const tempVar = damageButton.split('-');
+						} else if (damageButton.textContent.includes('-')) {
+							const tempVar = damageButton.textContent.split('-');
 							damageDice = tempVar[0];
 							damageModifier = -tempVar[1];
 						} else {
@@ -2308,9 +2308,9 @@ function spellInfo(buttonPressed, adventureData, spellInformation, spellLevel, c
 		}
 	});
 
-	const overlayBody = document.createElement('div');
-	overlayBody.classList.add('panel-body');
-
+	//const overlayBody = document.createElement('div');
+	//overlayBody.classList.add('panel-body');
+	overlayBody = content;
 	overlayBody.innerHTML = `
         <div id="overlayContainer">
             <button id="backButton" class="btn btn-primary btn-xs" style="height=75px; width=0px; font-size: 25px; margin-top: -20px; margin-left: -20px;">🢀</button>
@@ -2483,6 +2483,7 @@ function spellInfo(buttonPressed, adventureData, spellInformation, spellLevel, c
 				}
 			});
 		}
+		//content.appendChild(overlayBody);
 	});
 }
 
