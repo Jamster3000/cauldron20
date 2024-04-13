@@ -54,8 +54,6 @@ setTimeout(function () {
 }, 0);
 
 function showCharacterSheet(adventureData, buttonPressed) {
-	console.log(characterSheetOverlayOpen);
-	console.log(buttonPressed);
     if (characterSheetOverlayOpen && buttonPressed === true) {
 		return;
 	}
@@ -83,6 +81,7 @@ function showCharacterSheet(adventureData, buttonPressed) {
 				chrome.storage.local.get(null, function (result) {
 					//console.log('All stored data:', result);//uncomment this to get all data stored in the user's local chrome storage for this extension
 				});
+				console.log(characterData);
 
 				const overlayContainer = document.createElement('div');
 				overlayContainer.id = 'customOverlay';
@@ -120,31 +119,37 @@ function showCharacterSheet(adventureData, buttonPressed) {
 					}
 				}
 
-					// Create overlay header
-					const overlayHeader = document.createElement('div');
-					overlayHeader.classList.add('panel-heading');
-					overlayHeader.id = "titleBar";
-					overlayHeader.innerHTML = `${characterData.name} - Character ${characterHidden} <span class="glyphicon glyphicon-remove close" aria-hidden="true"></span>`;
+				// Create overlay header
+				const overlayHeader = document.createElement('div');
+				overlayHeader.classList.add('panel-heading');
+				overlayHeader.id = "titleBar";
+				overlayHeader.innerHTML = `${characterData.name} - Character ${characterHidden} <span class="glyphicon glyphicon-remove close" aria-hidden="true"></span>`;
 
 				const closeButton = overlayHeader.querySelector('.close');
-				closeButton.addEventListener('click', function() {
+				closeButton.addEventListener('click', function () {
 					overlayContainer.style.display = 'none';
 					characterSheetOverlayOpen = false;
 
 					const characterSheetOverlay = document.getElementById('customOverlay');
 					if (characterSheetOverlay) {
-	   				characterSheetOverlay.remove();
+						characterSheetOverlay.remove();
 					}
 				});
 
 				//working out the total character hp
 				const conStat = Math.floor((stats.totalConstitution - 10) / 2)//ability score -10/2 to get modifier (round up)
-				const level = calculateLevel(characterData.currentXp)
-				const totalHitPoints = characterData.baseHitPoints + (Number(conStat) * Number(level));//constitustion modifier X level + base hit points = total hp
+				const level = calculateLevel(characterData.currentXp, characterData)
+				var totalHitPoints = 0;
+
+				if (adventureData.characters.character.length != null) {
+					for (let i = 0; i < adventureData.characters.character.length; i++) {
+						totalHitPoints = adventureData.characters.character[0]['hitpoints'];
+					}
+				}
 
 				// Create overlay body
 				const overlayBody = document.createElement('div');
-				overlayBody.classList.add('panel-body', 'body');
+				overlayBody.classList.add('panel-body');
 
 				//html for the main page of the character sheet
 				overlayBody.innerHTML = `
@@ -159,17 +164,17 @@ function showCharacterSheet(adventureData, buttonPressed) {
     							<div style="border: 2px solid #336699; padding: 10px; margin-right: 10px; height: 515px;">
 								<br>
        		            					<h5 style="font-weight: bold;">STR</h5>
-        							<button id="strButton" style="margin-right: 5px;">${stats.totalStrength} (${stats.totalStrength >= 10 ? '+' : ''}${Math.floor((stats.totalStrength-10)/2)})</button>
+        							<button id="strButton" style="margin-right: 5px;">${stats.totalStrength} (${stats.totalStrength >= 10 ? '+' : ''}${Math.floor((stats.totalStrength - 10) / 2)})</button>
 								<h5 style="font-weight: bold;">DEX</h5>
-        							<button id="dexButton" style="margin-right: 5px;">${stats.totalDexterity} (${stats.totalDexterity >= 10 ? '+' : ''}${Math.floor((stats.totalDexterity-10)/2)})</button>
+        							<button id="dexButton" style="margin-right: 5px;">${stats.totalDexterity} (${stats.totalDexterity >= 10 ? '+' : ''}${Math.floor((stats.totalDexterity - 10) / 2)})</button>
         							<h5 style="font-weight: bold;">CON</h5>
-        							<button id="conButton" style="margin-right: 5px;">${stats.totalConstitution} (${stats.totalConstitution >= 10 ? '+' : ''}${Math.floor((stats.totalConstitution-10)/2)})</button>
+        							<button id="conButton" style="margin-right: 5px;">${stats.totalConstitution} (${stats.totalConstitution >= 10 ? '+' : ''}${Math.floor((stats.totalConstitution - 10) / 2)})</button>
   								<h5 style="font-weight: bold;">INT</h5>
-        							<button id="intButton" style="margin-right: 5px;">${stats.totalIntellegence} (${stats.totalIntellegence >= 10 ? '+' : ''}${Math.floor((stats.totalIntellegence-10)/2)})</button>
+        							<button id="intButton" style="margin-right: 5px;">${stats.totalIntellegence} (${stats.totalIntellegence >= 10 ? '+' : ''}${Math.floor((stats.totalIntellegence - 10) / 2)})</button>
 								<h5 style="font-weight: bold;">WIS</h5>
-        							<button id="wisButton" style="margin-right: 5px;">${stats.totalWisdom} (${stats.totalWisdom >= 10 ? '+' : ''}${Math.floor((stats.totalWisdom-10)/2)})</button>
+        							<button id="wisButton" style="margin-right: 5px;">${stats.totalWisdom} (${stats.totalWisdom >= 10 ? '+' : ''}${Math.floor((stats.totalWisdom - 10) / 2)})</button>
 								<h5 style="font-weight: bold;">CHA</h5>
-        							<button id="chaButton" style="margin-right: 5px;">${stats.totalCharisma} (${stats.totalCharisma >= 10 ? '+' : ''}${Math.floor((stats.totalCharisma-10)/2)})</button>
+        							<button id="chaButton" style="margin-right: 5px;">${stats.totalCharisma} (${stats.totalCharisma >= 10 ? '+' : ''}${Math.floor((stats.totalCharisma - 10) / 2)})</button>
     			    					<h3 style="margin-top: 50px; font-size: 20px;">ᴬᵇᶦˡᶦᵗʸ ˢᶜᵒʳᵉ</h3>
 							</div>
 							<div id=SkillListDiv style="border: 2px solid #336699; padding: 15px; margin-right: 10px; height: 515px;">
@@ -213,87 +218,87 @@ function showCharacterSheet(adventureData, buttonPressed) {
 
 				//event listeners for the ability buttons
 				const strButton = overlayBody.querySelector('#strButton');
-				strButton.addEventListener('click', function() {
+				strButton.addEventListener('click', function () {
 
 					//random number
-					let randomNumber = Math.floor(Math.random() * 20)+1 //this will do any number from 1 - 20
-					var message = `Strength Check: ${randomNumber + Math.floor((stats.totalStrength - 10) / 2)} [${Math.floor((stats.totalStrength - 10) / 2) >= 0 ? `+${Math.floor((stats.totalStrength - 10) / 2)}` : Math.floor((stats.totalStrength - 10) / 2)}]`;			sendDataToSidebar(message, characterData.name);	
-				 });
+					let randomNumber = Math.floor(Math.random() * 20) + 1 //this will do any number from 1 - 20
+					var message = `Strength Check: ${randomNumber + Math.floor((stats.totalStrength - 10) / 2)} [${Math.floor((stats.totalStrength - 10) / 2) >= 0 ? `+${Math.floor((stats.totalStrength - 10) / 2)}` : Math.floor((stats.totalStrength - 10) / 2)}]`; sendDataToSidebar(message, characterData.name);
+				});
 
 				const dexButton = overlayBody.querySelector('#dexButton');
-				dexButton.addEventListener('click', function() {
+				dexButton.addEventListener('click', function () {
 
 					//random number
-					let randomNumber = Math.floor(Math.random() * 20)+1 //this will do any number from 0 - 20
+					let randomNumber = Math.floor(Math.random() * 20) + 1 //this will do any number from 0 - 20
 					var message = `Dexterity Check: ${randomNumber + Math.floor((stats.totalDexterity - 10) / 2)} [${Math.floor((stats.totalDexterity - 10) / 2) >= 0 ? `+${Math.floor((stats.totalDexterity - 10) / 2)}` : Math.floor((stats.totalDexterity - 10) / 2)}]`;
-					sendDataToSidebar(message, characterData.name);	
+					sendDataToSidebar(message, characterData.name);
 
 				});
-	
+
 				const conButton = overlayBody.querySelector('#conButton');
-				conButton.addEventListener('click', function() {
+				conButton.addEventListener('click', function () {
 
 					//random number
 					let randomNumber = Math.floor(Math.random() * 20) + 1 //this will do any number from 0 - 20
 					var message = `Constitution Check: ${randomNumber + Math.floor((stats.totalConstitution - 10) / 2)} [${Math.floor((stats.totalConstitution - 10) / 2) >= 0 ? `+${Math.floor((stats.totalConstitution - 10) / 2)}` : Math.floor((stats.totalConstitution - 10) / 2)}]`;
-					sendDataToSidebar(message, characterData.name);	
+					sendDataToSidebar(message, characterData.name);
 
 				});
 
 				const intButton = overlayBody.querySelector('#intButton');
-				intButton.addEventListener('click', function() {
+				intButton.addEventListener('click', function () {
 
 					//random number
 					let randomNumber = Math.floor(Math.random() * 20) + 1 //this will do any number from 0 - 20
 					var message = `Intellegence Check: ${randomNumber + Math.floor((stats.totalIntellegence - 10) / 2)} [${Math.floor((stats.totalIntellegence - 10) / 2) >= 0 ? `+${Math.floor((stats.totalIntellegence - 10) / 2)}` : Math.floor((stats.totalIntellegence - 10) / 2)}]`;
-					sendDataToSidebar(message, characterData.name);	
+					sendDataToSidebar(message, characterData.name);
 				});
 
 				const wisButton = overlayBody.querySelector('#wisButton');
-				wisButton.addEventListener('click', function() {
+				wisButton.addEventListener('click', function () {
 
 					//random number
 					let randomNumber = Math.floor(Math.random() * 20) + 1 //this will do any number from 0 - 20
 					var message = `Wisdom Check: ${randomNumber + Math.floor((stats.totalWisdom - 10) / 2)} [${Math.floor((stats.totalWisdom - 10) / 2) >= 0 ? `+${Math.floor((stats.totalWisdom - 10) / 2)}` : Math.floor((stats.totalWisdom - 10) / 2)}]`;
-					sendDataToSidebar(message, characterData.name);	
+					sendDataToSidebar(message, characterData.name);
 				});
 
 				const chaButton = overlayBody.querySelector('#chaButton');
-				chaButton.addEventListener('click', function() {
+				chaButton.addEventListener('click', function () {
 
 					//random number
 					let randomNumber = Math.floor(Math.random() * 20) + 1 //this will do any number from 0 - 20
 					var message = `Charisma Check: ${randomNumber + Math.floor((stats.totalCharisma - 10) / 2)} [${Math.floor((stats.totalCharisma - 10) / 2) >= 0 ? `+${Math.floor((stats.totalCharisma - 10) / 2)}` : Math.floor((stats.totalCharisma - 10) / 2)}]`;
-					sendDataToSidebar(message, characterData.name);	
+					sendDataToSidebar(message, characterData.name);
 				});
 
 				//event listeners for the character buttons
 				const actionButton = overlayBody.querySelector('#actions');
-				actionButton.addEventListener('click', function() {
+				actionButton.addEventListener('click', function () {
 					showActions(adventureData, buttonPressed, characterData, stats);
 				});
-	
+
 				const bioButton = overlayBody.querySelector('#bio');
-				bioButton.addEventListener('click', function() {
+				bioButton.addEventListener('click', function () {
 					showBio(adventureData, buttonPressed, characterData, stats);
 				});
 
 				const characterButton = overlayBody.querySelector('#character');
-				characterButton.addEventListener('click', function() {
+				characterButton.addEventListener('click', function () {
 				});
 
 				const featuresButton = overlayBody.querySelector('#features');
-				featuresButton.addEventListener('click', function() {
+				featuresButton.addEventListener('click', function () {
 					showFeatures(adventureData, buttonPressed, characterData, stats);
 				});
 
 				const inventoryButton = overlayBody.querySelector('#inventory');
-				inventoryButton.addEventListener('click', function() {
+				inventoryButton.addEventListener('click', function () {
 					showInventory(adventureData, buttonPressed, characterData, stats);
 				});
 
 				const spellsButton = overlayBody.querySelector('#spells');
-				spellsButton.addEventListener('click', function() {
+				spellsButton.addEventListener('click', function () {
 					showSpells(adventureData, buttonPressed, characterData, stats);
 				});
 
@@ -351,7 +356,7 @@ function showCharacterSheet(adventureData, buttonPressed) {
 
 					if (listElement.checked === true) {
 						let total = 0;
-						const characterProf = calculateProf(calculateLevel(characterData.currentXp));
+						const characterProf = calculateProf(calculateLevel(characterData.currentXp, characterData));
 
 						if (listSkills[i].ability === "Str") {
 							total = Math.floor((stats.totalStrength - 10) / 2) + characterProf;
@@ -402,7 +407,7 @@ function showCharacterSheet(adventureData, buttonPressed) {
 
 				//saving throw loop
 				const getSavingThrowElement = document.getElementById('savingThrowElement');
-				for (let i = 0; i<savingThrowList.length; i++){
+				for (let i = 0; i < savingThrowList.length; i++) {
 					//radio button
 					const listElement = document.createElement('input');
 					listElement.type = "radio";
@@ -427,45 +432,57 @@ function showCharacterSheet(adventureData, buttonPressed) {
 
 					if (listElement.checked === true) {
 						let total = 0;
-						const characterProf = calculateProf(calculateLevel(characterData.currentXp));
+						const characterProf = calculateProf(calculateLevel(characterData.currentXp, characterData));
+
+						for (const feature in characterData.classes[0].classFeatures) {
+							if (characterData.classes[0].classFeatures[feature].definition.name === "Aura of Protection") {
+								total += 3;
+							}
+						}
 
 						if (savingThrowList[i] === "Strength") {
-							total = Math.floor((stats.totalStrength-10)/2) + characterProf;
+							total += Math.floor((stats.totalStrength - 10) / 2) + characterProf;
 						} else if (savingThrowList[i] === "Dexterity") {
-        					total = Math.floor((stats.totalDexterity - 10) / 2) + characterProf;
-    					} else if (savingThrowList[i] === "Constitution") {
-        					total = Math.floor((stats.totalConstitution - 10) / 2) + characterProf;
-    					} else if (savingThrowList[i] === "Intelligence") {
-        					total = Math.floor((stats.totalIntellegence - 10) / 2) + characterProf;
-    					} else if (savingThrowList[i] === "Wisdom") {
-        					total = Math.floor((stats.totalWisdom - 10) / 2) + characterProf;
-    					} else if (savingThrowList[i] === "Charisma") {
-        					total = Math.floor((stats.totalCharisma - 10) / 2) + characterProf;
-   					}
-		
-					savingThrowButton.textContent = total >= 0 ? `+${total}` : total;
+							total += Math.floor((stats.totalDexterity - 10) / 2) + characterProf;
+						} else if (savingThrowList[i] === "Constitution") {
+							total += Math.floor((stats.totalConstitution - 10) / 2) + characterProf;
+						} else if (savingThrowList[i] === "Intellegence") {
+							total += Math.floor((stats.totalIntellegence - 10) / 2) + characterProf;
+						} else if (savingThrowList[i] === "Wisdom") {
+							total += Math.floor((stats.totalWisdom - 10) / 2) + characterProf;
+						} else if (savingThrowList[i] === "Charisma") {
+							total += Math.floor((stats.totalCharisma - 10) / 2) + characterProf;
+						}
 
-					savingThrowButton.addEventListener('click', function () {
-						let randomNumber = Math.floor(Math.random() * 20) + 1
-						var message = `${savingThrowList[i]} Check: ${randomNumber + total} [${total >= 0 ? `+${total}` : total}]`;
-						sendDataToSidebar(message, characterData.name);
-					});
-				
+						savingThrowButton.textContent = total >= 0 ? `+${total}` : total;
+
+						savingThrowButton.addEventListener('click', function () {
+							let randomNumber = Math.floor(Math.random() * 20) + 1
+							var message = `${savingThrowList[i]} Check: ${randomNumber + total} [${total >= 0 ? `+${total}` : total}]`;
+							sendDataToSidebar(message, characterData.name);
+						});
+
 					} else {
-					 let total = 0;
+						let total = 0;
+
+						for (const feature in characterData.classes[0].classFeatures) {
+							if (characterData.classes[0].classFeatures[feature].definition.name === "Aura of Protection") {
+								total += 3;
+							}
+						}
 
 						if (savingThrowList[i] === "Strength") {
-						total = Math.floor((stats.totalStrength-10) / 2)
-					} else if (savingThrowList[i] === "Dexterity") {
-        					total = Math.floor((stats.totalDexterity - 10) / 2); 	 
-    						} else if (savingThrowList[i] === "Constitution") {
-        					total = Math.floor((stats.totalConstitution - 10) / 2);
-    					} else if (savingThrowList[i] === "Intelligence") {
-        					total = Math.floor((stats.totalIntellegence - 10) / 2);
+							total += Math.floor((stats.totalStrength - 10) / 2)
+						} else if (savingThrowList[i] === "Dexterity") {
+							total += Math.floor((stats.totalDexterity - 10) / 2);
+						} else if (savingThrowList[i] === "Constitution") {
+							total += Math.floor((stats.totalConstitution - 10) / 2);
+						} else if (savingThrowList[i] === "Intellegence") {
+							total += Math.floor((stats.totalIntellegence - 10) / 2);
     					} else if (savingThrowList[i] === "Wisdom") {
-        					total = Math.floor((stats.totalWisdom - 10) / 2);
+							total += Math.floor((stats.totalWisdom - 10) / 2);
     					} else if (savingThrowList[i] === "Charisma") {
-        					total = Math.floor((stats.totalCharisma - 10) / 2);
+							total += Math.floor((stats.totalCharisma - 10) / 2);
    					}
 		
 					savingThrowButton.textContent = total >= 0 ? `+${total}` : total;
@@ -535,10 +552,9 @@ function showActions(adventureData, buttonPressed, characterData, stats) {
 			}
 		});
 
-		const overlayBody = content;//= characterSheetOverlay.querySelector('.panel-body body');
+		const overlayBody = content;
 		overlayBody.innerHTML = `
 			<div>
-				
 				<div id="actionsList" style="height: 495px; width: 350px; margin-left: 0px; margin-top: 0px; overflow: auto; border: 2px solid #336699; padding: 10px;">
 					<ul id="ContentList">
 						<p style="font-size: 20px;"><b>Actions</b></p>
@@ -588,7 +604,7 @@ function showActions(adventureData, buttonPressed, characterData, stats) {
 				const range = characterData.inventory[i].definition.range;
 				const longRange = characterData.inventory[i].definition.longRange;
 
-				const characterLevel = calculateLevel(characterData.currentXp);
+				const characterLevel = calculateLevel(characterData.currentXp, characterData);
 				const profBonus = calculateProf(characterLevel);
 
 				//weapon
@@ -652,11 +668,21 @@ function showActions(adventureData, buttonPressed, characterData, stats) {
 
 				//damage button
 				var damageButton = document.createElement('button');
+				damageButton.textContent = '';
 				damageButton.id = "weapon";
 
 				try {
 					if (characterData.inventory[i].definition.range < 6) { //5 or less assume thats the range in feet meaning it's a melee weapon
-						damageButton.textContent = `${characterData.inventory[i].definition.damage.diceString}${(Math.floor((stats.totalStrength - 10) / 2) >= 0 ? `+${Math.floor((stats.totalStrength - 10) / 2)}` : Math.floor((stats.totalStrength - 10) / 2))}`;
+						for (const feature in characterData.classes[0].classFeatures) {
+							if (characterData.classes[0].classFeatures[feature].definition.name === "Aura of Hate") {
+								damageButton.textContent = `${characterData.inventory[i].definition.damage.diceString}${(Math.floor((stats.totalStrength - 10) / 2+3) >= 0 ? `+${Math.floor((stats.totalStrength - 10) / 2+3)}` : Math.floor(stats.totalStrength - 10) / 2+3)}`;
+								break;
+							}
+						}
+
+						if (damageButton.textContent === "") {
+							damageButton.textContent = `${characterData.inventory[i].definition.damage.diceString}${(Math.floor((stats.totalStrength - 10) / 2) >= 0 ? `+${Math.floor((stats.totalStrength - 10) / 2)}` : Math.floor((stats.totalStrength - 10) / 2))}`;
+						}
 					} else {
 						damageButton.textContent = `${characterData.inventory[i].definition.damage.diceString}${(Math.floor((stats.totalDexterity - 10) / 2) >= 0 ? `+${Math.floor((stats.totalDexterity - 10) / 2)}` : Math.floor((stats.totalDexterity - 10) / 2))}`;
 					}
@@ -699,12 +725,12 @@ function showActions(adventureData, buttonPressed, characterData, stats) {
 						var damageModifier = "0";
 						var damageDice = "";
 
-						if (damageButton.textContent.includes('+')) {
-							const tempVar = damageButton.textContent.split('+');
+						if (damageButton.includes('+')) {
+							const tempVar = damageButton.split('+');
 							damageDice = tempVar[0];
 							damageModifier = +tempVar[1];
-						} else if (damageButton.textContent.includes('-')) {
-							const tempVar = damageButton.textContent.split('-');
+						} else if (damageButton.includes('-')) {
+							const tempVar = damageButton.split('-');
 							damageDice = tempVar[0];
 							damageModifier = -tempVar[1];
 						} else {
@@ -713,7 +739,7 @@ function showActions(adventureData, buttonPressed, characterData, stats) {
 
 						if (range < 6) {
 							if (damageDice.includes("d")) {
-								message = `${itemName}\nReach: ${range}/${longRange}ft.\n${weaponDescription}\n\n\nDamage: ${calculateDamage(damageDice, damageModifier)} [${damageModifier >= 0 ? `+${damageModifier}` : damageModifier}]`;
+								message = `${itemName}\nDamage: ${calculateDamage(damageDice, damageModifier)} [${damageModifier >= 0 ? `+${damageModifier}` : damageModifier}]`;
 							} else {
 								if (range == null || longRange == null) {
 									message = `${itemName}\nReach: 5/5ft.\n${weaponDescription}`;
@@ -722,7 +748,7 @@ function showActions(adventureData, buttonPressed, characterData, stats) {
 								}
 							}
 						} else {
-							message = `${itemName}\nReach: ${range}/${longRange}ft.\n${weaponDescription}\n\n\nDamage: ${calculateDamage(damageDice, damageModifier)} [${damageModifier >= 0 ? `+${damageModifier}` : damageModifier}]`;
+							message = `${itemName}\nDamage: ${calculateDamage(damageDice, damageModifier)} [${damageModifier >= 0 ? `+${damageModifier}` : damageModifier}]`;
 						}
 						sendDataToSidebar(message, characterData.name);
 					});
@@ -745,28 +771,46 @@ function showActions(adventureData, buttonPressed, characterData, stats) {
 							damageDice = damageButton[0];
 						}
 
-						if (range < 6) {
-							if (damageDice.includes("d")) {
-								message = `${itemName}\nReach: ${range}/${longRange}ft.\n${weaponDescription}\n\n\nAttack Roll: ${randomNumber + Math.floor((stats.totalStrength - 10) / 2)} [${Math.floor((stats.totalStrength - 10) / 2) >= 0 ? `+${Math.floor((stats.totalStrength - 10) / 2)}` : Math.floor((stats.totalStrength - 10) / 2)}]\nDamage: ${calculateDamage(damageDice, damageModifier)} [${damageModifier >= 0 ? `+${damageModifier}` : damageModifier}]`;
-							} else {
-								if (range == null || longRange == null) {
-									message = `${itemName}\nReach: 5/5ft.\n${weaponDescription}`;
+						try {
+							if (range < 6) {
+								if (damageDice.includes("d")) {
+									message = `${itemName}\nReach: ${range}/${longRange}ft.\n${weaponDescription}\n\n\nAttack Roll: ${randomNumber + Math.floor((stats.totalStrength - 10) / 2)} [${currentAttackRoll.textContent >= 0 ? `${currentAttackRoll.textContent}` : currentAttackRoll.textContent}]\nDamage: ${calculateDamage(damageDice, damageModifier)} [${damageModifier >= 0 ? `+${damageModifier}` : damageModifier}]`;
 								} else {
-									message = `${itemName}\nReach: ${range}/${longRange}ft.\n${weaponDescription}`;
+									if (range == null || longRange == null) {
+										message = `${itemName}\nReach: 5/5ft.\n${weaponDescription}`;
+									} else {
+										message = `${itemName}\nReach: ${range}/${longRange}ft.\n${weaponDescription}`;
+									}
 								}
+							} else {
+								message = `${itemName}\nReach: ${range}/${longRange}ft.\n${weaponDescription}\n\n\nAttack Roll: ${randomNumber + Math.floor((stats.totalDexterity - 10) / 2)} [${currentAttackRoll.textContent >= 0 ? `${currentAttackRoll.textContent}` : currentAttackRoll.textContent}]\nDamage: ${calculateDamage(damageDice, damageModifier)} [${damageModifier >= 0 ? `+${damageModifier}` : damageModifier}]`;
 							}
-						} else {
-							message = `${itemName}\nReach: ${range}/${longRange}ft.\n${weaponDescription}\n\n\nAttack Roll: ${randomNumber + Math.floor((stats.totalDexterity - 10) / 2)} [${Math.floor((stats.totalDexterity - 10) / 2) >= 0 ? `+${Math.floor((stats.totalDexterity - 10) / 2)}` : Math.floor((stats.totalStrength - 10) / 2)}]\nDamage: ${calculateDamage(damageDice, damageModifier)} [${damageModifier >= 0 ? `+${damageModifier}` : damageModifier}]`;
+							sendDataToSidebar(message, characterData.name);
+						} catch (TypeError) {
+							const damageDice = damageButton.textContent;
+							if (range < 6) {
+								if (damageDice.includes("d")) {
+									message = `${itemName}\nReach: ${range}/${longRange}ft.\n${weaponDescription}\n\n\nAttack Roll: ${randomNumber + Math.floor((stats.totalStrength - 10) / 2)} [${currentAttackRoll.textContent >= 0 ? `${currentAttackRoll.textContent}` : currentAttackRoll.textContent}]\nDamage: ${calculateDamage(damageDice, damageModifier)} [${damageModifier >= 0 ? `+${damageModifier}` : damageModifier}]`;
+								} else {
+									if (range == null || longRange == null) {
+										message = `${itemName}\nReach: 5/5ft.\n${weaponDescription}`;
+									} else {
+										message = `${itemName}\nReach: ${range}/${longRange}ft.\n${weaponDescription}`;
+									}
+								}
+							} else {
+								message = `${itemName}\nReach: ${range}/${longRange}ft.\n${weaponDescription}\n\n\nAttack Roll: ${randomNumber + Math.floor((stats.totalDexterity - 10) / 2)} [${currentAttackRoll.textContent >= 0 ? `${currentAttackRoll.textContent}` : currentAttackRoll.textContent}]\nDamage: ${calculateDamage(damageDice, damageModifier)} [${damageModifier >= 0 ? `+${damageModifier}` : damageModifier}]`;
+							}
+							sendDataToSidebar(message, characterData.name);
 						}
-						sendDataToSidebar(message, characterData.name);
 					});
 
 					currentAttackRoll.addEventListener('click', function () {//the attack roll for only rolling the attack of a weapons
 						const randomNumber = Math.floor(Math.random() * 20) + 1
 						if (range < 6) {
-							message = `${itemName}\nReach: ${range}/${longRange}ft.\n${weaponDescription}\n\n\nAttack Roll: ${randomNumber + Math.floor((stats.totalStrength - 10) / 2)} [${Math.floor((stats.totalStrength - 10) / 2) >= 0 ? `+${Math.floor((stats.totalStrength - 10) / 2)}` : Math.floor((stats.totalStrength - 10) / 2)}]`;
+							message = `${itemName}\nAttack Roll: ${randomNumber + Math.floor((stats.totalStrength - 10) / 2)} [${currentAttackRoll.textContent >= 0 ? `${currentAttackRoll.textContent}` : currentAttackRoll.textContent}]`;
 						} else {
-							message = `${itemName}\nReach: ${range}/${longRange}ft.\n${weaponDescription}\n\n\nAttack Roll: ${randomNumber + Math.floor((stats.totalDexterity - 10) / 2)} [${Math.floor((stats.totalDexterity - 10) / 2) >= 0 ? `+${Math.floor((stats.totalDexterity - 10) / 2)}` : Math.floor((stats.totalStrength - 10) / 2)}]`;
+							message = `${itemName}\nAttack Roll: ${randomNumber + Math.floor((stats.totalDexterity - 10) / 2)} [${currentAttackRoll.textContent >= 0 ? `${currentAttackRoll.textContent}` : currentAttackRoll.textContent}]`;
 						}
 
 						sendDataToSidebar(message, characterData.name);
@@ -1854,7 +1898,7 @@ function showSpells(adventureData, buttonPressed, characterData, stats) {
 			var spellSlotElement2 = document.querySelector('.spellSlots2');
 			var spellSlotElement1 = document.querySelector('.spellSlots1');
 			
-			const characterLevel = calculateLevel(characterData.currentXp);
+			const characterLevel = calculateLevel(characterData.currentXp, characterData);
 
   			// Get the spell slot values based on the character's level
   			const spellSlotValues = characterData.classes[0].definition.spellRules.levelSpellSlots[characterLevel];
@@ -1872,7 +1916,7 @@ function showSpells(adventureData, buttonPressed, characterData, stats) {
 
 			//warlocks spells are different to other characters as they always cast at highest spell slots avaliable, so they only have set spell slots for the highest spell level avaliable to them
 			if (characterData.classes[0].definition.name === "Warlock") {
-				const characterLevel = calculateLevel(characterData.currentXp);
+				const characterLevel = calculateLevel(characterData.currentXp, characterData);
 				var spellSlotElement5 = document.querySelector('.spellSlots5');
 				var spellSlotElement4 = document.querySelector('.spellSlots4');
 				var spellSlotElement3 = document.querySelector('.spellSlots3');
@@ -2280,6 +2324,9 @@ function spellInfo(buttonPressed, adventureData, spellInformation, spellLevel, c
 		return;
 	}
 
+	const characterSheetOverlay = document.getElementById('customOverlay');
+	characterSheetOverlay.style.width = "400px";
+
 	const content = document.querySelector('#overlayContainer');
 	content.innerHTML = '';
 
@@ -2308,13 +2355,11 @@ function spellInfo(buttonPressed, adventureData, spellInformation, spellLevel, c
 		}
 	});
 
-	//const overlayBody = document.createElement('div');
-	//overlayBody.classList.add('panel-body');
 	overlayBody = content;
 	overlayBody.innerHTML = `
         <div id="overlayContainer">
-            <button id="backButton" class="btn btn-primary btn-xs" style="height=75px; width=0px; font-size: 25px; margin-top: -20px; margin-left: -20px;">🢀</button>
-            <div class="spellDiv" style="height: 400px; width: 345px; margin-left: -10px; margin-top: 25px; overflow: auto; border: 2px solid #336699; padding: 10px;">
+            <button id="backButton" class="btn btn-primary btn-xs" style="height=75px; width=0px; font-size: 25px; margin-top: 0px; margin-left: 0px;">🢀</button>
+            <div class="spellDiv" style="height: 400px; width: 365px; margin-left: -10px; margin-top: 25px; overflow: auto; border: 2px solid #336699; padding: 10px;">
                 <h2><b>${spellInformation['name']}</b></h2>
                 <hr>
                 <h5><b>${spellInformation['casting time']}</b></h5>
@@ -2328,28 +2373,35 @@ function spellInfo(buttonPressed, adventureData, spellInformation, spellLevel, c
         <div>
     `;
 	let highestSpellLevel = 0;
+	var spellIsCantrip = false;
 
 	if (characterData.classes[0].definition.name === "Warlock") {
 		var castButton = document.createElement('button');
+		const buttonFooter = document.querySelector('#buttonFooter');
 		castButton.id = "castSpell";
 		castButton.className = "btn btn-primary btn-xs";
 		castButton.style.fontSize = '25px';
-		castButton.style.marginLeft = '75px';
+		castButton.style.marginLeft = '0px';
 		castButton.style.marginTop = '5px';
 		castButton.textContent = "Cast Spell"
 
-		overlayBody.appendChild(castButton);
+		buttonFooter.appendChild(castButton);
 
 		for (let i = 0; i < characterData.classSpells[0].spells.length; i++) {
 			if (characterData.classSpells[0].spells[i].definition.level > highestSpellLevel) {
 				highestSpellLevel = characterData.classSpells[0].spells[i].definition.level;
 			}
 		}
-
+		console.log(spellInformation);
 		if (spellInformation['school level'].includes('Cantrip')) {
 			castButton.textContent = `Cast Spell as cantrip`;
+			spellIsCantrip = true;
 		} else {
-			castButton.textContent = `Cast Spell At Highest Level (${highestSpellLevel})`;
+			if (spellInformation['cast at will'] === true) {//true must mean it can't be cast at will, seems to be backward meaning
+				castButton.textContent = `Cast Spell At Highest Level (${highestSpellLevel})`;
+			} else {
+				castButton.textContent = "Cast Spell at Will";
+			}
 		}
 	} else {
 		var castButton = document.createElement('button');
@@ -2371,6 +2423,7 @@ function spellInfo(buttonPressed, adventureData, spellInformation, spellLevel, c
 	const castSpell = overlayBody.querySelector('#castSpell');
 	castSpell.addEventListener('click', function () {
 		const newline = "\n";
+
 		var message = (
 			spellInformation.name + newline +
 			spellInformation["school level"] + newline +
@@ -2383,7 +2436,11 @@ function spellInfo(buttonPressed, adventureData, spellInformation, spellLevel, c
 		);
 
 		if (characterData.classes[0].definition.name === "Warlock") {
-			sendDataToSidebar(message + `\n\n[Cast at highest level]`, characterData.name);
+			if (spellIsCantrip) {
+				sendDataToSidebar(message, characterData.name);
+			} else {
+				sendDataToSidebar(message + `\n\n[Cast at highest level]`, characterData.name);
+			}
 
 			getSpellSlots(function (data) {
 				if (data) {
@@ -2483,7 +2540,6 @@ function spellInfo(buttonPressed, adventureData, spellInformation, spellLevel, c
 				}
 			});
 		}
-		//content.appendChild(overlayBody);
 	});
 }
 
@@ -2504,13 +2560,17 @@ function calculateProf(characterLevel) {
     }
 }
 
-function calculateLevel(xp) {
+function calculateLevel(xp, characterData) {
     const xpThresholds = [0, 300, 900, 2700, 6500, 14000, 23000, 34000, 48000, 64000, 85000, 100000, 120000, 140000, 165000, 195000, 225000, 265000, 305000, 355000];
 
-    for (let i = 0; i < xpThresholds.length; i++) {
-        if (xp < xpThresholds[i]) {
-                return i;
-        }
+	for (let i = 0; i < xpThresholds.length; i++) {
+		if (xp > 0) {
+			if (xp < xpThresholds[i]) {
+				return i;
+			}
+		} else {
+			return characterData.classes[0].level;
+		}
     }
 
     // If the XP is higher than all values in the table, return the last level
@@ -2536,6 +2596,32 @@ function getCharacterStats(characterData) {
 				totalConstitution += characterData.modifiers.race[i].value;
 			} else if (abilityIncrease === "Intellegence") {
 				totalIntelligence += characterData.modifiers.race[i].value;
+			} else if (abilityIncrease === "Wisdom") {
+				totalWisdom += characterData.modifiers.race[i].value;
+			} else if (abilityIncrease === "Charisma") {
+				totalCharisma += characterData.modifiers.race[i].value;
+			}
+		}
+	}
+
+	for (let i = 0; i < characterData.modifiers.feat.length; i++) {
+		const abilities = ["Strength", "Dexterity", "Constitution", "Intellegence", "Wisdom", "Charisma"]
+		const type = characterData.modifiers.feat[i].friendlySubtypeName.replace(' Score', '');
+
+		if (abilities.includes(type) && characterData.modifiers.feat[i].type === "bonus") {
+			const ability = abilities.includes(type);
+			if (type === "Strength" && ability === true) {
+				totalStrength += characterData.modifiers.feat[i].value;
+			} else if (type === 'Dexterity' && ability === true) {
+				totalDexterity += characterData.modifiers.feat[i].value;
+			} else if (type === 'Constitution' && type === true) {
+				totalConstitution += characterData.modifiers.feat[i].value;
+			} else if (type === 'Intellegence' && ability === true) {
+				totalIntellegence += characterData.modifiers.feat[i].value;
+			} else if (type === 'Wisdom' && ability === true) {
+				totalWisdom += characterData.modifiers.feat[i].value;
+			} else if (type === 'Charisma' && ability === true) {
+				totalCharisma += characterData.modifiers.feat[i].value;
 			}
 		}
 	}
@@ -2558,6 +2644,72 @@ function getCharacterStats(characterData) {
 				totalWisdom += characterData.modifiers.class[i].value;
 			} else if (type === 'Charisma' && ability === true) {
 				totalCharisma += characterData.modifiers.class[i].value;
+			}
+		}
+	}
+
+	for (let i = 0; i < characterData.modifiers.background.length; i++) {
+		const abilities = ["Strength", "Dexterity", "Constitution", "Intellegence", "Wisdom", "Charisma"]
+		const type = characterData.modifiers.background[i].friendlySubtypeName.replace(' Score', '');
+
+		if (abilities.includes(type) && characterData.modifiers.background[i].type === "bonus") {
+			const ability = abilities.includes(type);
+			if (type === "Strength" && ability === true) {
+				totalStrength += characterData.modifiers.background[i].value;
+			} else if (type === 'Dexterity' && ability === true) {
+				totalDexterity += characterData.modifiers.background[i].value;
+			} else if (type === 'Constitution' && type === true) {
+				totalConstitution += characterData.modifiers.background[i].value;
+			} else if (type === 'Intellegence' && ability === true) {
+				totalIntellegence += characterData.modifiers.background[i].value;
+			} else if (type === 'Wisdom' && ability === true) {
+				totalWisdom += characterData.modifiers.background[i].value;
+			} else if (type === 'Charisma' && ability === true) {
+				totalCharisma += characterData.modifiers.background[i].value;
+			}
+		}
+	}
+
+	for (let i = 0; i < characterData.modifiers.item.length; i++) {
+		const abilities = ["Strength", "Dexterity", "Constitution", "Intellegence", "Wisdom", "Charisma"]
+		const type = characterData.modifiers.item[i].friendlySubtypeName.replace(' Score', '');
+
+		if (abilities.includes(type) && characterData.modifiers.item[i].type === "bonus") {
+			const ability = abilities.includes(type);
+			if (type === "Strength" && ability === true) {
+				totalStrength += characterData.modifiers.item[i].value;
+			} else if (type === 'Dexterity' && ability === true) {
+				totalDexterity += characterData.modifiers.item[i].value;
+			} else if (type === 'Constitution' && type === true) {
+				totalConstitution += characterData.modifiers.item[i].value;
+			} else if (type === 'Intellegence' && ability === true) {
+				totalIntellegence += characterData.modifiers.item[i].value;
+			} else if (type === 'Wisdom' && ability === true) {
+				totalWisdom += characterData.modifiers.item[i].value;
+			} else if (type === 'Charisma' && ability === true) {
+				totalCharisma += characterData.modifiers.item[i].value;
+			}
+		}
+	}
+
+	for (let i = 0; i < characterData.modifiers.condition.length; i++) {
+		const abilities = ["Strength", "Dexterity", "Constitution", "Intellegence", "Wisdom", "Charisma"]
+		const type = characterData.modifiers.condition[i].friendlySubtypeName.replace(' Score', '');
+
+		if (abilities.includes(type) && characterData.modifiers.condition[i].type === "bonus") {
+			const ability = abilities.includes(type);
+			if (type === "Strength" && ability === true) {
+				totalStrength += characterData.modifiers.condition[i].value;
+			} else if (type === 'Dexterity' && ability === true) {
+				totalDexterity += characterData.modifiers.condition[i].value;
+			} else if (type === 'Constitution' && type === true) {
+				totalConstitution += characterData.modifiers.condition[i].value;
+			} else if (type === 'Intellegence' && ability === true) {
+				totalIntellegence += characterData.modifiers.condition[i].value;
+			} else if (type === 'Wisdom' && ability === true) {
+				totalWisdom += characterData.modifiers.condition[i].value;
+			} else if (type === 'Charisma' && ability === true) {
+				totalCharisma += characterData.modifiers.condition[i].value;
 			}
 		}
 	}
@@ -2644,7 +2796,7 @@ function descriptionToCharacterData(description, characterData, stats) {
     for (let abilityAbbreviation in abilityMap) {
         let rePattern = new RegExp(`modifier:${abilityAbbreviation}`, "g");
         let abilityModifier = Math.floor((stats[abilityMap[abilityAbbreviation]] - 10) / 2);
-	let replacementValue = abilityModifier >= 0 ? '+' + abilityModifier : '-' + abilityModifier;
+		let replacementValue = abilityModifier >= 0 ? '+' + abilityModifier : '-' + abilityModifier;
 
         description = description.replace(rePattern, replacementValue).replace('{', '').replace('}', '');
     }
@@ -2659,7 +2811,7 @@ function descriptionToCharacterData(description, characterData, stats) {
     description = description.replace(rePattern2, "");
 
     let rePatternSum = /(\d+)\s*\+\s*(\d+)/g;
-    description = description.replace(rePatternSum, (match, x, y) => parseInt(x) + parseInt(y));
+	description = description.replace(rePatternSum, (match, x, y) => parseInt(x) + parseInt(y));
 
     return description;
 }
