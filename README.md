@@ -22,7 +22,7 @@ To install and try this extension
 See [wiki](https://github.com/Jamster3000/cauldron20/wiki) for more in depth instructions on how to setup the extension and use it.
 
 > [!NOTE]
-> This is a work in progress and there is likley to be many issues and bugs to happen.
+> This project is as spare time so there may not be activity for long periods of time.
 
 I would like to also add to this that I don't know JavaScript and I honeslty think it's a headache for me until I get the hang of this.
 
