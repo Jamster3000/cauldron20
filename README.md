@@ -11,7 +11,7 @@ If you already use Cauldron-vtt, you might be interested in the offical cauldron
 This works by clicking on the extension and entering your character sheet's number (e.g. 112012248). This will then use dndbeyond's api for character sheets. It will remember your character so this will be a one time input. If you want to use a different character just input a new number and your old character will be replaced with the new one (there are plans for mulitple characters)
 
 # Installation 🚀
-To install and try this work-in-progress extension
+To install and try this extension
 1) Install all the code on this github
 2) extract the code from the zip folder
 3) Open Chome and navigate to extensions [chome extensions](chrome://extensions/)
