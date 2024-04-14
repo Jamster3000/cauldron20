@@ -24,7 +24,7 @@ See [wiki](https://github.com/Jamster3000/cauldron20/wiki) for more in depth ins
 > [!NOTE]
 > This project is as spare time so there may not be activity for long periods of time.
 
-I would like to also add to this that I don't know JavaScript and I honeslty think it's a headache for me until I get the hang of this.
+This is my first project using javascript so I've certainly learnt a lot of also learnt javascript is a headache.
 
 # Screenshots
 Character Creation
