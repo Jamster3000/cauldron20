@@ -12,7 +12,7 @@ This works by clicking on the extension and entering your character sheet's numb
 
 # Installation 🚀
 To install and try this extension
-1) Install all the code on this github
+1) download all the code on this github
 2) extract the code from the zip folder
 3) Open Chome and navigate to extensions [chome extensions](chrome://extensions/)
 4) Make sure that developer mode is enabled on top right.
