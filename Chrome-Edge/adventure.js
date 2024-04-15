@@ -1,33 +1,35 @@
 let characterSheetOverlayOpen = false;
 saveSpellSlots(null);
 
+
 setTimeout(function () {
 	const urlWithJsonOutput = window.location.href + "?output=json";
 	fetchJsonDataFromUrl(urlWithJsonOutput)
 		.then(adventureData => {
 			adventureData = adventureData.adventure;
 			try {
-				if (adventureData['@is_dm'] === "yes") {
-					console.log('You are the DM, there is no character button for you!');
-				} else {
-					const container = document.querySelector('.btn-group');//contains each section of the page (playArea, chat, header, etc.)
+				const container = document.querySelector('.btn-group');//contains each section of the page (playArea, chat, header, etc.)
 
-					const viewCharacter = document.createElement('button');
-					viewCharacter.textContent = "View Character Sheet";
-					viewCharacter.classList.add('btn', 'btn-primary', 'btn-xs');
-					viewCharacter.display = 'inline-block';
-					viewCharacter.style.position = 'fixed';
-					viewCharacter.style.height = '19.6px';
-					viewCharacter.style.top = '7px';
-					viewCharacter.style.right = '100px';
-					container.appendChild(viewCharacter); // Appended the button to the container
+				const viewCharacter = document.createElement('button');
+				viewCharacter.textContent = "View Character Sheet";
+				viewCharacter.classList.add('btn', 'btn-primary', 'btn-xs');
+				viewCharacter.display = 'inline-block';
+				viewCharacter.style.position = 'fixed';
+				viewCharacter.style.height = '19.6px';
+				viewCharacter.style.top = '7px';
+				viewCharacter.style.right = '100px';
+				container.appendChild(viewCharacter); // Appended the button to the container
 
 
-					viewCharacter.addEventListener('click', function (event) {
-						event.preventDefault();
+				viewCharacter.addEventListener('click', function (event) {
+					event.preventDefault();
+
+					if (adventureData["@is_dm"] === "yes") {
+						showDmView(false, adventureData);
+					} else {
 						showCharacterSheet(adventureData, true);
-					});
-				}
+					}
+				});
 			} catch {
 				const container = document.querySelector('.btn-group');//contains each section of the page (playArea, chat, header, etc.)
 
@@ -44,7 +46,12 @@ setTimeout(function () {
 
 				viewCharacter.addEventListener('click', function (event) {
 					event.preventDefault();
-					showCharacterSheet(adventureData, true);
+
+					if (adventureData["@is_dm"] === "yes") {
+						showDmView(false, adventureData);
+					} else {
+						showCharacterSheet(adventureData, true);
+					}
 				});
 			}
 		})
@@ -52,6 +59,125 @@ setTimeout(function () {
 			console.error('Error fetching JSON data:', error);
 		});
 }, 0);
+
+function showDmView(buttonPressed, adventureData) {
+	if (characterSheetOverlayOpen && buttonPressed === true) {
+		return;
+	}
+
+	characterSheetOverlayOpen = true;
+
+	try {
+		const content = document.getElementById('overlayContainer');
+		content.innerHTML = '';
+	} catch { }
+
+	const overlayContainer = document.createElement('div');
+	overlayContainer.id = 'customOverlay';
+	overlayContainer.classList.add('panel', 'panel-primary');
+	overlayContainer.style.display = 'none';
+	overlayContainer.style.position = 'fixed';
+	overlayContainer.style.top = '40px';
+	overlayContainer.style.left = '15px';
+	overlayContainer.style.backgroundColor = 'rgba(255,255,255, 1)';
+	overlayContainer.style.zIndex = '1010';
+	overlayContainer.style.width = "375px";
+
+	// Create overlay header
+	const overlayHeader = document.createElement('div');
+	overlayHeader.classList.add('panel-heading');
+	overlayHeader.id = "titleBar";
+	overlayHeader.innerHTML = `${adventureData.title} <span class="glyphicon glyphicon-remove close" aria-hidden="true"></span>`;
+
+	const closeButton = overlayHeader.querySelector('.close');
+	closeButton.addEventListener('click', function () {
+		overlayContainer.style.display = 'none';
+		characterSheetOverlayOpen = false;
+
+		const characterSheetOverlay = document.getElementById('customOverlay');
+		if (characterSheetOverlay) {
+			characterSheetOverlay.remove();
+		}
+	});
+
+	console.log(adventureData);
+
+	// Create overlay body
+	const overlayBody = document.createElement('div');
+	overlayBody.classList.add('panel-body');
+
+	overlayBody.innerHTML = `
+		<p style="font-size: 18px;"><b>PC&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspHP&nbsp&nbsp&nbsp&nbsp&nbsp&nbspAC</b></p>
+		<hr>
+	`;
+
+	// Append elements to build the overlay
+	overlayContainer.appendChild(overlayHeader);
+	overlayContainer.appendChild(overlayBody);
+
+	// Append overlay container to the body
+	document.body.appendChild(overlayContainer);
+
+	// Show overlay
+	overlayContainer.style.display = 'block';
+
+	//this is where all the elements will be added.
+	for (let i = 0; i < adventureData.characters.character.length; i++) {
+		const pcButton = document.createElement('button');
+		pcButton.textContent = adventureData.characters.character[i].name;
+		pcButton.style.backgroundColor = "white";
+		pcButton.style.color = "black";
+		pcButton.style.padding = "5px";
+		pcButton.style.border = "1px solid black";
+		pcButton.style.borderRadius = '5px';
+		pcButton.style.cursor = "pointer";
+		pcButton.style.fontSize = "13px";
+
+		//label
+		var splitLabel = document.createElement('label');
+		splitLabel.style.fontSize = "22px";
+		splitLabel.style.fontWeight = 'bold';
+		splitLabel.textContent = "｜";
+
+		const hitPointsPc = document.createElement('label');
+		hitPointsPc.textContent = (adventureData.characters.character[i].hitpoints-adventureData.characters.character[i].damage) + "/" + adventureData.characters.character[i].hitpoints;
+
+		var splitLabelSecond = document.createElement('label');
+		splitLabelSecond.style.fontSize = "22px";
+		splitLabelSecond.style.fontWeight = 'bold';
+		splitLabelSecond.textContent = "｜";
+
+		const armourClassPc = document.createElement('label');
+		armourClassPc.textContent = adventureData.characters.character[i].armor_class;
+
+		var splitLabelThird = document.createElement('label');
+		splitLabelThird.style.fontSize = "22px";
+		splitLabelThird.style.fontWeight = 'bold';
+		splitLabelThird.textContent = "｜";
+
+		const breakLine = document.createElement('hr');
+
+		overlayBody.appendChild(pcButton);
+		overlayBody.appendChild(splitLabel);
+		overlayBody.appendChild(hitPointsPc);
+		overlayBody.appendChild(splitLabelSecond);
+		overlayBody.appendChild(armourClassPc);
+		overlayBody.appendChild(splitLabelThird);
+		overlayBody.appendChild(breakLine);
+
+		pcButton.addEventListener('click', function () {
+			const characterSheetId = adventureData.characters.character[i].sheet_url.split('/')[4];
+
+			chrome.runtime.sendMessage({ action: 'fetchCharacterInfo', characterId: characterSheetId }, function (response) {
+				const characterInfo = response.characterInfo;
+				console.log("one");
+			});
+			const mainOverlay = document.getElementById("customOverlay");
+			mainOverlay.remove();
+			showCharacterSheet(adventureData, false);
+		});
+	}
+}
 
 function showCharacterSheet(adventureData, buttonPressed) {
     if (characterSheetOverlayOpen && buttonPressed === true) {
@@ -2766,20 +2892,24 @@ function getSpellSlots(callback) {
 }
 
 function saveSpellSlots(spellSlots, callback = () => { }) {
-	chrome.storage.local.get('currentSpellSlots', function (result) {
-		if (result.currentSpellSlots != null && spellSlots != null) {
-			chrome.storage.local.set({ 'currentSpellSlots': spellSlots }, function () {
-				callback();
-			});
-		} else {
-			chrome.storage.local.get('characterData', function (result) {
-				const characterData = result.characterData;
-				chrome.storage.local.set({ 'currentSpellSlots': characterData.spellSlots }, function () {
+	try {
+		chrome.storage.local.get('currentSpellSlots', function (result) {
+			if (result.currentSpellSlots != null && spellSlots != null) {
+				chrome.storage.local.set({ 'currentSpellSlots': spellSlots }, function () {
 					callback();
 				});
-			});
-		}
-	});
+			} else {
+				chrome.storage.local.get('characterData', function (result) {
+					const characterData = result.characterData;
+					chrome.storage.local.set({ 'currentSpellSlots': characterData.spellSlots }, function () {
+						callback();
+					});
+				});
+			}
+		});
+	} catch (TypeError) {
+		//this will likely mean that the person is the DM and there is no spellslots or/and character data to get
+	}
 }
 
 function descriptionToCharacterData(description, characterData, stats) {
