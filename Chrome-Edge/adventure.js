@@ -1,10 +1,6 @@
 let characterSheetOverlayOpen = false;
 saveSpellSlots(null);
 
-
-let characterSheetOverlayOpen = false;
-saveSpellSlots(null);
-
 setTimeout(function () {
     const urlWithJsonOutput = window.location.href + "?output=json";
     fetchJsonDataFromUrl(urlWithJsonOutput)
