@@ -194,3 +194,9 @@
 #buttonNameWrap:hover {
     background-color: white;
 }
+
+.buttonContainer {
+    display: flex;
+    justify-content: flex-end; /* Align items to the end of the container */
+    margin-top: 10px; /* Adjust spacing between content and button */
+}
