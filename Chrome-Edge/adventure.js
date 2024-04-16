@@ -11,34 +11,35 @@ setTimeout(function () {
 
                 const viewCharacter = document.createElement('button');
 
-                if (adventureData["@is_dm"] === "yes") {
+				viewCharacter.classList.add('btn', 'btn-primary', 'btn-xs');
+				viewCharacter.display = 'inline-block';
+				viewCharacter.style.position = 'fixed';
+				viewCharacter.style.height = '19.6px';
+				viewCharacter.style.top = '7px';
+				viewCharacter.style.right = '100px';
+				container.appendChild(viewCharacter); // Appended the button to the container
+
+				if (adventureData["@is_dm"] === "yes") {					
                     viewCharacter.textContent = "Player Character Sheets";
                 } else {
-                    viewCharacter.textContent = "Character Sheets";
-                    viewCharacter.classList.add('btn', 'btn-primary', 'btn-xs');
-                    viewCharacter.display = 'inline-block';
-                    viewCharacter.style.position = 'fixed';
-                    viewCharacter.style.height = '19.6px';
-                    viewCharacter.style.top = '7px';
-                    viewCharacter.style.right = '100px';
-                    container.appendChild(viewCharacter); // Appended the button to the container
+					viewCharacter.textContent = "Character Sheets";
+				}
 
+				viewCharacter.addEventListener('click', function (event) {
+					event.preventDefault();
 
-                    viewCharacter.addEventListener('click', function (event) {
-                        event.preventDefault();
+					if (adventureData["@is_dm"] === "yes") {
+						showDmView(false, adventureData);
+					} else {
+						const urlWithJsonOutput = window.location.href + "?output=json";
+						fetchJsonDataFromUrl(urlWithJsonOutput)
+							.then(adventureData => {
+								adventureData = adventureData.adventure;
+								showCharacterSheet(adventureData, true);
+							})
+					}
+				});
 
-                        if (adventureData["@is_dm"] === "yes") {
-                            showDmView(false, adventureData);
-                        } else {
-                            const urlWithJsonOutput = window.location.href + "?output=json";
-                            fetchJsonDataFromUrl(urlWithJsonOutput)
-                                .then(adventureData => {
-                                    adventureData = adventureData.adventure;
-                                    showCharacterSheet(adventureData, true);
-                                })
-                        }
-                    });
-                }
             } catch {
                 const container = document.querySelector('.btn-group');//contains each section of the page (playArea, chat, header, etc.)
 
