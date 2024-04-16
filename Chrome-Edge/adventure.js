@@ -11,7 +11,11 @@ setTimeout(function () {
 				const container = document.querySelector('.btn-group');//contains each section of the page (playArea, chat, header, etc.)
 
 				const viewCharacter = document.createElement('button');
-				viewCharacter.textContent = "View Character Sheet";
+
+				if (adventureData["@is_dm"] === "yes"){
+				    viewCharacter.textContent = "Player Character Sheets";
+				} else{
+				     viewCharacter.textContent = "Character Sheets";
 				viewCharacter.classList.add('btn', 'btn-primary', 'btn-xs');
 				viewCharacter.display = 'inline-block';
 				viewCharacter.style.position = 'fixed';
