@@ -2,7 +2,7 @@
   "manifest_version": 2,
   "name": "Cauldron20",
   "version": "1.0.1",
-  "description": "Chrome Extension to incorporate dndbeyond character into the cauldron VTT.",
+  "description": "Firefox Extension to incorporate dndbeyond character into the Cauldron VTT.",
   "icons": {
     "128": "icon128.png"
   },
