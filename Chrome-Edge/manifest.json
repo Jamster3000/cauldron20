@@ -1,7 +1,7 @@
 {
   "manifest_version": 2,
   "name": "Cauldron20",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Chrome Extension to incorporate D&D Beyond character into the Cauldron VTT.",
   "icons": {
     "128": "icon128.png"
