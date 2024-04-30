@@ -1,17 +1,17 @@
-//Firefox adventure.js
+//firefox based adventure.js
 
 let characterSheetOverlayOpen = false;
 saveSpellSlots(null);
 
 setTimeout(function () {
-    const urlWithJsonOutput = window.location.href + "?output=json";
-    fetchJsonDataFromUrl(urlWithJsonOutput)
-        .then(adventureData => {
-            adventureData = adventureData.adventure;
-            try {
-                const container = document.querySelector('.btn-group');//contains each section of the page (playArea, chat, header, etc.)
+	const urlWithJsonOutput = window.location.href + "?output=json";
+	fetchJsonDataFromUrl(urlWithJsonOutput)
+		.then(adventureData => {
+			adventureData = adventureData.adventure;
+			try {
+				const container = document.querySelector('.btn-group');//contains each section of the page (playArea, chat, header, etc.)
 
-                const viewCharacter = document.createElement('button');
+				const viewCharacter = document.createElement('button');
 
 				viewCharacter.classList.add('btn', 'btn-primary', 'btn-xs');
 				viewCharacter.display = 'inline-block';
@@ -21,10 +21,10 @@ setTimeout(function () {
 				viewCharacter.style.right = '100px';
 				container.appendChild(viewCharacter); // Appended the button to the container
 
-				if (adventureData["@is_dm"] === "yes") {					
-                    viewCharacter.textContent = "Player Character Sheets";
-                } else {
-					viewCharacter.textContent = "Character Sheets";
+				if (adventureData["@is_dm"] === "yes") {
+					viewCharacter.textContent = "Player Character Sheets";
+				} else {
+					viewCharacter.textContent = "Character Sheet";
 				}
 
 				viewCharacter.addEventListener('click', function (event) {
@@ -42,39 +42,39 @@ setTimeout(function () {
 					}
 				});
 
-            } catch {
-                const container = document.querySelector('.btn-group');//contains each section of the page (playArea, chat, header, etc.)
+			} catch {
+				const container = document.querySelector('.btn-group');//contains each section of the page (playArea, chat, header, etc.)
 
-                const viewCharacter = document.createElement('button');
-                viewCharacter.textContent = "View Character Sheet";
-                viewCharacter.classList.add('btn', 'btn-primary', 'btn-xs');
-                viewCharacter.display = 'inline-block';
-                viewCharacter.style.position = 'fixed';
-                viewCharacter.style.height = '19.6px';
-                viewCharacter.style.top = '7px';
-                viewCharacter.style.right = '100px';
-                container.appendChild(viewCharacter); // Appended the button to the container
+				const viewCharacter = document.createElement('button');
+				viewCharacter.textContent = "View Character Sheet";
+				viewCharacter.classList.add('btn', 'btn-primary', 'btn-xs');
+				viewCharacter.display = 'inline-block';
+				viewCharacter.style.position = 'fixed';
+				viewCharacter.style.height = '19.6px';
+				viewCharacter.style.top = '7px';
+				viewCharacter.style.right = '100px';
+				container.appendChild(viewCharacter); // Appended the button to the container
 
 
-                viewCharacter.addEventListener('click', function (event) {
-                    event.preventDefault();
+				viewCharacter.addEventListener('click', function (event) {
+					event.preventDefault();
 
-                    if (adventureData["@is_dm"] === "yes") {
-                        showDmView(false, adventureData);
-                    } else {
-                        const urlWithJsonOutput = window.location.href + "?output=json";
-                        fetchJsonDataFromUrl(urlWithJsonOutput)
-                            .then(adventureData => {
-                                adventureData = adventureData.adventure;
-                                showCharacterSheet(adventureData, true);
-                            })
-                    }
-                });
-            }
-        })
-        .catch(error => {
-            console.error('Error fetching JSON data:', error);
-        });
+					if (adventureData["@is_dm"] === "yes") {
+						showDmView(false, adventureData);
+					} else {
+						const urlWithJsonOutput = window.location.href + "?output=json";
+						fetchJsonDataFromUrl(urlWithJsonOutput)
+							.then(adventureData => {
+								adventureData = adventureData.adventure;
+								showCharacterSheet(adventureData, true);
+							})
+					}
+				});
+			}
+		})
+		.catch(error => {
+			console.error('Error fetching JSON data:', error);
+		});
 }, 0);
 
 
@@ -123,15 +123,18 @@ function showDmView(buttonPressed, adventureData) {
 	overlayBody.classList.add('panel-body');
 
 	overlayBody.innerHTML = `
-		<p style="font-size: 18px;"><b>PC&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspHP&nbsp&nbsp&nbsp&nbsp&nbsp&nbspAC</b></p>
-		<hr>
+	    <div id="overlayContainer" style="display: flex;">
+		</div>
 	`;
+
+	const container = document.getElementById('overlayContainer');
 
 	// Append elements to build the overlay
 	overlayContainer.appendChild(overlayHeader);
 	overlayContainer.appendChild(overlayBody);
 
 	// Append overlay container to the body
+
 	document.body.appendChild(overlayContainer);
 
 	// Show overlay
@@ -181,20 +184,19 @@ function showDmView(buttonPressed, adventureData) {
 		overlayBody.appendChild(breakLine);
 
 		pcButton.addEventListener('click', function () {
-			const characterSheetId = adventureData.characters.character[i].sheet_url.split('/')[4];
-			const buttonIndex = i; // Store the index of the button being clicked
+			for (let i = 0; i < adventureData.characters.character.length; i++) {
+				const characterSheetId = adventureData.characters.character[i].sheet_url.split('/')[4];
+				const buttonIndex = i; // Store the index of the button being clicked
 
-			chrome.runtime.sendMessage({ action: 'fetchCharacterInfo', characterId: characterSheetId, buttonIndex: buttonIndex }, function (response) {
-				const characterInfo = response.characterInfo;
-				// Access the correct adventureData based on the button index
-				const clickedCharacter = adventureData.characters.character[buttonIndex];
+				chrome.runtime.sendMessage({ action: 'fetchCharacterInfo', characterId: characterSheetId, buttonIndex: buttonIndex }, function (response) {
+					const characterInfo = response.characterInfo;
+					// Access the correct adventureData based on the button index
+					const clickedCharacter = adventureData.characters.character[buttonIndex];
 
-				const a = { "characters": { "character": [clickedCharacter] } };
-				showCharacterSheet(a, false);
-			});
-
-			const mainOverlay = document.getElementById("customOverlay");
-			mainOverlay.remove();
+					const a = { "characters": { "character": [clickedCharacter] } };
+					createCharacterSheet(a, false);
+				});
+			}
 		});
 	} else {
 		//this is where all the elements will be added.
@@ -251,23 +253,17 @@ function showDmView(buttonPressed, adventureData) {
 					const clickedCharacter = adventureData.characters.character[buttonIndex];
 
 					const a = { "characters": { "character": [clickedCharacter] } };
-					showCharacterSheet(a, false);
+					createCharacterSheet(a, false);
 				});
-
-				const mainOverlay = document.getElementById("customOverlay");
-				mainOverlay.remove();
 			});
 		}
 	}
 }
 
-function createCharacterSheet(adventureData, buttonPressed) {
+function createCharacterSheet(adventureData, buttonPressed, recreateOverlay) {
 	if (characterSheetOverlayOpen && buttonPressed === true) {
 		return;
 	}
-	console.log(adventureData.characters.character);
-
-	characterSheetOverlayOpen = true;
 
 	try {
 		// clear content of overlay
@@ -276,7 +272,7 @@ function createCharacterSheet(adventureData, buttonPressed) {
 	} catch { }
 
 	const listSkills = [{ name: "Acrobatics", ability: "Dex" }, { name: "Animal Handling", ability: "Wis" }, { name: "Arcana", ability: "Int" }, { name: "Athletics", ability: "Str" }, { name: "Deception", ability: "Cha" }, { name: "History", ability: "Int" }, { name: "Insight", ability: "Wis" }, { name: "Intimidation", ability: "Cha" }, { name: "Investigation", ability: "Int" }, { name: "Medicine", ability: "Wis" }, { name: "Nature", ability: "Int" }, { name: "Perception", ability: "Wis" }, { name: "Performance", ability: "Cha" }, { name: "Persuasion", ability: "Cha" }, { name: "Religion", ability: "Int" }, { name: "Sleight of Hand", ability: "Dex" }, { name: "Stealth", ability: "Dex" }, { name: "Survival", ability: "Wis" }];
-	const savingThrowList = ["Strength", "Dexterity", "Constitution", "Intellegence", "Wisdom", "Charisma"];
+	const savingThrowList = ["Strength", "Dexterity", "Constitution", "Intelligence", "Wisdom", "Charisma"];
 
 	chrome.storage.local.get('characterData', function (result) {
 		const characterData = result.characterData;
@@ -287,7 +283,7 @@ function createCharacterSheet(adventureData, buttonPressed) {
 			//console.log('All stored data:', result);//uncomment this to get all data stored in the user's local chrome storage for this extension
 		});
 
-		const overlayContainer = document.createElement('div');
+		overlayContainer = document.createElement('div');
 		overlayContainer.id = 'customOverlay';
 		overlayContainer.classList.add('panel', 'panel-primary');
 		overlayContainer.style.display = 'none';
@@ -297,6 +293,7 @@ function createCharacterSheet(adventureData, buttonPressed) {
 		overlayContainer.style.backgroundColor = 'rgba(255,255,255, 1)';
 		overlayContainer.style.zIndex = '1';
 		overlayContainer.style.width = "415px";
+
 
 		let currentCauldronHitPoints = 0;
 		let currentArmourClass = 0;
@@ -342,12 +339,15 @@ function createCharacterSheet(adventureData, buttonPressed) {
 
 		//working out the total character hp
 		const conStat = Math.floor((stats.totalConstitution - 10) / 2)//ability score -10/2 to get modifier (round up)
-		const level = calculateLevel(characterData.currentXp, characterData)
+		const level = characterData.classes[0].level;//calculateLevel(characterData.currentXp, characterData)
 		var totalHitPoints = 0;
 
 		if (adventureData.characters.character.length != null) {
 			for (let i = 0; i < adventureData.characters.character.length; i++) {
-				totalHitPoints = adventureData.characters.character[0]['hitpoints'];
+				const characterName = adventureData.characters['@name']
+				if (adventureData.characters.character[i].name === characterName) {
+					totalHitPoints = adventureData.characters.character[i]['hitpoints'];
+				}
 			}
 		}
 
@@ -374,7 +374,7 @@ function createCharacterSheet(adventureData, buttonPressed) {
         					<h5 style="font-weight: bold;">CON</h5>
         					<button id="conButton" style="margin-right: 5px;">${stats.totalConstitution} (${stats.totalConstitution >= 10 ? '+' : ''}${Math.floor((stats.totalConstitution - 10) / 2)})</button>
   						<h5 style="font-weight: bold;">INT</h5>
-        					<button id="intButton" style="margin-right: 5px;">${stats.totalIntellegence} (${stats.totalIntellegence >= 10 ? '+' : ''}${Math.floor((stats.totalIntellegence - 10) / 2)})</button>
+        					<button id="intButton" style="margin-right: 5px;">${stats.totalIntelligence} (${stats.totalIntelligence >= 10 ? '+' : ''}${Math.floor((stats.totalIntelligence - 10) / 2)})</button>
 						<h5 style="font-weight: bold;">WIS</h5>
         					<button id="wisButton" style="margin-right: 5px;">${stats.totalWisdom} (${stats.totalWisdom >= 10 ? '+' : ''}${Math.floor((stats.totalWisdom - 10) / 2)})</button>
 						<h5 style="font-weight: bold;">CHA</h5>
@@ -405,11 +405,11 @@ function createCharacterSheet(adventureData, buttonPressed) {
 					<input type="text" id="maxHitPoints" disabled="true" value="${totalHitPoints}" style="width: 30px; height: 30px; margin-left: -35px;">
   			    		<input type="text" id="CurrentHitPoints" disabled=true value="${String(currentCauldronHitPoints)}" style="width: 30px; height: 30px; margin-left: -78px;">
 					<label style="margin-left: -6px; font-size: 20px;">／</label>
-						<label style="width: 30px; height: 30px; margin-left: -80px; font-size: 14px;">Hit Points</label>
+						<label style="width: 30px; height: 30px; margin-left: -70px; font-size: 16px;">HP</label>
 					</div>
 					<div>
 					<input type="text" id="armourClass" disabled="true" value="${currentArmourClass}" style="margin-left: -65px; margin-top: 55px; width: 40px; height: 30px;">
-					<label style="width: 30px; height: 30px; margin-left: -95px; margin-top: 55px; font-size: 14px;">AC</label>
+					<label style="width: 30px; height: 30px; margin-left: -95px; margin-top: 55px; font-size: 16px;">AC</label>
 				</div>
 	`;
 
@@ -438,7 +438,7 @@ function createCharacterSheet(adventureData, buttonPressed) {
 
 		const intButton = overlayBody.querySelector('#intButton');
 		intButton.addEventListener('click', function () {
-			roll_dice(`1d20+${Math.floor((stats.totalIntellegence - 10) / 2)}`);
+			roll_dice(`1d20+${Math.floor((stats.totalIntelligence - 10) / 2)}`);
 		});
 
 		const wisButton = overlayBody.querySelector('#wisButton');
@@ -491,6 +491,8 @@ function createCharacterSheet(adventureData, buttonPressed) {
 		// Show overlay
 		overlayContainer.style.display = 'block';
 
+		characterSheetOverlayOpen = true;
+
 		//loop for showing all elements for skills
 		const getSkillListElement = document.getElementById('skillList');
 		for (let i = 0; i < listSkills.length; i++) {
@@ -498,7 +500,7 @@ function createCharacterSheet(adventureData, buttonPressed) {
 			const listElement = document.createElement('input');
 			listElement.type = "radio";
 			listElement.disabled = true;
-			listElement.style.marginTop = '7px';
+			listElement.style.marginTop = '5px';
 
 			for (let j = 0; j < characterData.modifiers.background.length; j++) {
 				if (characterData.modifiers.background[j].subType.includes(listSkills[i].name.toLowerCase())) {
@@ -537,19 +539,20 @@ function createCharacterSheet(adventureData, buttonPressed) {
 
 			if (listElement.checked === true) {
 				let total = 0;
-				const characterProf = calculateProf(calculateLevel(characterData.currentXp, characterData));
+				const characterProf = calculateProf(characterData.classes[0].level);//calculateLevel(characterData.currentXp, characterData));
 
 				if (listSkills[i].ability === "Str") {
 					total = Math.floor((stats.totalStrength - 10) / 2) + characterProf;
 				} else if (listSkills[i].ability === "Dex") {
 					total = Math.floor((stats.totalDexterity - 10) / 2) + characterProf;
 				} else if (listSkills[i].ability === "Int") {
-					total = Math.floor((stats.totalIntellegence - 10) / 2) + characterProf;
+					total = Math.floor((stats.totalIntelligence - 10) / 2) + characterProf;
 				} else if (listSkills[i].ability === "Wis") {
 					total = Math.floor((stats.totalWisdom - 10) / 2) + characterProf;
 				} else if (listSkills[i].ability === "Cha") {
 					total = Math.floor((stats.totalCharisma - 10) / 2) + characterProf;
 				}
+
 				skillModifier.textContent = total >= 0 ? `+${total}` : total;
 				skillModifier.addEventListener('click', function () {
 					roll_dice(`1d20+${total}`);
@@ -562,7 +565,7 @@ function createCharacterSheet(adventureData, buttonPressed) {
 				} else if (listSkills[i].ability === "Dex") {
 					total = Math.floor((stats.totalDexterity - 10) / 2);
 				} else if (listSkills[i].ability === "Int") {
-					total = Math.floor((stats.totalIntellegence - 10) / 2);
+					total = Math.floor((stats.totalIntelligence - 10) / 2);
 				} else if (listSkills[i].ability === "Wis") {
 					total = Math.floor((stats.totalWisdom - 10) / 2);
 				} else if (listSkills[i].ability === "Cha") {
@@ -585,15 +588,28 @@ function createCharacterSheet(adventureData, buttonPressed) {
 		//saving throw loop
 		const getSavingThrowElement = document.getElementById('savingThrowElement');
 		for (let i = 0; i < savingThrowList.length; i++) {
+			const savingThrow = savingThrowList[i];
+
 			//radio button
 			const listElement = document.createElement('input');
 			listElement.type = "radio";
 			listElement.disabled = true;
-			listElement.style.marginTop = '8px';
+			listElement.style.marginTop = '6px';
 
-			//getting profs in different saving throws
+			for (let j = 0; j < characterData.modifiers.background.length; j++) {
+				if (characterData.modifiers.background[j].subType.includes(savingThrow.toLowerCase()) && characterData.modifiers.background[j].type === "proficiency") {
+					listElement.checked = true;
+				}
+			}
+
 			for (let j = 0; j < characterData.modifiers.class.length; j++) {
-				if (characterData.modifiers.class[j].friendlySubtypeName.replace('Saving Throws', '').includes(savingThrowList[i])) {
+				if (characterData.modifiers.class[j].subType.includes(savingThrow.toLowerCase()) && characterData.modifiers.class[j].type === "proficiency") {
+					listElement.checked = true;
+				}
+			}
+
+			for (let j = 0; j < characterData.modifiers.race.length; j++) {
+				if (characterData.modifiers.race[j].subType.includes(savingThrow.toLowerCase()) && characterData.modifiers.race[j].type === "proficiency") {
 					listElement.checked = true;
 				}
 			}
@@ -607,11 +623,11 @@ function createCharacterSheet(adventureData, buttonPressed) {
 			savingThrowButton = document.createElement('button');
 			savingThrowButton.id = "modifierButton";
 			savingThrowButton.style.marginRight = "5px";
-			savingThrowButton.style.width = "22px";
+			savingThrowButton.style.width = "25px";
 
 			if (listElement.checked === true) {
 				let total = 0;
-				const characterProf = calculateProf(calculateLevel(characterData.currentXp, characterData));
+				const characterProf = calculateProf(characterData.classes[0].level);//calculateLevel(characterData.currentXp, characterData));
 
 				for (const feature in characterData.classes[0].classFeatures) {
 					if (characterData.classes[0].classFeatures[feature].definition.name === "Aura of Protection") {
@@ -625,8 +641,8 @@ function createCharacterSheet(adventureData, buttonPressed) {
 					total += Math.floor((stats.totalDexterity - 10) / 2) + characterProf;
 				} else if (savingThrowList[i] === "Constitution") {
 					total += Math.floor((stats.totalConstitution - 10) / 2) + characterProf;
-				} else if (savingThrowList[i] === "Intellegence") {
-					total += Math.floor((stats.totalIntellegence - 10) / 2) + characterProf;
+				} else if (savingThrowList[i] === "Intelligence") {
+					total += Math.floor((stats.totalIntelligence - 10) / 2) + characterProf;
 				} else if (savingThrowList[i] === "Wisdom") {
 					total += Math.floor((stats.totalWisdom - 10) / 2) + characterProf;
 				} else if (savingThrowList[i] === "Charisma") {
@@ -654,8 +670,8 @@ function createCharacterSheet(adventureData, buttonPressed) {
 					total += Math.floor((stats.totalDexterity - 10) / 2);
 				} else if (savingThrowList[i] === "Constitution") {
 					total += Math.floor((stats.totalConstitution - 10) / 2);
-				} else if (savingThrowList[i] === "Intellegence") {
-					total += Math.floor((stats.totalIntellegence - 10) / 2);
+				} else if (savingThrowList[i] === "Intelligence") {
+					total += Math.floor((stats.totalIntelligence - 10) / 2);
 				} else if (savingThrowList[i] === "Wisdom") {
 					total += Math.floor((stats.totalWisdom - 10) / 2);
 				} else if (savingThrowList[i] === "Charisma") {
@@ -693,7 +709,7 @@ function showCharacterSheet(adventureData, buttonPressed) {
 	content.innerHTML = ''; // Clear existing content
 
 	const listSkills = [{ name: "Acrobatics", ability: "Dex" }, { name: "Animal Handling", ability: "Wis" }, { name: "Arcana", ability: "Int" }, { name: "Athletics", ability: "Str" }, { name: "Deception", ability: "Cha" }, { name: "History", ability: "Int" }, { name: "Insight", ability: "Wis" }, { name: "Intimidation", ability: "Cha" }, { name: "Investigation", ability: "Int" }, { name: "Medicine", ability: "Wis" }, { name: "Nature", ability: "Int" }, { name: "Perception", ability: "Wis" }, { name: "Performance", ability: "Cha" }, { name: "Persuasion", ability: "Cha" }, { name: "Religion", ability: "Int" }, { name: "Sleight of Hand", ability: "Dex" }, { name: "Stealth", ability: "Dex" }, { name: "Survival", ability: "Wis" }];
-	const savingThrowList = ["Strength", "Dexterity", "Constitution", "Intellegence", "Wisdom", "Charisma"];
+	const savingThrowList = ["Strength", "Dexterity", "Constitution", "Intelligence", "Wisdom", "Charisma"];
 
 	chrome.storage.local.get('characterData', function (result) {
 		const characterData = result.characterData;
@@ -746,7 +762,10 @@ function showCharacterSheet(adventureData, buttonPressed) {
 
 		if (adventureData.characters.character.length != null) {
 			for (let i = 0; i < adventureData.characters.character.length; i++) {
-				totalHitPoints = adventureData.characters.character[0]['hitpoints'];
+				const characterName = adventureData.characters['@name']
+				if (adventureData.characters.character[i].name === characterName) {
+					totalHitPoints = adventureData.characters.character[i]['hitpoints'];
+				}
 			}
 		}
 
@@ -770,7 +789,7 @@ function showCharacterSheet(adventureData, buttonPressed) {
         					<h5 style="font-weight: bold;">CON</h5>
         					<button id="conButton" style="margin-right: 5px;">${stats.totalConstitution} (${stats.totalConstitution >= 10 ? '+' : ''}${Math.floor((stats.totalConstitution - 10) / 2)})</button>
   						<h5 style="font-weight: bold;">INT</h5>
-        					<button id="intButton" style="margin-right: 5px;">${stats.totalIntellegence} (${stats.totalIntellegence >= 10 ? '+' : ''}${Math.floor((stats.totalIntellegence - 10) / 2)})</button>
+        					<button id="intButton" style="margin-right: 5px;">${stats.totalIntelligence} (${stats.totalIntelligence >= 10 ? '+' : ''}${Math.floor((stats.totalIntelligence - 10) / 2)})</button>
 						<h5 style="font-weight: bold;">WIS</h5>
         					<button id="wisButton" style="margin-right: 5px;">${stats.totalWisdom} (${stats.totalWisdom >= 10 ? '+' : ''}${Math.floor((stats.totalWisdom - 10) / 2)})</button>
 						<h5 style="font-weight: bold;">CHA</h5>
@@ -799,7 +818,7 @@ function showCharacterSheet(adventureData, buttonPressed) {
 					</div>
 					<div>
 					<input type="text" id="maxHitPoints" disabled="true" value="${totalHitPoints}" style="width: 30px; height: 30px; margin-left: -35px;">
-  			    		<input type="text" id="CurrentHitPoints" disabled=true value="${String(currentCauldronHitPoints)}" style="width: 30px; height: 30px; margin-left: -78px;">
+  			    	<input type="text" id="CurrentHitPoints" disabled=true value="${String(currentCauldronHitPoints)}" style="width: 30px; height: 30px; margin-left: -78px;">
 					<label style="margin-left: -6px; font-size: 20px;">／</label>
 						<label style="width: 30px; height: 30px; margin-left: -80px; font-size: 14px;">Hit Points</label>
 					</div>
@@ -834,7 +853,7 @@ function showCharacterSheet(adventureData, buttonPressed) {
 
 		const intButton = overlayBody.querySelector('#intButton');
 		intButton.addEventListener('click', function () {
-			roll_dice(`1d20+${Math.floor((stats.totalIntellegence - 10) / 2)}`);
+			roll_dice(`1d20+${Math.floor((stats.totalIntelligence - 10) / 2)}`);
 		});
 
 		const wisButton = overlayBody.querySelector('#wisButton');
@@ -923,14 +942,14 @@ function showCharacterSheet(adventureData, buttonPressed) {
 
 			if (listElement.checked === true) {
 				let total = 0;
-				const characterProf = calculateProf(calculateLevel(characterData.currentXp, characterData));
+				const characterProf = calculateProf(characterData.classes[0].level);// calculateLevel(characterData.currentXp, characterData));
 
 				if (listSkills[i].ability === "Str") {
 					total = Math.floor((stats.totalStrength - 10) / 2) + characterProf;
 				} else if (listSkills[i].ability === "Dex") {
 					total = Math.floor((stats.totalDexterity - 10) / 2) + characterProf;
 				} else if (listSkills[i].ability === "Int") {
-					total = Math.floor((stats.totalIntellegence - 10) / 2) + characterProf;
+					total = Math.floor((stats.totalIntelligence - 10) / 2) + characterProf;
 				} else if (listSkills[i].ability === "Wis") {
 					total = Math.floor((stats.totalWisdom - 10) / 2) + characterProf;
 				} else if (listSkills[i].ability === "Cha") {
@@ -948,7 +967,7 @@ function showCharacterSheet(adventureData, buttonPressed) {
 				} else if (listSkills[i].ability === "Dex") {
 					total = Math.floor((stats.totalDexterity - 10) / 2);
 				} else if (listSkills[i].ability === "Int") {
-					total = Math.floor((stats.totalIntellegence - 10) / 2);
+					total = Math.floor((stats.totalIntelligence - 10) / 2);
 				} else if (listSkills[i].ability === "Wis") {
 					total = Math.floor((stats.totalWisdom - 10) / 2);
 				} else if (listSkills[i].ability === "Cha") {
@@ -997,7 +1016,7 @@ function showCharacterSheet(adventureData, buttonPressed) {
 
 			if (listElement.checked === true) {
 				let total = 0;
-				const characterProf = calculateProf(calculateLevel(characterData.currentXp, characterData));
+				const characterProf = calculateProf(characterData.classes[0].level);// calculateLevel(characterData.currentXp, characterData));
 
 				for (const feature in characterData.classes[0].classFeatures) {
 					if (characterData.classes[0].classFeatures[feature].definition.name === "Aura of Protection") {
@@ -1011,8 +1030,8 @@ function showCharacterSheet(adventureData, buttonPressed) {
 					total += Math.floor((stats.totalDexterity - 10) / 2) + characterProf;
 				} else if (savingThrowList[i] === "Constitution") {
 					total += Math.floor((stats.totalConstitution - 10) / 2) + characterProf;
-				} else if (savingThrowList[i] === "Intellegence") {
-					total += Math.floor((stats.totalIntellegence - 10) / 2) + characterProf;
+				} else if (savingThrowList[i] === "Intelligence") {
+					total += Math.floor((stats.totalIntelligence - 10) / 2) + characterProf;
 				} else if (savingThrowList[i] === "Wisdom") {
 					total += Math.floor((stats.totalWisdom - 10) / 2) + characterProf;
 				} else if (savingThrowList[i] === "Charisma") {
@@ -1040,8 +1059,8 @@ function showCharacterSheet(adventureData, buttonPressed) {
 					total += Math.floor((stats.totalDexterity - 10) / 2);
 				} else if (savingThrowList[i] === "Constitution") {
 					total += Math.floor((stats.totalConstitution - 10) / 2);
-				} else if (savingThrowList[i] === "Intellegence") {
-					total += Math.floor((stats.totalIntellegence - 10) / 2);
+				} else if (savingThrowList[i] === "Intelligence") {
+					total += Math.floor((stats.totalIntelligence - 10) / 2);
 				} else if (savingThrowList[i] === "Wisdom") {
 					total += Math.floor((stats.totalWisdom - 10) / 2);
 				} else if (savingThrowList[i] === "Charisma") {
@@ -1066,6 +1085,7 @@ function showCharacterSheet(adventureData, buttonPressed) {
 		}
 	});
 }
+
 
 function showActions(adventureData, buttonPressed, characterData, stats) {
 	if (characterSheetOverlayOpen && buttonPressed == "null") {
@@ -1126,10 +1146,20 @@ function showActions(adventureData, buttonPressed, characterData, stats) {
 									<label style="font-size: 22px;">｜</label>
 									<button id="unarmedStrikeAttackRoll" class="unarmedStrikeAttackRoll">0</button>
 									<label style="font-size: 22px;">｜</label>
-									<button id="unarmedStrikeDamage" class="unarmedStrikeDamage">1${Math.floor((stats.totalStrength - 10) / 2) >= 0 ? `+${Math.floor((stats.totalStrength - 10) / 2)}` : Math.floor((stats.totalStrength - 10) / 2)}</button>
+									<button id="unarmedStrikeDamage" class="unarmedStrikeDamage">1${Math.floor((stats.totalStrength - 10) / 2) >= 0 ? `+${Math.floor((stats.totalStrength - 10) / 2)}` : ''}</button>
 									<hr>
 								</div>
 							</ul>
+						</div>
+						<div>
+							<p style="font-size: 20px;"><b>Bonus Actions</b></p>
+							<div id="allBonusActions">
+							</div>
+						</div>
+						<div>
+							<p style="font-size: 20px;"><b>Reactions</b></p>
+							<div id="allReactions">
+							</div>
 						</div>
 					</ul>
 				</div>
@@ -1161,7 +1191,7 @@ function showActions(adventureData, buttonPressed, characterData, stats) {
 				const range = characterData.inventory[i].definition.range;
 				const longRange = characterData.inventory[i].definition.longRange;
 
-				const characterLevel = calculateLevel(characterData.currentXp, characterData);
+				const characterLevel = characterData.classes[0].level; //calculateLevel(characterData.currentXp, characterData);
 				const profBonus = calculateProf(characterLevel);
 
 				//weapon
@@ -1243,10 +1273,15 @@ function showActions(adventureData, buttonPressed, characterData, stats) {
 					} else {
 						damageButton.textContent = `${characterData.inventory[i].definition.damage.diceString}${(Math.floor((stats.totalDexterity - 10) / 2) >= 0 ? `+${Math.floor((stats.totalDexterity - 10) / 2)}` : Math.floor((stats.totalDexterity - 10) / 2))}`;
 					}
+
 				} catch (TypeError) {//if the TypeError happens then this means that the diceString is else where in the data
 					try {
 						damageButton.textContent = `${characterData.inventory[i].definition.grantedModifiers[0].dice.diceString}`
 					} catch (TypeError) { }
+				}
+
+				if (damageButton.textContent.includes("+0")) {
+					damageButton.textContent = damageButton.textContent.replace("+0", "");
 				}
 
 				//label
@@ -1258,7 +1293,6 @@ function showActions(adventureData, buttonPressed, characterData, stats) {
 				//description
 				var weaponDescription = document.createElement('label');
 				weaponDescription.textContent = characterData.inventory[i].definition.description.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, "");
-				console.log(weaponDescription.textContent);
 
 				const breakLine = document.createElement('hr');
 
@@ -1279,7 +1313,7 @@ function showActions(adventureData, buttonPressed, characterData, stats) {
 					const currentAttackRoll = weaponAttackButton;
 
 					damageButton.addEventListener('click', function () {//damage button to only roll damage
-						damageButton = damageButton.textContent;
+						damageButton = damageWeaponButton.textContent;
 						var damageModifier = "0";
 						var damageDice = "";
 
@@ -1297,7 +1331,11 @@ function showActions(adventureData, buttonPressed, characterData, stats) {
 
 						if (range < 6) {
 							if (damageDice.includes("d")) {
-								roll_dice(`${damageDice}+${damageModifier}`);
+								if (damageModifier < 0) {
+									roll_dice(`${damageDice}${damageModifier}`);
+								} else {
+									roll_dice(`${damageDice}+${damageModifier}`);
+								}
 							} else {
 								if (range == null || longRange == null) {
 									message = `${itemName}\nReach: 5/5ft.\n${weaponDescription}`;
@@ -1306,7 +1344,11 @@ function showActions(adventureData, buttonPressed, characterData, stats) {
 								}
 							}
 						} else {
-							roll_dice(`${damageDice}+${damageModifier}`);
+							if (damageModifier < 0) {
+								roll_dice(`${damageDice}${damageModifier}`);
+							} else {
+								roll_dice(`${damageDice}+${damageModifier}`);
+							}
 						}
 					});
 
@@ -1366,6 +1408,7 @@ function showActions(adventureData, buttonPressed, characterData, stats) {
 				snippetLabel.textContent = characterData.actions.class[i].snippet;
 
 				breakLine = document.createElement('hr');
+
 			}
 
 			try {
@@ -1383,6 +1426,94 @@ function showActions(adventureData, buttonPressed, characterData, stats) {
 				})();
 			}
 			catch { }
+
+			var allBonusActionsDiv = overlayBody.querySelector('#allBonusActions');
+
+			const characterProf = calculateProf(characterData.classes[0].level);
+			const characterInt = Math.floor((stats.totalIntelligence - 1) / 2);
+			if (characterData.actions.class[i].activation.activationType === 3) {
+				var nameButton = document.createElement('button');
+				nameButton.textContent = characterData.actions.class[i].name;
+				nameButton.id = "actionName"
+				nameButton.style.fontWeight = "bold";
+
+				var snippetLabel = document.createElement('label');
+				snippetLabel.textContent = characterData.actions.class[i].snippet.replace(/{{proficiency}}/g, characterProf);
+
+				if (characterData.classes[0].definition.name === "Blood Hunter") {
+					snippetLabel.textContent = snippetLabel.textContent.replace(/{{scalevalue}}/g, "1d6");
+				}
+
+				if (characterInt > 0) {
+					snippetLabel.textContent = snippetLabel.textContent.replace(/{{modifier:int@min:1}}/g, characterInt);
+				} else {
+					snippetLabel.textContent = snippetLabel.textContent.replace(/{{modifier:int@min:1}}/g, 1);
+				}
+
+				try {
+					snippetLabel.textContent = snippetLabel.textContent.replace(/{{scalevalue}}/g, characterData.actions.class[i].dice.diceString);
+				} catch { }
+
+				(function () {
+					const currentNameButton = nameButton;
+					const label = snippetLabel;
+					// Add a click event listener to the current weapon button
+					currentNameButton.addEventListener('click', function () {
+						message = `${currentNameButton.textContent}\n_______________\n${label.textContent}`;
+						sendDataToSidebar(message, characterData.name);
+					});
+				})();
+
+				var breakLine = document.createElement('hr');
+
+				try {
+					allBonusActionsDiv.appendChild(nameButton);
+					allBonusActionsDiv.appendChild(snippetLabel);
+					allBonusActionsDiv.appendChild(breakLine);
+				} catch { }
+			}
+
+			var allReactionsDiv = overlayBody.querySelector('#allReactions');
+			if (characterData.actions.class[i].activation.activationType === 4) {
+				var nameButton = document.createElement('button');
+				nameButton.textContent = characterData.actions.class[i].name;
+				nameButton.id = "actionName"
+				nameButton.style.fontWeight = "bold";
+
+				var snippetLabel = document.createElement('label');
+				snippetLabel.textContent = characterData.actions.class[i].snippet;
+
+				try {
+					snippetLabel.textContent = snippetLabel.textContent.replace(/<em>/g, "").replace(/<\/?em\s*>/g, "").replace(/<strong>/g, "").replace(/<\/?strong\s*>/g, "")
+
+					var characterWisdom = Math.floor((stats.totalWisdom - 10) / 2) >= 0 ? `+${Math.floor((stats.totalWisdom - 10) / 2)}` : Math.floor((stats.totalWisdom - 10) / 2)
+
+					if (characterWisdom < 1) {
+						snippetLabel.textContent = snippetLabel.textContent.replace(/{{modifier:wis@min:1#signed}}/g, characterWisdom);
+					} else {
+						snippetLabel.textContent = snippetLabel.textContent.replace(/{{modifier:wis@min:1#signed}}/g, characterWisdom);
+					}
+				} catch { }
+
+				(function () {
+					const currentFeatsButton = nameButton;
+					const label = snippetLabel;
+					// Add a click event listener to the current weapon button
+					currentFeatsButton.addEventListener('click', function () {
+						message = `${currentFeatsButton.textContent}\n_______________\n${label.textContent}`;
+						sendDataToSidebar(message, characterData.name);
+					});
+				})();
+
+				var breakLine = document.createElement('hr');
+
+				try {
+					allReactionsDiv.appendChild(nameButton);
+					allReactionsDiv.appendChild(snippetLabel);
+					allReactionsDiv.appendChild(breakLine);
+
+				} catch { }
+			}
 		}
 
 		//feats
@@ -1474,9 +1605,12 @@ function showActions(adventureData, buttonPressed, characterData, stats) {
 
 		setTimeout(() => {
 			let unarmedStrikeAttackRoll = document.getElementById('unarmedStrikeAttackRoll');
+			const characterLevel = characterData.classes[0].level; //calculateLevel(characterData.currentXp, characterData);
+			const profBonus = calculateProf(characterLevel);
+
 			if (unarmedStrikeAttackRoll) {
 				//attack roll
-				unarmedStrikeAttackRoll.textContent = (Math.floor((stats.totalStrength - 10) / 2) >= 0 ? `+${Math.floor((stats.totalStrength - 10) / 2)}` : Math.floor((stats.totalStrength - 10) / 2))
+				unarmedStrikeAttackRoll.textContent = (Math.floor((stats.totalStrength - 10) / 2 + profBonus) >= 0 ? `+${Math.floor((stats.totalStrength - 10) / 2 + profBonus)}` : Math.floor((stats.totalStrength - 10) / 2 + profBonus))
 			} else {
 				console.error("Button not found.");
 				console.error("Please refresh page");
@@ -1559,6 +1693,9 @@ function showActions(adventureData, buttonPressed, characterData, stats) {
 			} else if (unarmedStrikeDamage.textContent.includes("-")) {
 				damage = unarmedStrikeDamage.textContent.split('-')[0];
 				modifier = unarmedStrikeDamage.textContent.split('+')[1];
+			} else {
+				damage = 1;
+				modifier = 0;
 			}
 
 			message = `Unarmed Strike\n_________________\n${parseInt(damage) + parseInt(modifier)} Bludgeoning`;
@@ -1677,13 +1814,13 @@ function showBio(adventureData, buttonPressed, characterData, stats) {
 						<div id="personalPossessionsDiv" style="margin-left: 20px;">
 							<label class=personalPossLabel style="font-size: 13px;">${characterData.notes.personalPossessions ? characterData.notes.personalPossessions : ""}</label>
 						</div>
-						<button id=bioButton class=shortDes style="font-size: 20px;"><b>Background: ${characterData.background.definition.name}</b></button>
+						<button id=bioButton class=shortDes style="font-size: 20px;"><b>Background: ${characterData.background.definition.name ? characterData.background.definition.name : ""}</b></button>
 						<div id="backgroundDescription" style="margin-left: 20px;">
-							<label class=backgroundDescLabel style="font-size: 13px;">${removeHtmlTags(characterData.background.definition.shortDescription)}
+							<label class=backgroundDescLabel style="font-size: 13px;">${removeHtmlTags(characterData.background.definition.shortDescription ? characterData.background.definition.shortDescription : "")}
 						</div>
-						<button id=bioButton class=features style="font-size: 12px;"><b>Background Feature: ${characterData.background.definition.featureName}</b></button>
+						<button id=bioButton class=features style="font-size: 12px;"><b>Background Feature: ${characterData.background.definition.featureName ? characterData.background.definition.featureName : ""}</b></button>
 						<div id="backgroundFeature" style="margin-left: 20px;">
-							<label class=backgroundFeatureLabel style="font-size: 13px;">${removeHtmlTags(characterData.background.definition.featureDescription)}
+							<label class=backgroundFeatureLabel style="font-size: 13px;">${removeHtmlTags(characterData.background.definition.featureDescription ? characterData.background.definition.featureDescription : "")}
 						</div>
 						<button id=bioButton class=appearance style="font-size: 16px;"><b>Appearance</b></button>
 						<div id="apperance" style="margin-left: 20px;">
@@ -1691,19 +1828,19 @@ function showBio(adventureData, buttonPressed, characterData, stats) {
 						</div>
 						<button id=bioButton class=bond style="font-size: 16px;"><b>Bond</b></button>
 						<div id="bond" style="margin-left: 20px;">
-							<label class=bondLabel style="font-size: 13px;">${characterData.traits.bonds}
+							<label class=bondLabel style="font-size: 13px;">${characterData.traits.bonds ? characterData.traits.bonds : ""}
 						</div>
 						<button id=bioButton class=flaws style="font-size: 16px;"><b>Flaws</b></button>
 						<div id="flaws" style="margin-left: 20px;">
-							<label class=flawsLabel style="font-size: 13px;">${characterData.traits.flaws}
+							<label class=flawsLabel style="font-size: 13px;">${characterData.traits.flaws ? characterData.traits.bonds : ""}
 						</div>
 						<button id=bioButton class=ideals style="font-size: 16px;"><b>Ideals</b></button>
 						<div id="ideals" style="margin-left: 20px;">
-							<label class=idealsLabel style="font-size: 13px;">${characterData.traits.ideals}
+							<label class=idealsLabel style="font-size: 13px;">${characterData.traits.ideals ? characterData.traits.bonds : ""}
 						</div>
 						<button id=bioButton class=personality style="font-size: 16px;"><b>Personality Traits</b></button>
 						<div id="personalityTraits" style="margin-left: 20px;">
-							<label class=personalityTraitsLabel style="font-size: 13px;">${characterData.traits.personalityTraits}
+							<label class=personalityTraitsLabel style="font-size: 13px;">${characterData.traits.personalityTraits ? characterData.traits.bonds : ""}
 						</div>
 					</ul>
 				</div>
@@ -1712,7 +1849,7 @@ function showBio(adventureData, buttonPressed, characterData, stats) {
 
 	const backstory = overlayBody.querySelector('.backstory');
 	backstory.addEventListener('click', function () {
-		const message = `${backstory.textContent}\n${characterData.notes.backstory}`;
+		const message = `${backstory.textContent}\n${characterData.notes.backstory.replace(/<br>/g, "").replace(/<\/?br\s*>/g, "")}`;
 		if (message !== "") {
 			sendDataToSidebar(message, characterData.name);
 		}
@@ -1720,7 +1857,7 @@ function showBio(adventureData, buttonPressed, characterData, stats) {
 
 	const allies = overlayBody.querySelector('.allies');
 	allies.addEventListener('click', function () {
-		const message = `${allies.textContent}\n${characterData.notes.allies}`;
+		const message = `${allies.textContent}\n${characterData.notes.allies.replace(/<br>/g, "").replace(/<\/?br\s*>/g, "")}`;
 		if (message !== "") {
 			sendDataToSidebar(message, characterData.name);
 		}
@@ -1728,7 +1865,7 @@ function showBio(adventureData, buttonPressed, characterData, stats) {
 
 	const enemies = overlayBody.querySelector('.enemies');
 	enemies.addEventListener('click', function () {
-		const message = `${enemies.textContent}\n${characterData.notes.enemies}`;
+		const message = `${enemies.textContent}\n${characterData.notes.enemies.replace(/<br>/g, "\n").replace(/<\/?br\s*>/g, "\n")}`;
 		if (message !== "") {
 			sendDataToSidebar(message, characterData.name);
 		}
@@ -1736,7 +1873,7 @@ function showBio(adventureData, buttonPressed, characterData, stats) {
 
 	const organizations = overlayBody.querySelector('.organizations');
 	organizations.addEventListener('click', function () {
-		const message = `${organizations.textContent}\n${characterData.notes.organizations}`;
+		const message = `${organizations.textContent}\n${characterData.notes.organizations.replace(/<br>/g, "\n").replace(/<\/?br\s*>/g, "\n")}`;
 		if (message !== "") {
 			sendDataToSidebar(message, characterData.name);
 		}
@@ -1744,7 +1881,7 @@ function showBio(adventureData, buttonPressed, characterData, stats) {
 
 	const otherHoldings = overlayBody.querySelector('.otherHoldings');
 	otherHoldings.addEventListener('click', function () {
-		const message = `${otherHoldings.textContent}\n${characterData.notes.otherHoldings}`;
+		const message = `${otherHoldings.textContent}\n${characterData.notes.otherHoldings.replace(/<br>/g, "\n").replace(/<\/?br\s*>/g, "\n")}`;
 		if (message !== "") {
 			sendDataToSidebar(message, characterData.name);
 		}
@@ -1752,7 +1889,7 @@ function showBio(adventureData, buttonPressed, characterData, stats) {
 
 	const otherNotes = overlayBody.querySelector('.otherNotes');
 	otherNotes.addEventListener('click', function () {
-		const message = `${otherNotes.textContent}\n${characterData.notes.otherNotes}`;
+		const message = `${otherNotes.textContent}\n${characterData.notes.otherNotes.replace(/<br>/g, "\n").replace(/<\/?br\s*>/g, "\n")}`;
 		if (message !== "") {
 			sendDataToSidebar(message, characterData.name);
 		}
@@ -1760,7 +1897,7 @@ function showBio(adventureData, buttonPressed, characterData, stats) {
 
 	const personalPossessions = overlayBody.querySelector('.personalposs');
 	personalPossessions.addEventListener('click', function () {
-		const message = `${personalPossessions.textContent}\n${characterData.notes.personalPossessions}`;
+		const message = `${personalPossessions.textContent}\n${characterData.notes.personalPossessions.replace(/<br>/g, "\n").replace(/<\/?br\s*>/g, "\n")}`;
 		if (message !== "") {
 			sendDataToSidebar(message, characterData.name);
 		}
@@ -1768,7 +1905,7 @@ function showBio(adventureData, buttonPressed, characterData, stats) {
 
 	const backgroundDescription = overlayBody.querySelector('.shortDes');
 	backgroundDescription.addEventListener('click', function () {
-		const message = `${backgroundDescription.textContent}\n${removeHtmlTags(characterData.background.definition.shortDescription)}`;
+		const message = `${backgroundDescription.textContent}\n${removeHtmlTags(characterData.background.definition.shortDescription).replace(/<br>/g, "\n").replace(/<\/?br\s*>/g, "\n")}`;
 		if (message !== "") {
 			sendDataToSidebar(message, characterData.name);
 		}
@@ -1776,7 +1913,7 @@ function showBio(adventureData, buttonPressed, characterData, stats) {
 
 	const backgroundFeature = overlayBody.querySelector('.features');
 	backgroundFeature.addEventListener('click', function () {
-		const message = `${backgroundFeature.textContent}\n${removeHtmlTags(characterData.background.definition.featureDescription)}`;
+		const message = `${backgroundFeature.textContent}\n${removeHtmlTags(characterData.background.definition.featureDescription).replace(/<br><br>/g, "\n").replace(/<\/?br\s*>/g, "\n")}`;
 		if (message !== "") {
 			sendDataToSidebar(message, characterData.name);
 		}
@@ -1792,7 +1929,7 @@ function showBio(adventureData, buttonPressed, characterData, stats) {
 
 	const bond = overlayBody.querySelector('.bond');
 	bond.addEventListener('click', function () {
-		const message = `${bond.textContent}\n${characterData.traits.bonds}`;
+		const message = `${bond.textContent}\n${characterData.traits.bonds.replace(/<br>/g, "").replace(/<\/?br\s*>/g, "")}`;
 		if (message !== "") {
 			sendDataToSidebar(message, characterData.name);
 		}
@@ -1800,7 +1937,7 @@ function showBio(adventureData, buttonPressed, characterData, stats) {
 
 	const flaws = overlayBody.querySelector('.flaws');
 	flaws.addEventListener('click', function () {
-		const message = `${flaws.textContent}\n${characterData.traits.flaws}`;
+		const message = `${flaws.textContent}\n${characterData.traits.flaws.replace(/<br>/g, "").replace(/<\/?br\s*>/g, "")}`;
 		if (message !== "") {
 			sendDataToSidebar(message, characterData.name);
 		}
@@ -1808,7 +1945,7 @@ function showBio(adventureData, buttonPressed, characterData, stats) {
 
 	const ideals = overlayBody.querySelector('.ideals');
 	ideals.addEventListener('click', function () {
-		const message = `${ideals.textContent}\n${characterData.traits.ideals}`;
+		const message = `${ideals.textContent}\n${characterData.traits.ideals.replace(/<br>/g, "").replace(/<\/?br\s*>/g, "")}`;
 		if (message !== "") {
 			sendDataToSidebar(message, characterData.name);
 		}
@@ -1816,14 +1953,11 @@ function showBio(adventureData, buttonPressed, characterData, stats) {
 
 	const personalityTraits = overlayBody.querySelector('.personality');
 	personalityTraits.addEventListener('click', function () {
-		const message = `${personalityTraits.textContent}\n${characterData.traits.personalityTraits}`;
+		const message = `${personalityTraits.textContent}\n${characterData.traits.personalityTraits.replace(/<br>/g, "").replace(/<\/?br\s*>/g, "")}`;
 		if (message !== "") {
 			sendDataToSidebar(message, characterData.name);
 		}
 	});
-
-
-
 
 	//event listeners for the character buttons
 	const actionButton = overlayBody.querySelector('#actions');
@@ -1927,8 +2061,8 @@ function showFeatures(adventureData, buttonPressed, characterData, stats) {
 
 			// Loop through the actions array and add elements to the listFeatures array
 			actions.forEach(action => {
-				const characterProf = calculateProf(calculateLevel(characterData.currentXp));
-				const characterLevel = calculateLevel(characterData.currentXp);
+				const characterProf = calculateProf(characterData.classes[0].level);//calculateLevel(characterData.currentXp));
+				const characterLevel = characterData.classes[0].level;//calculateLevel(characterData.currentXp);
 
 				var featureNameButton = document.createElement('button');
 				featureNameButton.id = "featureButton";
@@ -1936,8 +2070,7 @@ function showFeatures(adventureData, buttonPressed, characterData, stats) {
 
 				var featureDescription = document.createElement('p');
 
-				featureDescription.textContent = descriptionToCharacterData(action.snippet, characterData, stats).replace("proficiency#signed", "+" + characterProf).replace('<strong>', '').replace('</strong>', '').replace(/classlevel/g, characterLevel + " (character Level)");
-				console.log(featureDescription.textContent);
+				featureDescription.textContent = descriptionToCharacterData(action.snippet, characterData, stats).replace(/proficiency#signed/g, "+" + characterProf).replace(/<strong>/g, '').replace(/<\/?strong\s*>/g, '').replace(/classlevel/g, characterLevel + " (character Level)").replace(/@min:1#signed/g, "").replace(/<em>/g, "").replace(/<\/?em\s*>/g, '').replace(/scalevalue/g, "1d6").replace(/@min:1/g, "");
 				var breakline = document.createElement('hr');
 
 				// Add all elements to the listFeatures array
@@ -1961,7 +2094,7 @@ function showFeatures(adventureData, buttonPressed, characterData, stats) {
 
 			// Loop through the options array and add elements to the listFeatures array
 			options.forEach(option => {
-				const characterProf = calculateProf(calculateLevel(characterData.currentXp));
+				const characterProf = calculateProf(characterData.classes[0].level);// calculateLevel(characterData.currentXp));
 
 				var featureNameButton = document.createElement('button');
 				featureNameButton.id = "featureButton";
@@ -2147,6 +2280,7 @@ function showInventory(adventureData, buttonPressed, characterData, stats) {
 
 		var itemDescription = document.createElement('label');
 		itemDescription.textContent = removeHtmlTags(characterData.inventory[i].definition.description).replace(/<br><br>/g, '');
+		itemDescription.style.width = "200px";
 
 		//breakline
 		const breakline = document.createElement('hr');
@@ -2386,6 +2520,29 @@ function showSpells(adventureData, buttonPressed, characterData, stats) {
 			</div>
 			`;
 
+			var spellDC = document.querySelector('.spellSaveDc');
+			var characterProf = calculateProf(characterData.classes[0].level);//calculateLevel(characterData.currentXp));
+
+			if (characterData.classes[0].definition.name === "Sorcerer") {
+				spellDC.textContent = "Spell Save DC: " + (8 + Math.floor((stats.totalCharisma - 10) / 2) + characterProf);
+			} else if (characterData.classes[0].definition.name === "Wizard") {
+				spellDC.textContent = "Spell Save DC: " + (8 + Math.floor((stats.totalIntelligence - 10) / 2) + characterProf);
+			} else if (characterData.classes[0].definition.name === "Cleric") {
+				spellDC.textContent = "Spell Save DC: " + (8 + Math.floor((stats.totalWisdom - 10) / 2) + characterProf);
+			} else if (characterData.classes[0].definition.name === "Druid") {
+				spellDC.textContent = "Spell Save DC: " + (8 + Math.floor((stats.totalWisdom - 10) / 2) + characterProf);
+			} else if (characterDAta.classes[0].definition.name === "Paladin") {
+				spellDC.textContent = "Spell Save DC: " + (8 + Math.floor((stats.totalCharisma - 10) / 2) + characterProf);
+			} else if (characterDAta.classes[0].definition.name === "Ranger") {
+				spellDC.textContent = "Spell Save DC: " + (8 + Math.floor((stats.totalWisdom - 10) / 2) + characterProf);
+			} else if (characterDAta.classes[0].definition.name === "Bard") {
+				spellDC.textContent = "Spell Save DC: " + (8 + Math.floor((stats.totalCharisma - 10) / 2) + characterProf);
+			} else if (characterDAta.classes[0].definition.name === "Warlock") {
+				spellDC.textContent = "Spell Save DC: " + (8 + Math.floor((stats.totalCharisma - 10) / 2) + characterProf);
+			} else if (characterDAta.classes[0].definition.name === "Artificer") {
+				spellDC.textContent = "Spell Save DC: " + (8 + Math.floor((stats.totalIntelligence - 10) / 2) + characterProf);
+			}
+
 			var spellSlotElement9 = document.querySelector('.spellSlots9');
 			var spellSlotElement8 = document.querySelector('.spellSlots8');
 			var spellSlotElement7 = document.querySelector('.spellSlots7');
@@ -2396,7 +2553,7 @@ function showSpells(adventureData, buttonPressed, characterData, stats) {
 			var spellSlotElement2 = document.querySelector('.spellSlots2');
 			var spellSlotElement1 = document.querySelector('.spellSlots1');
 
-			const characterLevel = calculateLevel(characterData.currentXp, characterData);
+			const characterLevel = characterData.classes[0].level; //calculateLevel(characterData.currentXp, characterData);
 
 			// Get the spell slot values based on the character's level
 			const spellSlotValues = characterData.classes[0].definition.spellRules.levelSpellSlots[characterLevel];
@@ -2414,7 +2571,7 @@ function showSpells(adventureData, buttonPressed, characterData, stats) {
 
 			//warlocks spells are different to other characters as they always cast at highest spell slots avaliable, so they only have set spell slots for the highest spell level avaliable to them
 			if (characterData.classes[0].definition.name === "Warlock") {
-				const characterLevel = calculateLevel(characterData.currentXp, characterData);
+				const characterLevel = characterData.classes[0].level;//calculateLevel(characterData.currentXp, characterData);
 				var spellSlotElement5 = document.querySelector('.spellSlots5');
 				var spellSlotElement4 = document.querySelector('.spellSlots4');
 				var spellSlotElement3 = document.querySelector('.spellSlots3');
@@ -2795,7 +2952,7 @@ function showSpells(adventureData, buttonPressed, characterData, stats) {
 
 			const characterButton = overlayBody.querySelector('#character');
 			characterButton.addEventListener('click', function () {
-				showCharacterSheet(adventureData);
+				showCharacterSheet(adventureData, buttonPressed);
 			});
 
 			const featuresButton = overlayBody.querySelector('#features');
@@ -2909,9 +3066,8 @@ function spellInfo(buttonPressed, adventureData, spellInformation, spellLevel, c
 
 	const castSpell = overlayBody.querySelector('#castSpell');
 	castSpell.addEventListener('click', function () {
-		const newline = "\n";
-
-		var message = (
+		//uncomment this vvv to send the entire spell detail to the chat instead
+		/*var message = (
 			spellInformation.name + newline +
 			spellInformation["school level"] + newline +
 			spellInformation["casting time"] + newline +
@@ -2920,7 +3076,9 @@ function spellInfo(buttonPressed, adventureData, spellInformation, spellLevel, c
 			spellInformation.duration + newline +
 			newline +
 			spellInformation.description.replace(/<br><br>/g, '\n\n')
-		);
+		);*/
+
+		var message = ("Casting: " + spellInformation.name);
 
 		if (characterData.classes[0].definition.name === "Warlock") {
 			if (spellIsCantrip) {
@@ -3068,7 +3226,7 @@ function getCharacterStats(characterData) {
 	let totalStrength = characterData.stats[0].value;
 	let totalDexterity = characterData.stats[1].value;
 	let totalConstitution = characterData.stats[2].value;
-	let totalIntellegence = characterData.stats[3].value;
+	let totalIntelligence = characterData.stats[3].value;
 	let totalWisdom = characterData.stats[4].value;
 	let totalCharisma = characterData.stats[5].value;
 
@@ -3081,7 +3239,7 @@ function getCharacterStats(characterData) {
 				totalDexterity += characterData.modifiers.race[i].value;
 			} else if (abilityIncrease === "Constitution") {
 				totalConstitution += characterData.modifiers.race[i].value;
-			} else if (abilityIncrease === "Intellegence") {
+			} else if (abilityIncrease === "Intelligence") {
 				totalIntelligence += characterData.modifiers.race[i].value;
 			} else if (abilityIncrease === "Wisdom") {
 				totalWisdom += characterData.modifiers.race[i].value;
@@ -3092,7 +3250,7 @@ function getCharacterStats(characterData) {
 	}
 
 	for (let i = 0; i < characterData.modifiers.feat.length; i++) {
-		const abilities = ["Strength", "Dexterity", "Constitution", "Intellegence", "Wisdom", "Charisma"]
+		const abilities = ["Strength", "Dexterity", "Constitution", "Intelligence", "Wisdom", "Charisma"]
 		const type = characterData.modifiers.feat[i].friendlySubtypeName.replace(' Score', '');
 
 		if (abilities.includes(type) && characterData.modifiers.feat[i].type === "bonus") {
@@ -3101,10 +3259,10 @@ function getCharacterStats(characterData) {
 				totalStrength += characterData.modifiers.feat[i].value;
 			} else if (type === 'Dexterity' && ability === true) {
 				totalDexterity += characterData.modifiers.feat[i].value;
-			} else if (type === 'Constitution' && type === true) {
+			} else if (type === 'Constitution' && ability === true) {
 				totalConstitution += characterData.modifiers.feat[i].value;
-			} else if (type === 'Intellegence' && ability === true) {
-				totalIntellegence += characterData.modifiers.feat[i].value;
+			} else if (type === 'Intillegence' && ability === true) {
+				totalIntelligence += characterData.modifiers.feat[i].value;
 			} else if (type === 'Wisdom' && ability === true) {
 				totalWisdom += characterData.modifiers.feat[i].value;
 			} else if (type === 'Charisma' && ability === true) {
@@ -3114,19 +3272,18 @@ function getCharacterStats(characterData) {
 	}
 
 	for (let i = 0; i < characterData.modifiers.class.length; i++) {
-		const abilities = ["Strength", "Dexterity", "Constitution", "Intellegence", "Wisdom", "Charisma"]
+		const abilities = ["Strength", "Dexterity", "Constitution", "Intelligence", "Wisdom", "Charisma"]
 		const type = characterData.modifiers.class[i].friendlySubtypeName.replace(' Score', '');
-
 		if (abilities.includes(type) && characterData.modifiers.class[i].type === "bonus") {
 			const ability = abilities.includes(type);
 			if (type === "Strength" && ability === true) {
 				totalStrength += characterData.modifiers.class[i].value;
 			} else if (type === 'Dexterity' && ability === true) {
 				totalDexterity += characterData.modifiers.class[i].value;
-			} else if (type === 'Constitution' && type === true) {
+			} else if (type === 'Constitution' && ability === true) {
 				totalConstitution += characterData.modifiers.class[i].value;
-			} else if (type === 'Intellegence' && ability === true) {
-				totalIntellegence += characterData.modifiers.class[i].value;
+			} else if (type === 'Intelligence' && ability === true) {
+				totalIntelligence += characterData.modifiers.class[i].value;
 			} else if (type === 'Wisdom' && ability === true) {
 				totalWisdom += characterData.modifiers.class[i].value;
 			} else if (type === 'Charisma' && ability === true) {
@@ -3136,7 +3293,7 @@ function getCharacterStats(characterData) {
 	}
 
 	for (let i = 0; i < characterData.modifiers.background.length; i++) {
-		const abilities = ["Strength", "Dexterity", "Constitution", "Intellegence", "Wisdom", "Charisma"]
+		const abilities = ["Strength", "Dexterity", "Constitution", "Intelligence", "Wisdom", "Charisma"]
 		const type = characterData.modifiers.background[i].friendlySubtypeName.replace(' Score', '');
 
 		if (abilities.includes(type) && characterData.modifiers.background[i].type === "bonus") {
@@ -3145,10 +3302,10 @@ function getCharacterStats(characterData) {
 				totalStrength += characterData.modifiers.background[i].value;
 			} else if (type === 'Dexterity' && ability === true) {
 				totalDexterity += characterData.modifiers.background[i].value;
-			} else if (type === 'Constitution' && type === true) {
+			} else if (type === 'Constitution' && ability === true) {
 				totalConstitution += characterData.modifiers.background[i].value;
-			} else if (type === 'Intellegence' && ability === true) {
-				totalIntellegence += characterData.modifiers.background[i].value;
+			} else if (type === 'Intelligence' && ability === true) {
+				totalIntelligence += characterData.modifiers.background[i].value;
 			} else if (type === 'Wisdom' && ability === true) {
 				totalWisdom += characterData.modifiers.background[i].value;
 			} else if (type === 'Charisma' && ability === true) {
@@ -3157,8 +3314,8 @@ function getCharacterStats(characterData) {
 		}
 	}
 
-	for (let i = 0; i < characterData.modifiers.item.length; i++) {
-		const abilities = ["Strength", "Dexterity", "Constitution", "Intellegence", "Wisdom", "Charisma"]
+	/*for (let i = 0; i < characterData.modifiers.item.length; i++) {
+		const abilities = ["Strength", "Dexterity", "Constitution", "Intelligence", "Wisdom", "Charisma"]
 		const type = characterData.modifiers.item[i].friendlySubtypeName.replace(' Score', '');
 
 		if (abilities.includes(type) && characterData.modifiers.item[i].type === "bonus") {
@@ -3167,20 +3324,20 @@ function getCharacterStats(characterData) {
 				totalStrength += characterData.modifiers.item[i].value;
 			} else if (type === 'Dexterity' && ability === true) {
 				totalDexterity += characterData.modifiers.item[i].value;
-			} else if (type === 'Constitution' && type === true) {
+			} else if (type === 'Constitution' && ability === true) {
 				totalConstitution += characterData.modifiers.item[i].value;
-			} else if (type === 'Intellegence' && ability === true) {
-				totalIntellegence += characterData.modifiers.item[i].value;
+			} else if (type === 'Intelligence' && ability === true) {
+				totalIntelligence += characterData.modifiers.item[i].value;
 			} else if (type === 'Wisdom' && ability === true) {
 				totalWisdom += characterData.modifiers.item[i].value;
 			} else if (type === 'Charisma' && ability === true) {
 				totalCharisma += characterData.modifiers.item[i].value;
 			}
 		}
-	}
+	}*/
 
 	for (let i = 0; i < characterData.modifiers.condition.length; i++) {
-		const abilities = ["Strength", "Dexterity", "Constitution", "Intellegence", "Wisdom", "Charisma"]
+		const abilities = ["Strength", "Dexterity", "Constitution", "Intelligence", "Wisdom", "Charisma"]
 		const type = characterData.modifiers.condition[i].friendlySubtypeName.replace(' Score', '');
 
 		if (abilities.includes(type) && characterData.modifiers.condition[i].type === "bonus") {
@@ -3189,10 +3346,10 @@ function getCharacterStats(characterData) {
 				totalStrength += characterData.modifiers.condition[i].value;
 			} else if (type === 'Dexterity' && ability === true) {
 				totalDexterity += characterData.modifiers.condition[i].value;
-			} else if (type === 'Constitution' && type === true) {
+			} else if (type === 'Constitution' && ability === true) {
 				totalConstitution += characterData.modifiers.condition[i].value;
-			} else if (type === 'Intellegence' && ability === true) {
-				totalIntellegence += characterData.modifiers.condition[i].value;
+			} else if (type === 'Intelligence' && ability === true) {
+				totalIntelligence += characterData.modifiers.condition[i].value;
 			} else if (type === 'Wisdom' && ability === true) {
 				totalWisdom += characterData.modifiers.condition[i].value;
 			} else if (type === 'Charisma' && ability === true) {
@@ -3201,11 +3358,58 @@ function getCharacterStats(characterData) {
 		}
 	}
 
+	for (let i = 0; i < characterData.inventory.length; i++) {
+		try {
+			if (characterData.inventory[i].equipped === true) {
+
+				if (characterData.inventory[i].definition.grantedModifiers[0].subType === "constitution-score") {
+					if (characterData.inventory[i].definition.grantedModifiers[0].type === "set") {
+						totalConstitution = characterData.inventory[i].definition.grantedModifiers[0].value;
+					} else if (characterData.inventory[i].definition.grantedModifiers[0].type === "bonus") {
+						totalConstitution += characterData.inventory[i].definition.grantedModifiers[0].value;
+					}
+				} else if (characterData.inventory[i].definition.grantedModifiers[0].subType === "strength-score") {
+					if (characterData.inventory[i].definition.grantedModifiers[0].type === "set") {
+						totalStrength = characterData.inventory[i].definition.grantedModifiers[0].value;
+					} else if (characterData.inventory[i].definition.grantedModifiers[0].type === "bonus") {
+						totalStrength += characterData.inventory[i].definition.grantedModifiers[0].value;
+					}
+				} else if (characterData.inventory[i].definition.grantedModifiers[0].subType === "dexterity-score") {
+					if (characterData.inventory[i].definition.grantedModifiers[0].type === "set") {
+						totalDexterity = characterData.inventory[i].definition.grantedModifiers[0].value;
+					} else if (characterData.inventory[i].definition.grantedModifiers[0].type === "bonus") {
+						totalDexterity += characterData.inventory[i].definition.grantedModifiers[0].value;
+					}
+				} else if (characterData.inventory[i].definition.grantedModifiers[0].subType === "intelligence-score") {
+					if (characterData.inventory[i].definition.grantedModifiers[0].type === "set") {
+						totalIntelligence = characterData.inventory[i].definition.grantedModifiers[0].value;
+					} else if (characterData.inventory[i].definition.grantedModifiers[0].type === "bonus") {
+						totalIntelligence += characterData.inventory[i].definition.grantedModifiers[0].value;
+					}
+				} else if (characterData.inventory[i].definition.grantedModifiers[0].subType === "wisdom-score") {
+					if (characterData.inventory[i].definition.grantedModifiers[0].type === "set") {
+						totalWisdom = characterData.inventory[i].definition.grantedModifiers[0].value;
+					} else if (characterData.inventory[i].definition.grantedModifiers[0].type === "bonus") {
+						totalWisdom += characterData.inventory[i].definition.grantedModifiers[0].value;
+					}
+				} else if (characterData.inventory[i].definition.grantedModifiers[0].subType === "charisma-score") {
+					if (characterData.inventory[i].definition.grantedModifiers[0].type === "set") {
+						totalCharisma = characterData.inventory[i].definition.grantedModifiers[0].value;
+					} else if (characterData.inventory[i].definition.grantedModifiers[0].type === "bonus") {
+						totalCharisma += characterData.inventory[i].definition.grantedModifiers[0].value;
+					}
+				}
+			}
+		} catch (TypeError) {
+			continue
+		}
+	}
+
 	return {
 		totalStrength,
 		totalDexterity,
 		totalConstitution,
-		totalIntellegence,
+		totalIntelligence,
 		totalWisdom,
 		totalCharisma,
 	};
@@ -3219,7 +3423,7 @@ function totalHitPoints(hitPoints) {
 		if (characterData) {
 
 			const conStat = Math.floor((stats.totalConstitution - 10) / 2)//ability score -10/2 to get modifier (round up)
-			const level = calculateLevel(characterData.currentXp)
+			const level = characterData.classes[0].level;//calculateLevel(characterData.currentXp)
 			const totalHitPoints = characterData.baseHitPoints + (Number(conStat) * Number(level));//constitustion modifier X level + base hit points = total hp
 			hitPoints.value = totalHitPoints;
 		} else {
@@ -3294,7 +3498,7 @@ function descriptionToCharacterData(description, characterData, stats) {
 
 	//replaces +classlevel with the classes level
 	let rePattern = /\+classlevel\)/;
-	let replacementValue = calculateLevel(characterData.currentXp); // Replace this with the desired number
+	let replacementValue = characterData.classes[0].level;//calculateLevel(characterData.currentXp);
 	description = description.replace(rePattern, "+" + replacementValue);
 
 	//replaces min:1#unsighned
