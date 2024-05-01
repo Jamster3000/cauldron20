@@ -8,7 +8,7 @@ Cauldron20, a chrome extension that provides functionalily between character she
 If you already use Cauldron-vtt, you might be interested in the offical cauldron-vtt discord server: [Discord Server](https://discord.gg/Bbg4TACH)
 
 # How it works
-This works by clicking on the extension and entering your character sheet's number (e.g. 112012248). This will then use dndbeyond's api for character sheets. It will remember your character so this will be a one time input. If you want to use a different character just input a new number and your old character will be replaced with the new one (there are plans for mulitple characters)
+This works by clicking on the extension and entering your character sheet's number (e.g. 112012248). This will then use dndbeyond's api for character sheets. It will remember your character so this will be a one time input. If you want to use a different character just input a new number and your old character will be replaced with the new one (there are plans for mulitple characters).
 
 # Installation 🚀
 To install and try this extension
@@ -17,7 +17,7 @@ To install and try this extension
 3) Open Chome and navigate to extensions [chome extensions](chrome://extensions/)
 4) Make sure that developer mode is enabled on top right.
 5) Top left, choose "load unpacked" and choose the folder that contains the code.
-6) Clicking on the extention and input the number that identifies your character (make sure that your character sheet on dndbeyond is in public so it can be accessed by the extension)
+6) Clicking on the extention and input the number that identifies your character (make sure that your character sheet on dndbeyond is in public so it can be accessed by the extension).
 
 See [wiki](https://github.com/Jamster3000/cauldron20/wiki) for more in depth instructions on how to setup the extension and use it.
 
