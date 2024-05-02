@@ -16,7 +16,7 @@ setTimeout(function () {
     const newButton = document.createElement('button');
     newButton.textContent = 'Auto Fill';
     newButton.classList.add('btn', 'btn-default');
-    const btnGroup = document.querySelector('.btn-group'); 
+    const btnGroup = document.querySelector('.btn-group');
     btnGroup.appendChild(newButton);
 
     //checkes the url remote file radio button
@@ -69,12 +69,12 @@ setTimeout(function () {
         const lineBreak2 = document.createElement('br');
         addNameButton.after(lineBreak1);
         addNameButton.after(lineBreak2);
-        
+
         addNameButton.addEventListener('click', function (event) {
             event.preventDefault();
             addName(nameInput);
         });
-        
+
     }
     if (hitPoints) {
         const addHitPointsButton = createButton('Add Hit Points');
@@ -103,7 +103,7 @@ setTimeout(function () {
         addArmourClass.addEventListener('click', function (event) {
             event.preventDefault();
             addAC(armourClass);
-            
+
         });
         armourClass.after(addArmourClass);
     }
@@ -139,7 +139,7 @@ function calculateLevel(xp) {
 
     for (let i = 0; i < xpThresholds.length; i++) {
         if (xp < xpThresholds[i]) {
-                return i;
+            return i;
         }
     }
 
@@ -200,17 +200,17 @@ function addAC(armourClass) {
                     if (inventory[i].equipped === true) {
                         totalArmourClass = totalArmourClass + checkArmour(inventory[i].definition.name, stats);
                     } else {
-                        totalArmourClass = totalArmourClass + 10 + Math.floor((stats.totalDexterity-10)/2);
+                        totalArmourClass = totalArmourClass + 10 + Math.floor((stats.totalDexterity - 10) / 2);
                     }
-                    
+
                     if (inventory[i].definition.name === "Shield") {
                         totalArmourClass = totalArmourClass + 2;
-                    }  
+                    }
 
                     if (characterData.classes[0].definition.name === "Sorcerer" && characterData.classes[0].subclassDefinition.name === "Draconic Bloodline") {
-                        totalArmourClass = totalArmourClass + 13 + Math.floor((stats.totalDexterity-10)/2);
+                        totalArmourClass = totalArmourClass + 13 + Math.floor((stats.totalDexterity - 10) / 2);
                     }
-                              
+
                     armourClass.value = totalArmourClass;
                     break;
                 } else {

@@ -1,18 +1,18 @@
-//chromium based adventure.js
+//firefox based adventure.js
 
 let characterSheetOverlayOpen = false;
 saveSpellSlots(null);
 
 setTimeout(function () {
-    const urlWithJsonOutput = window.location.href + "?output=json";
-    fetchJsonDataFromUrl(urlWithJsonOutput)
-        .then(adventureData => {
-            adventureData = adventureData.adventure;
-            try {
-                const container = document.querySelector('.btn-group');//contains each section of the page (playArea, chat, header, etc.)
+	const urlWithJsonOutput = window.location.href + "?output=json";
+	fetchJsonDataFromUrl(urlWithJsonOutput)
+		.then(adventureData => {
+			adventureData = adventureData.adventure;
+			try {
+				const container = document.querySelector('.btn-group');//contains each section of the page (playArea, chat, header, etc.)
 
-                const viewCharacter = document.createElement('button');
-				
+				const viewCharacter = document.createElement('button');
+
 				viewCharacter.classList.add('btn', 'btn-primary', 'btn-xs');
 				viewCharacter.display = 'inline-block';
 				viewCharacter.style.position = 'fixed';
@@ -21,9 +21,9 @@ setTimeout(function () {
 				viewCharacter.style.right = '100px';
 				container.appendChild(viewCharacter); // Appended the button to the container
 
-				if (adventureData["@is_dm"] === "yes") {					
-                    viewCharacter.textContent = "Player Character Sheets";
-                } else {
+				if (adventureData["@is_dm"] === "yes") {
+					viewCharacter.textContent = "Player Character Sheets";
+				} else {
 					viewCharacter.textContent = "Character Sheet";
 				}
 
@@ -42,39 +42,39 @@ setTimeout(function () {
 					}
 				});
 
-            } catch {
-                const container = document.querySelector('.btn-group');//contains each section of the page (playArea, chat, header, etc.)
+			} catch {
+				const container = document.querySelector('.btn-group');//contains each section of the page (playArea, chat, header, etc.)
 
-                const viewCharacter = document.createElement('button');
-                viewCharacter.textContent = "View Character Sheet";
-                viewCharacter.classList.add('btn', 'btn-primary', 'btn-xs');
-                viewCharacter.display = 'inline-block';
-                viewCharacter.style.position = 'fixed';
-                viewCharacter.style.height = '19.6px';
-                viewCharacter.style.top = '7px';
-                viewCharacter.style.right = '100px';
-                container.appendChild(viewCharacter); // Appended the button to the container
+				const viewCharacter = document.createElement('button');
+				viewCharacter.textContent = "View Character Sheet";
+				viewCharacter.classList.add('btn', 'btn-primary', 'btn-xs');
+				viewCharacter.display = 'inline-block';
+				viewCharacter.style.position = 'fixed';
+				viewCharacter.style.height = '19.6px';
+				viewCharacter.style.top = '7px';
+				viewCharacter.style.right = '100px';
+				container.appendChild(viewCharacter); // Appended the button to the container
 
 
-                viewCharacter.addEventListener('click', function (event) {
-                    event.preventDefault();
+				viewCharacter.addEventListener('click', function (event) {
+					event.preventDefault();
 
-                    if (adventureData["@is_dm"] === "yes") {
-                        showDmView(false, adventureData);
-                    } else {
-                        const urlWithJsonOutput = window.location.href + "?output=json";
-                        fetchJsonDataFromUrl(urlWithJsonOutput)
-                            .then(adventureData => {
-                                adventureData = adventureData.adventure;
-                                showCharacterSheet(adventureData, true);
-                            })
-                    }
-                });
-            }
-        })
-        .catch(error => {
-            console.error('Error fetching JSON data:', error);
-        });
+					if (adventureData["@is_dm"] === "yes") {
+						showDmView(false, adventureData);
+					} else {
+						const urlWithJsonOutput = window.location.href + "?output=json";
+						fetchJsonDataFromUrl(urlWithJsonOutput)
+							.then(adventureData => {
+								adventureData = adventureData.adventure;
+								showCharacterSheet(adventureData, true);
+							})
+					}
+				});
+			}
+		})
+		.catch(error => {
+			console.error('Error fetching JSON data:', error);
+		});
 }, 0);
 
 
@@ -118,11 +118,47 @@ function showDmView(buttonPressed, adventureData) {
 		}
 	});
 
-	console.log(adventureData);
-
 	// Create overlay body
 	const overlayBody = document.createElement('div');
 	overlayBody.classList.add('panel-body');
+
+	// Create a div with the id "overlayContainer"
+	const overlayContainerDiv = document.createElement('div');
+	overlayContainerDiv.id = 'overlayContainer';
+
+	// Create the table element inside the overlayContainerDiv
+	const overlayTable = document.createElement('table');
+	overlayTable.style.width = '100%';
+
+	const headerRow = document.createElement('tr');
+	const headerCell1 = document.createElement('th');
+	headerCell1.textContent = 'PC';
+	const headerCell2 = document.createElement('th');
+	headerCell2.textContent = 'HP';
+	const headerCell3 = document.createElement('th');
+	headerCell3.textContent = 'AC';
+	headerRow.style.borderBottom = '25px solid transparent';
+
+	headerRow.appendChild(headerCell1);
+	headerRow.appendChild(headerCell2);
+	headerRow.appendChild(headerCell3);
+
+	overlayTable.appendChild(headerRow);
+
+	if (adventureData.characters.character.length == null) {
+		const rowData = adventureData.characters.character;
+		addRowToTable(rowData, overlayTable);
+	} else {
+		adventureData.characters.character.forEach(rowData => {
+			addRowToTable(rowData, overlayTable);
+		});
+	}
+
+	// Append the table to the overlayContainerDiv
+	overlayContainerDiv.appendChild(overlayTable);
+
+	// Append the overlayContainerDiv to the overlayBody
+	overlayBody.appendChild(overlayContainerDiv);
 
 	overlayContainer.appendChild(overlayHeader);
 	overlayContainer.appendChild(overlayBody);
@@ -133,142 +169,58 @@ function showDmView(buttonPressed, adventureData) {
 	// Show overlay
 	overlayContainer.style.display = 'block';
 
-	const overlayDiv = document.createElement('div');
-	overlayDiv.id = "overlayContainer";
+	function addRowToTable(rowData, table) {
+		const newRow = document.createElement('tr');
+		newRow.style.borderBottom = '10px solid transparent';
 
-	const pElement = document.createElement('p');
-	pElement.style.fontSize = "18px";
-	pElement.style.fontWeight = "bold";
-	pElement.innerHTML = "<b>PC&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;HP&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AC</b>";
+		const nameCell = document.createElement('td');
+		const hpCell = document.createElement('td');
+		const acCell = document.createElement('td');
 
-	const breakline = document.createElement('hr');
-
-	overlayDiv.appendChild(pElement);
-	overlayDiv.appendChild(breakline);
-
-	//this is where all the elements will be added.
-	if (adventureData.characters.character.length == null) {
 		const pcButton = document.createElement('button');
-		pcButton.textContent = adventureData.characters.character.name;
+
+		if (rowData.sheet_url.includes('.pdf')) {
+			pcButton.textContent = rowData.name + '  ⚠️';
+		} else {
+			pcButton.textContent = rowData.name;
+		}
 		pcButton.style.backgroundColor = "white";
 		pcButton.style.color = "black";
 		pcButton.style.padding = "5px";
 		pcButton.style.border = "1px solid black";
+		pcButton.style.color = "#6385C1";
 		pcButton.style.borderRadius = '5px';
 		pcButton.style.cursor = "pointer";
 		pcButton.style.fontSize = "13px";
 
-		//label
-		var splitLabel = document.createElement('label');
-		splitLabel.style.fontSize = "22px";
-		splitLabel.style.fontWeight = 'bold';
-		splitLabel.textContent = "｜";
+		nameCell.appendChild(pcButton);
+		hpCell.textContent = `${rowData.hitpoints - rowData.damage}/${rowData.hitpoints}`;
+		acCell.textContent = rowData.armor_class;
 
-		const hitPointsPc = document.createElement('label');
-		hitPointsPc.textContent = (adventureData.characters.character.hitpoints - adventureData.characters.character.damage) + "/" + adventureData.characters.character.hitpoints;
+		newRow.appendChild(nameCell);
+		newRow.appendChild(hpCell);
+		newRow.appendChild(acCell);
 
-		var splitLabelSecond = document.createElement('label');
-		splitLabelSecond.style.fontSize = "22px";
-		splitLabelSecond.style.fontWeight = 'bold';
-		splitLabelSecond.textContent = "｜";
+		table.appendChild(newRow);
 
-		const armourClassPc = document.createElement('label');
-		armourClassPc.textContent = adventureData.characters.character.armor_class;
-
-		var splitLabelThird = document.createElement('label');
-		splitLabelThird.style.fontSize = "22px";
-		splitLabelThird.style.fontWeight = 'bold';
-		splitLabelThird.textContent = "｜";
-
-		const breakLine = document.createElement('hr');
-
-		overlayDiv.appendChild(pcButton);
-		overlayDiv.appendChild(splitLabel);
-		overlayDiv.appendChild(hitPointsPc);
-		overlayDiv.appendChild(splitLabelSecond);
-		overlayDiv.appendChild(armourClassPc);
-		overlayDiv.appendChild(splitLabelThird);
-		overlayDiv.appendChild(breakLine);
-
-		overlayBody.appendChild(overlayDiv);
+		const buttonIndex = Array.isArray(adventureData.characters.character) ? table.rows.length - 2 : 0;
 
 		pcButton.addEventListener('click', function () {
-			const characterSheetId = adventureData.characters.character.sheet_url.split('/')[4];
-			const buttonIndex = 1; // Store the index of the button being clicked
+			const characterSheetId = rowData.sheet_url.split('/')[4];
 
 			chrome.runtime.sendMessage({ action: 'fetchCharacterInfo', characterId: characterSheetId, buttonIndex: buttonIndex }, function (response) {
 				const characterInfo = response.characterInfo;
 
 				// Access the correct adventureData based on the button index
-				const clickedCharacter = adventureData.characters.character;
+				const clickedCharacter = adventureData.characters.character[buttonIndex];
 
 				const a = { "characters": { "character": [clickedCharacter] } };
 				showCharacterSheet(a, false);
 			});
 		});
-	} else {
-		for (let i = 0; i < adventureData.characters.character.length; i++) {
-			const pcButton = document.createElement('button');
-			pcButton.textContent = adventureData.characters.character[i].name;
-			pcButton.style.backgroundColor = "white";
-			pcButton.style.color = "black";
-			pcButton.style.padding = "5px";
-			pcButton.style.border = "1px solid black";
-			pcButton.style.borderRadius = '5px';
-			pcButton.style.cursor = "pointer";
-			pcButton.style.fontSize = "13px";
-
-			//label
-			var splitLabel = document.createElement('label');
-			splitLabel.style.fontSize = "22px";
-			splitLabel.style.fontWeight = 'bold';
-			splitLabel.textContent = "｜";
-
-			const hitPointsPc = document.createElement('label');
-			hitPointsPc.textContent = (adventureData.characters.character[i].hitpoints - adventureData.characters.character[i].damage) + "/" + adventureData.characters.character[i].hitpoints;
-
-			var splitLabelSecond = document.createElement('label');
-			splitLabelSecond.style.fontSize = "22px";
-			splitLabelSecond.style.fontWeight = 'bold';
-			splitLabelSecond.textContent = "｜";
-
-			const armourClassPc = document.createElement('label');
-			armourClassPc.textContent = adventureData.characters.character[i].armor_class;
-
-			var splitLabelThird = document.createElement('label');
-			splitLabelThird.style.fontSize = "22px";
-			splitLabelThird.style.fontWeight = 'bold';
-			splitLabelThird.textContent = "｜";
-
-			const breakLine = document.createElement('hr');
-
-			overlayDiv.appendChild(pcButton);
-			overlayDiv.appendChild(splitLabel);
-			overlayDiv.appendChild(hitPointsPc);
-			overlayDiv.appendChild(splitLabelSecond);
-			overlayDiv.appendChild(armourClassPc);
-			overlayDiv.appendChild(splitLabelThird);
-			overlayDiv.appendChild(breakLine);
-
-			overlayBody.appendChild(overlayDiv);
-
-			pcButton.addEventListener('click', function () {
-				const characterSheetId = adventureData.characters.character[i].sheet_url.split('/')[4];
-				const buttonIndex = i; // Store the index of the button being clicked
-
-				chrome.runtime.sendMessage({ action: 'fetchCharacterInfo', characterId: characterSheetId, buttonIndex: buttonIndex }, function (response) {
-					const characterInfo = response.characterInfo;
-
-					// Access the correct adventureData based on the button index
-					const clickedCharacter = adventureData.characters.character[buttonIndex];
-
-					const a = { "characters": { "character": [clickedCharacter] } };
-					showCharacterSheet(a, false);
-				});
-			});
-		}
 	}
 }
+
 
 function createCharacterSheet(adventureData, buttonPressed, recreateOverlay) {
 	if (characterSheetOverlayOpen && buttonPressed === true) {
@@ -280,7 +232,7 @@ function createCharacterSheet(adventureData, buttonPressed, recreateOverlay) {
 		const content = document.getElementById('overlayContainer');
 		content.innerHTML = '';
 	} catch {
-		
+
 	}
 
 	const listSkills = [{ name: "Acrobatics", ability: "Dex" }, { name: "Animal Handling", ability: "Wis" }, { name: "Arcana", ability: "Int" }, { name: "Athletics", ability: "Str" }, { name: "Deception", ability: "Cha" }, { name: "History", ability: "Int" }, { name: "Insight", ability: "Wis" }, { name: "Intimidation", ability: "Cha" }, { name: "Investigation", ability: "Int" }, { name: "Medicine", ability: "Wis" }, { name: "Nature", ability: "Int" }, { name: "Perception", ability: "Wis" }, { name: "Performance", ability: "Cha" }, { name: "Persuasion", ability: "Cha" }, { name: "Religion", ability: "Int" }, { name: "Sleight of Hand", ability: "Dex" }, { name: "Stealth", ability: "Dex" }, { name: "Survival", ability: "Wis" }];
@@ -304,7 +256,7 @@ function createCharacterSheet(adventureData, buttonPressed, recreateOverlay) {
 		overlayContainer.style.left = '15px';
 		overlayContainer.style.backgroundColor = 'rgba(255,255,255, 1)';
 		overlayContainer.style.zIndex = '1';
-		overlayContainer.style.width = "415px";
+		overlayContainer.style.width = "425px";
 
 
 		let currentCauldronHitPoints = 0;
@@ -400,13 +352,13 @@ function createCharacterSheet(adventureData, buttonPressed, recreateOverlay) {
 					</ul>
 					<h3 style="margin-top: -10px; font-size: 20px; margin-left: 45px;">ˢᵏᶦˡˡˢ</h3>
 					</div>
-					<div style="border: 2px solid #336699; padding 15px; margin-right: 1px; height: 185px; margin-top: 330px; width: 110px;">
-					<ul id="savingThrowElement">
-						</ul>
-					<h3 style="margin-top: -13px; font-size: 20px; margin-left: 10px;">ˢᵃᵛᶦⁿᵍ ᵀʰʳᵒʷˢ</h3>
+					<div style="border: 2px solid #336699; padding 15px; margin-right: 1px; height: 185px; margin-top: 330px; width: 115px;">
+						<ul id="savingThrowElement">
+							</ul>
+						<h3 style="margin-top: -13px; font-size: 20px; margin-left: 10px;">ˢᵃᵛᶦⁿᵍ ᵀʰʳᵒʷˢ</h3>
 					</div>
 					<div class="Character-menu-container" style="margin-top: 95px; height: 40px; margin-left: 9px;">
-						<div class="character-menu" style="border: 2px solid #336699; padding 5px; height: 230px; width: 110px; margin-left: -120px;">
+						<div class="character-menu" style="border: 2px solid #336699; padding 5px; height: 230px; width: 115px; margin-left: -125px;">
 						<button id="actions" class="btn btn-primary btn-xs" style="font-size: 12px; margin-top: 10px; margin-left: 2px; width: 100px; height: 28px;">Actions</button>
 						<button id="bio" class="btn btn-primary btn-xs" style="font-size: 12px; margin-top: -10px; margin-left: 2px; width: 100px; height: 28px;">Bio</button>
 						<button id="character" class="btn btn-primary btn-xs" style="font-size: 12px; margin-top: -10px; margin-left: 2px; width: 100px; height: 28px;">Character</button>
@@ -419,7 +371,7 @@ function createCharacterSheet(adventureData, buttonPressed, recreateOverlay) {
 					<input type="text" id="maxHitPoints" disabled="true" value="${totalHitPoints}" style="width: 30px; height: 30px; margin-left: -35px;">
   			    		<input type="text" id="CurrentHitPoints" disabled=true value="${String(currentCauldronHitPoints)}" style="width: 30px; height: 30px; margin-left: -78px;">
 					<label style="margin-left: -6px; font-size: 20px;">／</label>
-						<label style="width: 30px; height: 30px; margin-left: -70px; font-size: 16px;">HP</label>
+						<label style="width: 30px; height: 30px; margin-left: -65px; font-size: 16px;">HP</label>
 					</div>
 					<div>
 					<input type="text" id="armourClass" disabled="true" value="${currentArmourClass}" style="margin-left: -65px; margin-top: 55px; width: 40px; height: 30px;">
@@ -437,7 +389,7 @@ function createCharacterSheet(adventureData, buttonPressed, recreateOverlay) {
 		//event listeners for the ability buttons
 		const strButton = overlayBody.querySelector('#strButton');
 		strButton.addEventListener('click', function () {
-			roll_dice(`1d20+${Math.floor((stats.totalStrength-10)/2)}`);
+			roll_dice(`1d20+${Math.floor((stats.totalStrength - 10) / 2)}`);
 		});
 
 		const dexButton = overlayBody.querySelector('#dexButton');
@@ -725,7 +677,7 @@ function showCharacterSheet(adventureData, buttonPressed) {
 	}
 
 	const characterSheetOverlay = document.getElementById('customOverlay');
-	characterSheetOverlay.style.width = "415px";
+	characterSheetOverlay.style.width = "425px";
 
 	var content;
 
@@ -774,7 +726,7 @@ function showCharacterSheet(adventureData, buttonPressed) {
 		}
 
 		var header = document.getElementById('titleBar');
-		header.innerHTML = `${characterData.name} - Action ${characterHidden} <span class="glyphicon glyphicon-remove close" aria-hidden="true"></span>`;
+		header.innerHTML = `${characterData.name} - Character ${characterHidden} <span class="glyphicon glyphicon-remove close" aria-hidden="true"></span>`;
 
 		const closeButton = header.querySelector('.close');
 		closeButton.addEventListener('click', function () {
@@ -837,13 +789,13 @@ function showCharacterSheet(adventureData, buttonPressed) {
 					</ul>
 					<h3 style="margin-top: -10px; font-size: 20px; margin-left: 45px;">ˢᵏᶦˡˡˢ</h3>
 					</div>
-					<div style="border: 2px solid #336699; padding 15px; margin-right: 1px; height: 185px; margin-top: 330px; width: 110px;">
-					<ul id="savingThrowElement">
-						</ul>
-					<h3 style="margin-top: -13px; font-size: 20px; margin-left: 10px;">ˢᵃᵛᶦⁿᵍ ᵀʰʳᵒʷˢ</h3>
+					<div style="border: 2px solid #336699; padding 15px; margin-right: 1px; height: 185px; margin-top: 330px; width: 115px;">
+						<ul id="savingThrowElement">
+							</ul>
+						<h3 style="margin-top: -13px; font-size: 20px; margin-left: 10px;">ˢᵃᵛᶦⁿᵍ ᵀʰʳᵒʷˢ</h3>
 					</div>
 					<div class="Character-menu-container" style="margin-top: 95px; height: 40px; margin-left: 9px;">
-						<div class="character-menu" style="border: 2px solid #336699; padding 5px; height: 230px; width: 110px; margin-left: -120px;">
+						<div class="character-menu" style="border: 2px solid #336699; padding 5px; height: 230px; width: 115px; margin-left: -125px;">
 						<button id="actions" class="btn btn-primary btn-xs" style="font-size: 12px; margin-top: 10px; margin-left: 2px; width: 100px; height: 28px;">Actions</button>
 						<button id="bio" class="btn btn-primary btn-xs" style="font-size: 12px; margin-top: -10px; margin-left: 2px; width: 100px; height: 28px;">Bio</button>
 						<button id="character" class="btn btn-primary btn-xs" style="font-size: 12px; margin-top: -10px; margin-left: 2px; width: 100px; height: 28px;">Character</button>
@@ -854,15 +806,16 @@ function showCharacterSheet(adventureData, buttonPressed) {
 					</div>
 					<div>
 					<input type="text" id="maxHitPoints" disabled="true" value="${totalHitPoints}" style="width: 30px; height: 30px; margin-left: -35px;">
-  			    	<input type="text" id="CurrentHitPoints" disabled=true value="${String(currentCauldronHitPoints)}" style="width: 30px; height: 30px; margin-left: -78px;">
+  			    		<input type="text" id="CurrentHitPoints" disabled=true value="${String(currentCauldronHitPoints)}" style="width: 30px; height: 30px; margin-left: -78px;">
 					<label style="margin-left: -6px; font-size: 20px;">／</label>
-						<label style="width: 30px; height: 30px; margin-left: -80px; font-size: 14px;">Hit Points</label>
+						<label style="width: 30px; height: 30px; margin-left: -65px; font-size: 16px;">HP</label>
 					</div>
 					<div>
 					<input type="text" id="armourClass" disabled="true" value="${currentArmourClass}" style="margin-left: -65px; margin-top: 55px; width: 40px; height: 30px;">
-					<label style="width: 30px; height: 30px; margin-left: -95px; margin-top: 55px; font-size: 14px;">AC</label>
+					<label style="width: 30px; height: 30px; margin-left: -95px; margin-top: 55px; font-size: 16px;">AC</label>
 				</div>
 	`;
+
 
 		//All the css that is in control of the format of character sheets
 		const link = document.createElement('link');
@@ -1484,7 +1437,7 @@ function showActions(adventureData, buttonPressed, characterData, stats) {
 			catch { }
 
 			var allBonusActionsDiv = overlayBody.querySelector('#allBonusActions');
-			
+
 			const characterProf = calculateProf(characterData.classes[0].level);
 			const characterInt = Math.floor((stats.totalIntelligence - 1) / 2);
 			if (characterData.actions.class[i].activation.activationType === 3) {
@@ -1758,7 +1711,7 @@ function showActions(adventureData, buttonPressed, characterData, stats) {
 				modifier = 0;
 			}
 
-			message = `Unarmed Strike\n_________________\n${parseInt(damage)+parseInt(modifier)} Bludgeoning`;
+			message = `Unarmed Strike\n_________________\n${parseInt(damage) + parseInt(modifier)} Bludgeoning`;
 			sendDataToSidebar(message, characterData.name);
 		});
 
@@ -1881,13 +1834,13 @@ function showBio(adventureData, buttonPressed, characterData, stats) {
 						<div id="personalPossessionsDiv" style="margin-left: 20px;">
 							<label class=personalPossLabel style="font-size: 13px;">${characterData.notes.personalPossessions ? characterData.notes.personalPossessions : ""}</label>
 						</div>
-						<button id=bioButton class=shortDes style="font-size: 20px; color: #6385C1;"><b>Background: ${characterData.background.definition.name ? characterData.background.definition.name: ""}</b></button>
+						<button id=bioButton class=shortDes style="font-size: 20px; color: #6385C1;"><b>Background: ${characterData.background.definition.name ? characterData.background.definition.name : ""}</b></button>
 						<div id="backgroundDescription" style="margin-left: 20px;">
-							<label class=backgroundDescLabel style="font-size: 13px;">${removeHtmlTags(characterData.background.definition.shortDescription ? characterData.background.definition.shortDescription: "")}
+							<label class=backgroundDescLabel style="font-size: 13px;">${removeHtmlTags(characterData.background.definition.shortDescription ? characterData.background.definition.shortDescription : "")}
 						</div>
-						<button id=bioButton class=features style="font-size: 12px; color: #6385C1;"><b>Background Feature: ${characterData.background.definition.featureName ? characterData.background.definition.featureName: ""}</b></button>
+						<button id=bioButton class=features style="font-size: 12px; color: #6385C1;"><b>Background Feature: ${characterData.background.definition.featureName ? characterData.background.definition.featureName : ""}</b></button>
 						<div id="backgroundFeature" style="margin-left: 20px;">
-							<label class=backgroundFeatureLabel style="font-size: 13px;">${removeHtmlTags(characterData.background.definition.featureDescription ? characterData.background.definition.featureDescription: "")}
+							<label class=backgroundFeatureLabel style="font-size: 13px;">${removeHtmlTags(characterData.background.definition.featureDescription ? characterData.background.definition.featureDescription : "")}
 						</div>
 						<button id=bioButton class=appearance style="font-size: 16px; color: #6385C1;"><b>Appearance</b></button>
 						<div id="apperance" style="margin-left: 20px;">
@@ -1899,15 +1852,15 @@ function showBio(adventureData, buttonPressed, characterData, stats) {
 						</div>
 						<button id=bioButton class=flaws style="font-size: 16px; color: #6385C1;"><b>Flaws</b></button>
 						<div id="flaws" style="margin-left: 20px;">
-							<label class=flawsLabel style="font-size: 13px;">${characterData.traits.flaws ? characterData.traits.bonds: ""}
+							<label class=flawsLabel style="font-size: 13px;">${characterData.traits.flaws ? characterData.traits.bonds : ""}
 						</div>
 						<button id=bioButton class=ideals style="font-size: 16px; color: #6385C1;"><b>Ideals</b></button>
 						<div id="ideals" style="margin-left: 20px;">
-							<label class=idealsLabel style="font-size: 13px;">${characterData.traits.ideals ? characterData.traits.bonds: ""}
+							<label class=idealsLabel style="font-size: 13px;">${characterData.traits.ideals ? characterData.traits.bonds : ""}
 						</div>
 						<button id=bioButton class=personality style="font-size: 16px; color: #6385C1;"><b>Personality Traits</b></button>
 						<div id="personalityTraits" style="margin-left: 20px;">
-							<label class=personalityTraitsLabel style="font-size: 13px;">${characterData.traits.personalityTraits ? characterData.traits.bonds: ""}
+							<label class=personalityTraitsLabel style="font-size: 13px;">${characterData.traits.personalityTraits ? characterData.traits.bonds : ""}
 						</div>
 					</ul>
 				</div>
@@ -1924,7 +1877,7 @@ function showBio(adventureData, buttonPressed, characterData, stats) {
 
 	const allies = overlayBody.querySelector('.allies');
 	allies.addEventListener('click', function () {
-		const message = `${allies.textContent}\n${characterData.notes.allies.replace(/<br>/g, "").replace(/<\/?br\s*>/g, "") }`;
+		const message = `${allies.textContent}\n${characterData.notes.allies.replace(/<br>/g, "").replace(/<\/?br\s*>/g, "")}`;
 		if (message !== "") {
 			sendDataToSidebar(message, characterData.name);
 		}
@@ -1932,7 +1885,7 @@ function showBio(adventureData, buttonPressed, characterData, stats) {
 
 	const enemies = overlayBody.querySelector('.enemies');
 	enemies.addEventListener('click', function () {
-		const message = `${enemies.textContent}\n${characterData.notes.enemies.replace(/<br>/g, "\n").replace(/<\/?br\s*>/g, "\n") }`;
+		const message = `${enemies.textContent}\n${characterData.notes.enemies.replace(/<br>/g, "\n").replace(/<\/?br\s*>/g, "\n")}`;
 		if (message !== "") {
 			sendDataToSidebar(message, characterData.name);
 		}
@@ -1940,7 +1893,7 @@ function showBio(adventureData, buttonPressed, characterData, stats) {
 
 	const organizations = overlayBody.querySelector('.organizations');
 	organizations.addEventListener('click', function () {
-		const message = `${organizations.textContent}\n${characterData.notes.organizations.replace(/<br>/g, "\n").replace(/<\/?br\s*>/g, "\n") }`;
+		const message = `${organizations.textContent}\n${characterData.notes.organizations.replace(/<br>/g, "\n").replace(/<\/?br\s*>/g, "\n")}`;
 		if (message !== "") {
 			sendDataToSidebar(message, characterData.name);
 		}
@@ -1948,7 +1901,7 @@ function showBio(adventureData, buttonPressed, characterData, stats) {
 
 	const otherHoldings = overlayBody.querySelector('.otherHoldings');
 	otherHoldings.addEventListener('click', function () {
-		const message = `${otherHoldings.textContent}\n${characterData.notes.otherHoldings.replace(/<br>/g, "\n").replace(/<\/?br\s*>/g, "\n") }`;
+		const message = `${otherHoldings.textContent}\n${characterData.notes.otherHoldings.replace(/<br>/g, "\n").replace(/<\/?br\s*>/g, "\n")}`;
 		if (message !== "") {
 			sendDataToSidebar(message, characterData.name);
 		}
@@ -1956,7 +1909,7 @@ function showBio(adventureData, buttonPressed, characterData, stats) {
 
 	const otherNotes = overlayBody.querySelector('.otherNotes');
 	otherNotes.addEventListener('click', function () {
-		const message = `${otherNotes.textContent}\n${characterData.notes.otherNotes.replace(/<br>/g, "\n").replace(/<\/?br\s*>/g, "\n") }`;
+		const message = `${otherNotes.textContent}\n${characterData.notes.otherNotes.replace(/<br>/g, "\n").replace(/<\/?br\s*>/g, "\n")}`;
 		if (message !== "") {
 			sendDataToSidebar(message, characterData.name);
 		}
@@ -1964,7 +1917,7 @@ function showBio(adventureData, buttonPressed, characterData, stats) {
 
 	const personalPossessions = overlayBody.querySelector('.personalposs');
 	personalPossessions.addEventListener('click', function () {
-		const message = `${personalPossessions.textContent}\n${characterData.notes.personalPossessions.replace(/<br>/g, "\n").replace(/<\/?br\s*>/g, "\n") }`;
+		const message = `${personalPossessions.textContent}\n${characterData.notes.personalPossessions.replace(/<br>/g, "\n").replace(/<\/?br\s*>/g, "\n")}`;
 		if (message !== "") {
 			sendDataToSidebar(message, characterData.name);
 		}
@@ -1972,7 +1925,7 @@ function showBio(adventureData, buttonPressed, characterData, stats) {
 
 	const backgroundDescription = overlayBody.querySelector('.shortDes');
 	backgroundDescription.addEventListener('click', function () {
-		const message = `${backgroundDescription.textContent}\n${removeHtmlTags(characterData.background.definition.shortDescription).replace(/<br>/g, "\n").replace(/<\/?br\s*>/g, "\n") }`;
+		const message = `${backgroundDescription.textContent}\n${removeHtmlTags(characterData.background.definition.shortDescription).replace(/<br>/g, "\n").replace(/<\/?br\s*>/g, "\n")}`;
 		if (message !== "") {
 			sendDataToSidebar(message, characterData.name);
 		}
@@ -1996,7 +1949,7 @@ function showBio(adventureData, buttonPressed, characterData, stats) {
 
 	const bond = overlayBody.querySelector('.bond');
 	bond.addEventListener('click', function () {
-		const message = `${bond.textContent}\n${characterData.traits.bonds.replace(/<br>/g, "").replace(/<\/?br\s*>/g, "") }`;
+		const message = `${bond.textContent}\n${characterData.traits.bonds.replace(/<br>/g, "").replace(/<\/?br\s*>/g, "")}`;
 		if (message !== "") {
 			sendDataToSidebar(message, characterData.name);
 		}
@@ -2004,7 +1957,7 @@ function showBio(adventureData, buttonPressed, characterData, stats) {
 
 	const flaws = overlayBody.querySelector('.flaws');
 	flaws.addEventListener('click', function () {
-		const message = `${flaws.textContent}\n${characterData.traits.flaws.replace(/<br>/g, "").replace(/<\/?br\s*>/g, "") }`;
+		const message = `${flaws.textContent}\n${characterData.traits.flaws.replace(/<br>/g, "").replace(/<\/?br\s*>/g, "")}`;
 		if (message !== "") {
 			sendDataToSidebar(message, characterData.name);
 		}
@@ -2012,7 +1965,7 @@ function showBio(adventureData, buttonPressed, characterData, stats) {
 
 	const ideals = overlayBody.querySelector('.ideals');
 	ideals.addEventListener('click', function () {
-		const message = `${ideals.textContent}\n${characterData.traits.ideals.replace(/<br>/g, "").replace(/<\/?br\s*>/g, "") }`;
+		const message = `${ideals.textContent}\n${characterData.traits.ideals.replace(/<br>/g, "").replace(/<\/?br\s*>/g, "")}`;
 		if (message !== "") {
 			sendDataToSidebar(message, characterData.name);
 		}
@@ -3521,7 +3474,7 @@ function getCharacterStats(characterData) {
 	for (let i = 0; i < characterData.modifiers.condition.length; i++) {
 		const abilities = ["Strength", "Dexterity", "Constitution", "Intelligence", "Wisdom", "Charisma"]
 		const type = characterData.modifiers.condition[i].friendlySubtypeName.replace(' Score', '');
-		
+
 		if (abilities.includes(type) && characterData.modifiers.condition[i].type === "bonus") {
 			const ability = abilities.includes(type);
 			if (type === "Strength" && ability === true) {
