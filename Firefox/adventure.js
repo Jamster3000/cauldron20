@@ -1,18 +1,18 @@
-//firefox based adventure.js
+//chromium based adventure.js
 
 let characterSheetOverlayOpen = false;
 saveSpellSlots(null);
 
 setTimeout(function () {
-	const urlWithJsonOutput = window.location.href + "?output=json";
-	fetchJsonDataFromUrl(urlWithJsonOutput)
-		.then(adventureData => {
-			adventureData = adventureData.adventure;
-			try {
-				const container = document.querySelector('.btn-group');//contains each section of the page (playArea, chat, header, etc.)
+    const urlWithJsonOutput = window.location.href + "?output=json";
+    fetchJsonDataFromUrl(urlWithJsonOutput)
+        .then(adventureData => {
+            adventureData = adventureData.adventure;
+            try {
+                const container = document.querySelector('.btn-group');//contains each section of the page (playArea, chat, header, etc.)
 
-				const viewCharacter = document.createElement('button');
-
+                const viewCharacter = document.createElement('button');
+				
 				viewCharacter.classList.add('btn', 'btn-primary', 'btn-xs');
 				viewCharacter.display = 'inline-block';
 				viewCharacter.style.position = 'fixed';
@@ -21,9 +21,9 @@ setTimeout(function () {
 				viewCharacter.style.right = '100px';
 				container.appendChild(viewCharacter); // Appended the button to the container
 
-				if (adventureData["@is_dm"] === "yes") {
-					viewCharacter.textContent = "Player Character Sheets";
-				} else {
+				if (adventureData["@is_dm"] === "yes") {					
+                    viewCharacter.textContent = "Player Character Sheets";
+                } else {
 					viewCharacter.textContent = "Character Sheet";
 				}
 
@@ -42,39 +42,39 @@ setTimeout(function () {
 					}
 				});
 
-			} catch {
-				const container = document.querySelector('.btn-group');//contains each section of the page (playArea, chat, header, etc.)
+            } catch {
+                const container = document.querySelector('.btn-group');//contains each section of the page (playArea, chat, header, etc.)
 
-				const viewCharacter = document.createElement('button');
-				viewCharacter.textContent = "View Character Sheet";
-				viewCharacter.classList.add('btn', 'btn-primary', 'btn-xs');
-				viewCharacter.display = 'inline-block';
-				viewCharacter.style.position = 'fixed';
-				viewCharacter.style.height = '19.6px';
-				viewCharacter.style.top = '7px';
-				viewCharacter.style.right = '100px';
-				container.appendChild(viewCharacter); // Appended the button to the container
+                const viewCharacter = document.createElement('button');
+                viewCharacter.textContent = "View Character Sheet";
+                viewCharacter.classList.add('btn', 'btn-primary', 'btn-xs');
+                viewCharacter.display = 'inline-block';
+                viewCharacter.style.position = 'fixed';
+                viewCharacter.style.height = '19.6px';
+                viewCharacter.style.top = '7px';
+                viewCharacter.style.right = '100px';
+                container.appendChild(viewCharacter); // Appended the button to the container
 
 
-				viewCharacter.addEventListener('click', function (event) {
-					event.preventDefault();
+                viewCharacter.addEventListener('click', function (event) {
+                    event.preventDefault();
 
-					if (adventureData["@is_dm"] === "yes") {
-						showDmView(false, adventureData);
-					} else {
-						const urlWithJsonOutput = window.location.href + "?output=json";
-						fetchJsonDataFromUrl(urlWithJsonOutput)
-							.then(adventureData => {
-								adventureData = adventureData.adventure;
-								showCharacterSheet(adventureData, true);
-							})
-					}
-				});
-			}
-		})
-		.catch(error => {
-			console.error('Error fetching JSON data:', error);
-		});
+                    if (adventureData["@is_dm"] === "yes") {
+                        showDmView(false, adventureData);
+                    } else {
+                        const urlWithJsonOutput = window.location.href + "?output=json";
+                        fetchJsonDataFromUrl(urlWithJsonOutput)
+                            .then(adventureData => {
+                                adventureData = adventureData.adventure;
+                                showCharacterSheet(adventureData, true);
+                            })
+                    }
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching JSON data:', error);
+        });
 }, 0);
 
 
@@ -98,7 +98,7 @@ function showDmView(buttonPressed, adventureData) {
 	overlayContainer.style.top = '40px';
 	overlayContainer.style.left = '15px';
 	overlayContainer.style.backgroundColor = 'rgba(255,255,255, 1)';
-	overlayContainer.style.zIndex = '1';
+	overlayContainer.style.zIndex = '1010';
 	overlayContainer.style.width = "375px";
 
 	// Create overlay header
@@ -118,28 +118,35 @@ function showDmView(buttonPressed, adventureData) {
 		}
 	});
 
+	console.log(adventureData);
+
 	// Create overlay body
 	const overlayBody = document.createElement('div');
 	overlayBody.classList.add('panel-body');
 
-	overlayBody.innerHTML = `
-	    <div id="overlayContainer" style="display: flex;">
-		</div>
-	`;
-
-	const container = document.getElementById('overlayContainer');
-
-	// Append elements to build the overlay
 	overlayContainer.appendChild(overlayHeader);
 	overlayContainer.appendChild(overlayBody);
 
 	// Append overlay container to the body
-
 	document.body.appendChild(overlayContainer);
 
 	// Show overlay
 	overlayContainer.style.display = 'block';
 
+	const overlayDiv = document.createElement('div');
+	overlayDiv.id = "overlayContainer";
+
+	const pElement = document.createElement('p');
+	pElement.style.fontSize = "18px";
+	pElement.style.fontWeight = "bold";
+	pElement.innerHTML = "<b>PC&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;HP&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AC</b>";
+
+	const breakline = document.createElement('hr');
+
+	overlayDiv.appendChild(pElement);
+	overlayDiv.appendChild(breakline);
+
+	//this is where all the elements will be added.
 	if (adventureData.characters.character.length == null) {
 		const pcButton = document.createElement('button');
 		pcButton.textContent = adventureData.characters.character.name;
@@ -175,31 +182,31 @@ function showDmView(buttonPressed, adventureData) {
 
 		const breakLine = document.createElement('hr');
 
-		overlayBody.appendChild(pcButton);
-		overlayBody.appendChild(splitLabel);
-		overlayBody.appendChild(hitPointsPc);
-		overlayBody.appendChild(splitLabelSecond);
-		overlayBody.appendChild(armourClassPc);
-		overlayBody.appendChild(splitLabelThird);
-		overlayBody.appendChild(breakLine);
+		overlayDiv.appendChild(pcButton);
+		overlayDiv.appendChild(splitLabel);
+		overlayDiv.appendChild(hitPointsPc);
+		overlayDiv.appendChild(splitLabelSecond);
+		overlayDiv.appendChild(armourClassPc);
+		overlayDiv.appendChild(splitLabelThird);
+		overlayDiv.appendChild(breakLine);
+
+		overlayBody.appendChild(overlayDiv);
 
 		pcButton.addEventListener('click', function () {
-			for (let i = 0; i < adventureData.characters.character.length; i++) {
-				const characterSheetId = adventureData.characters.character[i].sheet_url.split('/')[4];
-				const buttonIndex = i; // Store the index of the button being clicked
+			const characterSheetId = adventureData.characters.character.sheet_url.split('/')[4];
+			const buttonIndex = 1; // Store the index of the button being clicked
 
-				chrome.runtime.sendMessage({ action: 'fetchCharacterInfo', characterId: characterSheetId, buttonIndex: buttonIndex }, function (response) {
-					const characterInfo = response.characterInfo;
-					// Access the correct adventureData based on the button index
-					const clickedCharacter = adventureData.characters.character[buttonIndex];
+			chrome.runtime.sendMessage({ action: 'fetchCharacterInfo', characterId: characterSheetId, buttonIndex: buttonIndex }, function (response) {
+				const characterInfo = response.characterInfo;
 
-					const a = { "characters": { "character": [clickedCharacter] } };
-					createCharacterSheet(a, false);
-				});
-			}
+				// Access the correct adventureData based on the button index
+				const clickedCharacter = adventureData.characters.character;
+
+				const a = { "characters": { "character": [clickedCharacter] } };
+				showCharacterSheet(a, false);
+			});
 		});
 	} else {
-		//this is where all the elements will be added.
 		for (let i = 0; i < adventureData.characters.character.length; i++) {
 			const pcButton = document.createElement('button');
 			pcButton.textContent = adventureData.characters.character[i].name;
@@ -235,13 +242,15 @@ function showDmView(buttonPressed, adventureData) {
 
 			const breakLine = document.createElement('hr');
 
-			overlayBody.appendChild(pcButton);
-			overlayBody.appendChild(splitLabel);
-			overlayBody.appendChild(hitPointsPc);
-			overlayBody.appendChild(splitLabelSecond);
-			overlayBody.appendChild(armourClassPc);
-			overlayBody.appendChild(splitLabelThird);
-			overlayBody.appendChild(breakLine);
+			overlayDiv.appendChild(pcButton);
+			overlayDiv.appendChild(splitLabel);
+			overlayDiv.appendChild(hitPointsPc);
+			overlayDiv.appendChild(splitLabelSecond);
+			overlayDiv.appendChild(armourClassPc);
+			overlayDiv.appendChild(splitLabelThird);
+			overlayDiv.appendChild(breakLine);
+
+			overlayBody.appendChild(overlayDiv);
 
 			pcButton.addEventListener('click', function () {
 				const characterSheetId = adventureData.characters.character[i].sheet_url.split('/')[4];
@@ -249,11 +258,12 @@ function showDmView(buttonPressed, adventureData) {
 
 				chrome.runtime.sendMessage({ action: 'fetchCharacterInfo', characterId: characterSheetId, buttonIndex: buttonIndex }, function (response) {
 					const characterInfo = response.characterInfo;
+
 					// Access the correct adventureData based on the button index
 					const clickedCharacter = adventureData.characters.character[buttonIndex];
 
 					const a = { "characters": { "character": [clickedCharacter] } };
-					createCharacterSheet(a, false);
+					showCharacterSheet(a, false);
 				});
 			});
 		}
@@ -269,7 +279,9 @@ function createCharacterSheet(adventureData, buttonPressed, recreateOverlay) {
 		// clear content of overlay
 		const content = document.getElementById('overlayContainer');
 		content.innerHTML = '';
-	} catch { }
+	} catch {
+		
+	}
 
 	const listSkills = [{ name: "Acrobatics", ability: "Dex" }, { name: "Animal Handling", ability: "Wis" }, { name: "Arcana", ability: "Int" }, { name: "Athletics", ability: "Str" }, { name: "Deception", ability: "Cha" }, { name: "History", ability: "Int" }, { name: "Insight", ability: "Wis" }, { name: "Intimidation", ability: "Cha" }, { name: "Investigation", ability: "Int" }, { name: "Medicine", ability: "Wis" }, { name: "Nature", ability: "Int" }, { name: "Perception", ability: "Wis" }, { name: "Performance", ability: "Cha" }, { name: "Persuasion", ability: "Cha" }, { name: "Religion", ability: "Int" }, { name: "Sleight of Hand", ability: "Dex" }, { name: "Stealth", ability: "Dex" }, { name: "Survival", ability: "Wis" }];
 	const savingThrowList = ["Strength", "Dexterity", "Constitution", "Intelligence", "Wisdom", "Charisma"];
@@ -346,9 +358,11 @@ function createCharacterSheet(adventureData, buttonPressed, recreateOverlay) {
 			for (let i = 0; i < adventureData.characters.character.length; i++) {
 				const characterName = adventureData.characters['@name']
 				if (adventureData.characters.character[i].name === characterName) {
-					totalHitPoints = adventureData.characters.character[i]['hitpoints'];
+					totalHitPoints = adventureData.characters.character[i].hitpoints;
 				}
 			}
+		} else {
+			totalHitPoints = adventureData.characters.character.hitpoints;
 		}
 
 		// Create overlay body
@@ -423,7 +437,7 @@ function createCharacterSheet(adventureData, buttonPressed, recreateOverlay) {
 		//event listeners for the ability buttons
 		const strButton = overlayBody.querySelector('#strButton');
 		strButton.addEventListener('click', function () {
-			roll_dice(`1d20+${Math.floor((stats.totalStrength - 10) / 2)}`);
+			roll_dice(`1d20+${Math.floor((stats.totalStrength-10)/2)}`);
 		});
 
 		const dexButton = overlayBody.querySelector('#dexButton');
@@ -535,11 +549,19 @@ function createCharacterSheet(adventureData, buttonPressed, recreateOverlay) {
 			const skillModifier = document.createElement('button');
 			skillModifier.id = "modifierButton";
 			skillModifier.style.marginRight = "7px";
-			skillModifier.style.width = "20px";
+			skillModifier.style.fontSize = "14px";
+			skillModifier.style.width = "25px";
 
 			if (listElement.checked === true) {
 				let total = 0;
-				const characterProf = calculateProf(characterData.classes[0].level);//calculateLevel(characterData.currentXp, characterData));
+				var characterProf = calculateProf(characterData.classes[0].level);//calculateLevel(characterData.currentXp, characterData));
+
+				for (let i = 0; i < characterData.classes[0].classFeatures.length; i++) {
+					if (characterData.classes[0].classFeatures[i].definition.name === "Expertise") {
+						characterProf = characterProf * 2;
+						break;
+					}
+				}
 
 				if (listSkills[i].ability === "Str") {
 					total = Math.floor((stats.totalStrength - 10) / 2) + characterProf;
@@ -596,8 +618,8 @@ function createCharacterSheet(adventureData, buttonPressed, recreateOverlay) {
 			listElement.disabled = true;
 			listElement.style.marginTop = '6px';
 
-			for (let j = 0; j < characterData.modifiers.background.length; j++) {
-				if (characterData.modifiers.background[j].subType.includes(savingThrow.toLowerCase()) && characterData.modifiers.background[j].type === "proficiency") {
+			for (let j = 0; j < characterData.modifiers.class.length; j++) {
+				if (characterData.modifiers.class[j].friendlySubtypeName === savingThrowList[i] + " Saving Throws") {
 					listElement.checked = true;
 				}
 			}
@@ -705,8 +727,15 @@ function showCharacterSheet(adventureData, buttonPressed) {
 	const characterSheetOverlay = document.getElementById('customOverlay');
 	characterSheetOverlay.style.width = "415px";
 
-	const content = document.getElementById('overlayContainer');
-	content.innerHTML = ''; // Clear existing content
+	var content;
+
+	try {
+		content = document.getElementById('overlayContainer');
+		content.innerHTML = ''; // Clear existing content
+	} catch {
+		content = document.getElementById('customOverlay');
+		content.innerHTML = '';
+	}
 
 	const listSkills = [{ name: "Acrobatics", ability: "Dex" }, { name: "Animal Handling", ability: "Wis" }, { name: "Arcana", ability: "Int" }, { name: "Athletics", ability: "Str" }, { name: "Deception", ability: "Cha" }, { name: "History", ability: "Int" }, { name: "Insight", ability: "Wis" }, { name: "Intimidation", ability: "Cha" }, { name: "Investigation", ability: "Int" }, { name: "Medicine", ability: "Wis" }, { name: "Nature", ability: "Int" }, { name: "Perception", ability: "Wis" }, { name: "Performance", ability: "Cha" }, { name: "Persuasion", ability: "Cha" }, { name: "Religion", ability: "Int" }, { name: "Sleight of Hand", ability: "Dex" }, { name: "Stealth", ability: "Dex" }, { name: "Survival", ability: "Wis" }];
 	const savingThrowList = ["Strength", "Dexterity", "Constitution", "Intelligence", "Wisdom", "Charisma"];
@@ -763,10 +792,17 @@ function showCharacterSheet(adventureData, buttonPressed) {
 		if (adventureData.characters.character.length != null) {
 			for (let i = 0; i < adventureData.characters.character.length; i++) {
 				const characterName = adventureData.characters['@name']
-				if (adventureData.characters.character[i].name === characterName) {
-					totalHitPoints = adventureData.characters.character[i]['hitpoints'];
+
+				if (characterName == null) {
+					totalHitPoints = adventureData.characters.character[0].hitpoints;
+				} else {
+					if (adventureData.characters.character[i].name === characterName) {
+						totalHitPoints = adventureData.characters.character[i].hitpoints;
+					}
 				}
 			}
+		} else {
+			totalHitPoints = adventureData.characters.character.hitpoints;
 		}
 
 		//html for the main page of the character sheet
@@ -938,12 +974,19 @@ function showCharacterSheet(adventureData, buttonPressed) {
 			const skillModifier = document.createElement('button');
 			skillModifier.id = "modifierButton";
 			skillModifier.style.marginRight = "7px";
-			skillModifier.style.width = "20px";
+			skillModifier.style.fontSize = "14px";
+			skillModifier.style.width = "25px";
 
 			if (listElement.checked === true) {
 				let total = 0;
-				const characterProf = calculateProf(characterData.classes[0].level);// calculateLevel(characterData.currentXp, characterData));
+				var characterProf = calculateProf(characterData.classes[0].level);
 
+				for (let i = 0; i < characterData.classes[0].classFeatures.length; i++) {
+					if (characterData.classes[0].classFeatures[i].definition.name === "Expertise") {
+						characterProf = characterProf * 2;
+						break;
+					}
+				}
 				if (listSkills[i].ability === "Str") {
 					total = Math.floor((stats.totalStrength - 10) / 2) + characterProf;
 				} else if (listSkills[i].ability === "Dex") {
@@ -998,7 +1041,7 @@ function showCharacterSheet(adventureData, buttonPressed) {
 
 			//getting profs in different saving throws
 			for (let j = 0; j < characterData.modifiers.class.length; j++) {
-				if (characterData.modifiers.class[j].friendlySubtypeName.replace('Saving Throws', '').includes(savingThrowList[i])) {
+				if (characterData.modifiers.class[j].friendlySubtypeName === savingThrowList[i] + " Saving Throws") {
 					listElement.checked = true;
 				}
 			}
@@ -1131,40 +1174,48 @@ function showActions(adventureData, buttonPressed, characterData, stats) {
 
 		const overlayBody = content;
 		overlayBody.innerHTML = `
-			<div>
-				<div id="actionsList" style="height: 495px; width: 350px; margin-left: 0px; margin-top: 0px; overflow: auto; border: 2px solid #336699; padding: 10px;">
-					<ul id="ContentList">
-						<p style="font-size: 20px;"><b>Actions</b></p>
-						<div style="margin-left: 20px;">
-							<ul id="actionList">
-							    <div id="allActions">
-									<p><b>Actions In Combat</b></p>
-									<p style="max-width: 400px; font-size: 12px;">Attack, Cast a Spell, Dash, Disengage, Dodge, Grapple, Help, Hide, Improvise, Ready, Search, Shove, Use an Object</p>
-									<button id="unarmedStrike"><b>Unarmed Strike</b></button>
-									<label style="font-size: 22px;">｜</label>
-									<label id="actionReach">reach: 5ft.</label>
-									<label style="font-size: 22px;">｜</label>
-									<button id="unarmedStrikeAttackRoll" class="unarmedStrikeAttackRoll">0</button>
-									<label style="font-size: 22px;">｜</label>
-									<button id="unarmedStrikeDamage" class="unarmedStrikeDamage">1${Math.floor((stats.totalStrength - 10) / 2) >= 0 ? `+${Math.floor((stats.totalStrength - 10) / 2)}` : ''}</button>
-									<hr>
+		<style>
+    		.character-menu {
+        		display: grid;
+        		grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); /* Adjust minmax values as needed */
+        		gap: 10px; /* Adjust gap as needed */
+    		}
+		</style>
+		    <div style="display: flex;">
+				<div>
+					<div id="actionsList" style="height: 495px; width: 350px; margin-left: 0px; margin-top: 0px; overflow: auto; border: 2px solid #336699; padding: 10px;">
+						<ul id="ContentList">
+							<p style="font-size: 20px;"><b>Actions</b></p>
+							<div style="margin-left: 20px;">
+								<ul id="actionList">
+									<div id="allActions">
+										<p><b>Actions In Combat</b></p>
+										<p style="max-width: 400px; font-size: 12px;">Attack, Cast a Spell, Dash, Disengage, Dodge, Grapple, Help, Hide, Improvise, Ready, Search, Shove, Use an Object</p>
+										<button id="unarmedStrike" style="color: #6385C1;"><b>Unarmed Strike</b></button>
+										<label style="font-size: 22px;">｜</label>
+										<label id="actionReach">reach: 5ft.</label>
+										<label style="font-size: 22px;">｜</label>
+										<button id="unarmedStrikeAttackRoll" style="color: #6385C1;" class="unarmedStrikeAttackRoll">0</button>
+										<label style="font-size: 22px;">｜</label>
+										<button id="unarmedStrikeDamage" style="color: #6385C1;" class="unarmedStrikeDamage">1${parseInt(Math.floor((stats.totalStrength - 10) / 2)) >= 0 ? `+${Math.floor((stats.totalStrength - 10) / 2)}` : ''}</button>
+										<hr>
+									</div>
+								</ul>
+							</div>
+							<div>
+								<p style="font-size: 20px;"><b>Bonus Actions</b></p>
+								<div id="allBonusActions">
 								</div>
-							</ul>
-						</div>
-						<div>
-							<p style="font-size: 20px;"><b>Bonus Actions</b></p>
-							<div id="allBonusActions">
 							</div>
-						</div>
-						<div>
-							<p style="font-size: 20px;"><b>Reactions</b></p>
-							<div id="allReactions">
+							<div>
+								<p style="font-size: 20px;"><b>Reactions</b></p>
+								<div id="allReactions">
+								</div>
 							</div>
-						</div>
-					</ul>
+						</ul>
+					</div>
 				</div>
-			</div>
-			<div class="Character-menu-container" style="margin-top: 0px; height: 40px; margin-left: 150px;">
+				<div class="Character-menu-container" style="margin-top: 0px; height: 40px; margin-left: 150px;">
 					<div class="character-menu" style="border: 2px solid #336699; height: 230px; width: 110px; margin-left: -140px;">
 						<button id="actions" class="btn btn-primary btn-xs" style="font-size: 12px; margin-top: 10px; margin-left: 2px; width: 100px; height: 28px;">Actions</button>
 						<button id="bio" class="btn btn-primary btn-xs" style="font-size: 12px; margin-top: -10px; margin-left: 2px; width: 100px; height: 28px;">Bio</button>
@@ -1174,7 +1225,8 @@ function showActions(adventureData, buttonPressed, characterData, stats) {
 						<button id="spells" class="btn btn-primary btn-xs" style="font-size: 12px; margin-top: -10px; margin-left: 2px; width: 100px; height: 28px;">Spells</button>
 					</div>
 				</div>
-			<div id="ammoList" style="border: 2px solid #336699; padding 5px; height: 230px; width: 110px; margin-left: -140px; margin-top: 240px;"></div>	
+				<div id="ammoList" style="border: 2px solid #336699; padding 5px; height: 230px; width: 110px; margin-left: -140px; margin-top: 240px;"></div>	
+			</div>
         `;
 
 		//there should be two daggers, show one as melee stats, and one as ranged
@@ -1197,6 +1249,7 @@ function showActions(adventureData, buttonPressed, characterData, stats) {
 				//weapon
 				var weaponButton = document.createElement('button');
 				weaponButton.id = "weapon"
+				weaponButton.style.color = "#6385C1";
 				weaponButton.style.fontWeight = 'bold';
 				weaponButton.textContent = itemName;
 
@@ -1226,6 +1279,7 @@ function showActions(adventureData, buttonPressed, characterData, stats) {
 				//weapon attack roll
 				var weaponAttackButton = document.createElement('button');
 				weaponAttackButton.id = "weapon";
+				weaponAttackButton.style.color = "#6385C1";
 
 				if (secondDagger === true || rangeWeapon.includes(characterData.inventory[i].definition.type)) {
 					const dex = Math.floor((stats.totalDexterity - 10) / 2);
@@ -1257,6 +1311,7 @@ function showActions(adventureData, buttonPressed, characterData, stats) {
 				var damageButton = document.createElement('button');
 				damageButton.textContent = '';
 				damageButton.id = "weapon";
+				damageButton.style.color = "#6385C1";
 
 				try {
 					if (characterData.inventory[i].definition.range < 6) { //5 or less assume thats the range in feet meaning it's a melee weapon
@@ -1402,6 +1457,7 @@ function showActions(adventureData, buttonPressed, characterData, stats) {
 				nameButton = document.createElement('button');
 				nameButton.textContent = characterData.actions.class[i].name;
 				nameButton.id = "actionName"
+				nameButton.style.color = "#6385C1";
 				nameButton.style.fontWeight = "bold";
 
 				snippetLabel = document.createElement('label');
@@ -1428,7 +1484,7 @@ function showActions(adventureData, buttonPressed, characterData, stats) {
 			catch { }
 
 			var allBonusActionsDiv = overlayBody.querySelector('#allBonusActions');
-
+			
 			const characterProf = calculateProf(characterData.classes[0].level);
 			const characterInt = Math.floor((stats.totalIntelligence - 1) / 2);
 			if (characterData.actions.class[i].activation.activationType === 3) {
@@ -1436,6 +1492,7 @@ function showActions(adventureData, buttonPressed, characterData, stats) {
 				nameButton.textContent = characterData.actions.class[i].name;
 				nameButton.id = "actionName"
 				nameButton.style.fontWeight = "bold";
+				nameButton.style.color = "#6385C1";
 
 				var snippetLabel = document.createElement('label');
 				snippetLabel.textContent = characterData.actions.class[i].snippet.replace(/{{proficiency}}/g, characterProf);
@@ -1479,6 +1536,7 @@ function showActions(adventureData, buttonPressed, characterData, stats) {
 				nameButton.textContent = characterData.actions.class[i].name;
 				nameButton.id = "actionName"
 				nameButton.style.fontWeight = "bold";
+				nameButton.style.color = "#6385C1";
 
 				var snippetLabel = document.createElement('label');
 				snippetLabel.textContent = characterData.actions.class[i].snippet;
@@ -1535,6 +1593,7 @@ function showActions(adventureData, buttonPressed, characterData, stats) {
 				nameButton.textContent = characterData.actions.feat[i].name;
 				nameButton.id = "actionName"
 				nameButton.style.fontWeight = "bold";
+				nameButton.style.color = "#6385C1";
 
 				snippetLabel = document.createElement('label');
 				snippetLabel.textContent = characterData.actions.feat[i].snippet;
@@ -1578,6 +1637,7 @@ function showActions(adventureData, buttonPressed, characterData, stats) {
 				nameButton.textContent = characterData.actions.race[i].name;
 				nameButton.id = "actionName"
 				nameButton.style.fontWeight = "bold";
+				nameButton.style.color = "#6385C1";
 
 				snippetLabel = document.createElement('label');
 				snippetLabel.textContent = characterData.actions.race[i].snippet;
@@ -1698,7 +1758,7 @@ function showActions(adventureData, buttonPressed, characterData, stats) {
 				modifier = 0;
 			}
 
-			message = `Unarmed Strike\n_________________\n${parseInt(damage) + parseInt(modifier)} Bludgeoning`;
+			message = `Unarmed Strike\n_________________\n${parseInt(damage)+parseInt(modifier)} Bludgeoning`;
 			sendDataToSidebar(message, characterData.name);
 		});
 
@@ -1773,6 +1833,13 @@ function showBio(adventureData, buttonPressed, characterData, stats) {
 
 	const overlayBody = content;
 	overlayBody.innerHTML = `
+	<style>
+    		.character-menu {
+        		display: grid;
+        		grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); /* Adjust minmax values as needed */
+        		gap: 10px; /* Adjust gap as needed */
+    		}
+		</style>
 			<div id="overlayContainer">
 				<div class="Character-menu-container" style="margin-top: -10px; height: 40px; margin-left: 465px;">
 					<div class="character-menu" style="border: 2px solid #336699; padding 5px; height: 230px; width: 110px; margin-left: -120px;">
@@ -1786,61 +1853,61 @@ function showBio(adventureData, buttonPressed, characterData, stats) {
 				</div>
 				<div class="bioDiv" style="height: 495px; width: 345px; margin-left: -10px; margin-top: -40px; overflow: auto; border: 2px solid #336699; padding: 10px;">
 					<ul id="ContentList">
-						<button id=bioButton class=backstory style="font-size: 20px;"><b>Backstory</b></button>
+						<button id=bioButton class=backstory style="font-size: 20px; color: #6385C1;"><b>Backstory</b></button>
 						<div id="backstoryDiv" style="margin-left: 20px;">
 							<label class=backstoryLabel style="font-size: 13px;">${characterData.notes.backstory ? characterData.notes.backstory : ""}</label>
 						</div>
-						<button id=bioButton class=allies style="font-size: 20px;"><b>Allies</b></button>
+						<button id=bioButton class=allies style="font-size: 20px; color: #6385C1;"><b>Allies</b></button>
 						<div id="alliesDiv" style="margin-left: 20px;">
 							<label class=alliesLabel style="font-size: 13px;">${characterData.notes.allies ? characterData.notes.allies : ""}</label>
 						</div>
-						<button id=bioButton class=enemies style="font-size: 20px;"><b>Enemies</b></button>
+						<button id=bioButton class=enemies style="font-size: 20px; color: #6385C1;"><b>Enemies</b></button>
 						<div id="enemiesDiv" style="margin-left: 20px;">
 							<label class=enemiesLabel style="font-size: 13px;">${characterData.notes.enemies ? characterData.notes.enemies : ""}</label>
 						</div>
-						<button id=bioButton class=organizations style="font-size: 20px;"><b>Organizations</b></button>
+						<button id=bioButton class=organizations style="font-size: 20px; color: #6385C1;"><b>Organizations</b></button>
 						<div id="organizationsDiv" style="margin-left: 20px;">
 							<label class=organizationLabel style="font-size: 13px;">${characterData.notes.organizations ? characterData.notes.organizations : ""}</label>
 						</div>
-						<button id=bioButton class=otherHoldings style="font-size: 20px;"><b>Other holdings</b></button>
+						<button id=bioButton class=otherHoldings style="font-size: 20px; color: #6385C1;"><b>Other holdings</b></button>
 						<div id="otherHoldingsDiv" style="margin-left: 20px;">
 							<label class=otherHoldingLabel style="font-size: 13px;">${characterData.notes.otherHoldings ? characterData.notes.otherHoldings : ""}</label>
 						</div>
-						<button id=bioButton class=otherNotes style="font-size: 20px;"><b>Other Notes</b></button>
+						<button id=bioButton class=otherNotes style="font-size: 20px; color: #6385C1;"><b>Other Notes</b></button>
 						<div id="otherNotesDiv" style="margin-left: 20px;">
 							<label class=otherNoteLabel style="font-size: 13px;">${characterData.notes.otherNotes ? characterData.notes.otherNotes : ""}</label>
 						</div>
-						<button id=bioButton class=personalposs style="font-size: 20px;"><b>Personal Possessions</b></button>
+						<button id=bioButton class=personalposs style="font-size: 20px; color: #6385C1;"><b>Personal Possessions</b></button>
 						<div id="personalPossessionsDiv" style="margin-left: 20px;">
 							<label class=personalPossLabel style="font-size: 13px;">${characterData.notes.personalPossessions ? characterData.notes.personalPossessions : ""}</label>
 						</div>
-						<button id=bioButton class=shortDes style="font-size: 20px;"><b>Background: ${characterData.background.definition.name ? characterData.background.definition.name : ""}</b></button>
+						<button id=bioButton class=shortDes style="font-size: 20px; color: #6385C1;"><b>Background: ${characterData.background.definition.name ? characterData.background.definition.name: ""}</b></button>
 						<div id="backgroundDescription" style="margin-left: 20px;">
-							<label class=backgroundDescLabel style="font-size: 13px;">${removeHtmlTags(characterData.background.definition.shortDescription ? characterData.background.definition.shortDescription : "")}
+							<label class=backgroundDescLabel style="font-size: 13px;">${removeHtmlTags(characterData.background.definition.shortDescription ? characterData.background.definition.shortDescription: "")}
 						</div>
-						<button id=bioButton class=features style="font-size: 12px;"><b>Background Feature: ${characterData.background.definition.featureName ? characterData.background.definition.featureName : ""}</b></button>
+						<button id=bioButton class=features style="font-size: 12px; color: #6385C1;"><b>Background Feature: ${characterData.background.definition.featureName ? characterData.background.definition.featureName: ""}</b></button>
 						<div id="backgroundFeature" style="margin-left: 20px;">
-							<label class=backgroundFeatureLabel style="font-size: 13px;">${removeHtmlTags(characterData.background.definition.featureDescription ? characterData.background.definition.featureDescription : "")}
+							<label class=backgroundFeatureLabel style="font-size: 13px;">${removeHtmlTags(characterData.background.definition.featureDescription ? characterData.background.definition.featureDescription: "")}
 						</div>
-						<button id=bioButton class=appearance style="font-size: 16px;"><b>Appearance</b></button>
+						<button id=bioButton class=appearance style="font-size: 16px; color: #6385C1;"><b>Appearance</b></button>
 						<div id="apperance" style="margin-left: 20px;">
 							<label class=apperanceLabel style="font-size: 13px;">${characterData.traits.appearance ? characterData.traits.appearance : ""}
 						</div>
-						<button id=bioButton class=bond style="font-size: 16px;"><b>Bond</b></button>
+						<button id=bioButton class=bond style="font-size: 16px; color: #6385C1;"><b>Bond</b></button>
 						<div id="bond" style="margin-left: 20px;">
 							<label class=bondLabel style="font-size: 13px;">${characterData.traits.bonds ? characterData.traits.bonds : ""}
 						</div>
-						<button id=bioButton class=flaws style="font-size: 16px;"><b>Flaws</b></button>
+						<button id=bioButton class=flaws style="font-size: 16px; color: #6385C1;"><b>Flaws</b></button>
 						<div id="flaws" style="margin-left: 20px;">
-							<label class=flawsLabel style="font-size: 13px;">${characterData.traits.flaws ? characterData.traits.bonds : ""}
+							<label class=flawsLabel style="font-size: 13px;">${characterData.traits.flaws ? characterData.traits.bonds: ""}
 						</div>
-						<button id=bioButton class=ideals style="font-size: 16px;"><b>Ideals</b></button>
+						<button id=bioButton class=ideals style="font-size: 16px; color: #6385C1;"><b>Ideals</b></button>
 						<div id="ideals" style="margin-left: 20px;">
-							<label class=idealsLabel style="font-size: 13px;">${characterData.traits.ideals ? characterData.traits.bonds : ""}
+							<label class=idealsLabel style="font-size: 13px;">${characterData.traits.ideals ? characterData.traits.bonds: ""}
 						</div>
-						<button id=bioButton class=personality style="font-size: 16px;"><b>Personality Traits</b></button>
+						<button id=bioButton class=personality style="font-size: 16px; color: #6385C1;"><b>Personality Traits</b></button>
 						<div id="personalityTraits" style="margin-left: 20px;">
-							<label class=personalityTraitsLabel style="font-size: 13px;">${characterData.traits.personalityTraits ? characterData.traits.bonds : ""}
+							<label class=personalityTraitsLabel style="font-size: 13px;">${characterData.traits.personalityTraits ? characterData.traits.bonds: ""}
 						</div>
 					</ul>
 				</div>
@@ -1857,7 +1924,7 @@ function showBio(adventureData, buttonPressed, characterData, stats) {
 
 	const allies = overlayBody.querySelector('.allies');
 	allies.addEventListener('click', function () {
-		const message = `${allies.textContent}\n${characterData.notes.allies.replace(/<br>/g, "").replace(/<\/?br\s*>/g, "")}`;
+		const message = `${allies.textContent}\n${characterData.notes.allies.replace(/<br>/g, "").replace(/<\/?br\s*>/g, "") }`;
 		if (message !== "") {
 			sendDataToSidebar(message, characterData.name);
 		}
@@ -1865,7 +1932,7 @@ function showBio(adventureData, buttonPressed, characterData, stats) {
 
 	const enemies = overlayBody.querySelector('.enemies');
 	enemies.addEventListener('click', function () {
-		const message = `${enemies.textContent}\n${characterData.notes.enemies.replace(/<br>/g, "\n").replace(/<\/?br\s*>/g, "\n")}`;
+		const message = `${enemies.textContent}\n${characterData.notes.enemies.replace(/<br>/g, "\n").replace(/<\/?br\s*>/g, "\n") }`;
 		if (message !== "") {
 			sendDataToSidebar(message, characterData.name);
 		}
@@ -1873,7 +1940,7 @@ function showBio(adventureData, buttonPressed, characterData, stats) {
 
 	const organizations = overlayBody.querySelector('.organizations');
 	organizations.addEventListener('click', function () {
-		const message = `${organizations.textContent}\n${characterData.notes.organizations.replace(/<br>/g, "\n").replace(/<\/?br\s*>/g, "\n")}`;
+		const message = `${organizations.textContent}\n${characterData.notes.organizations.replace(/<br>/g, "\n").replace(/<\/?br\s*>/g, "\n") }`;
 		if (message !== "") {
 			sendDataToSidebar(message, characterData.name);
 		}
@@ -1881,7 +1948,7 @@ function showBio(adventureData, buttonPressed, characterData, stats) {
 
 	const otherHoldings = overlayBody.querySelector('.otherHoldings');
 	otherHoldings.addEventListener('click', function () {
-		const message = `${otherHoldings.textContent}\n${characterData.notes.otherHoldings.replace(/<br>/g, "\n").replace(/<\/?br\s*>/g, "\n")}`;
+		const message = `${otherHoldings.textContent}\n${characterData.notes.otherHoldings.replace(/<br>/g, "\n").replace(/<\/?br\s*>/g, "\n") }`;
 		if (message !== "") {
 			sendDataToSidebar(message, characterData.name);
 		}
@@ -1889,7 +1956,7 @@ function showBio(adventureData, buttonPressed, characterData, stats) {
 
 	const otherNotes = overlayBody.querySelector('.otherNotes');
 	otherNotes.addEventListener('click', function () {
-		const message = `${otherNotes.textContent}\n${characterData.notes.otherNotes.replace(/<br>/g, "\n").replace(/<\/?br\s*>/g, "\n")}`;
+		const message = `${otherNotes.textContent}\n${characterData.notes.otherNotes.replace(/<br>/g, "\n").replace(/<\/?br\s*>/g, "\n") }`;
 		if (message !== "") {
 			sendDataToSidebar(message, characterData.name);
 		}
@@ -1897,7 +1964,7 @@ function showBio(adventureData, buttonPressed, characterData, stats) {
 
 	const personalPossessions = overlayBody.querySelector('.personalposs');
 	personalPossessions.addEventListener('click', function () {
-		const message = `${personalPossessions.textContent}\n${characterData.notes.personalPossessions.replace(/<br>/g, "\n").replace(/<\/?br\s*>/g, "\n")}`;
+		const message = `${personalPossessions.textContent}\n${characterData.notes.personalPossessions.replace(/<br>/g, "\n").replace(/<\/?br\s*>/g, "\n") }`;
 		if (message !== "") {
 			sendDataToSidebar(message, characterData.name);
 		}
@@ -1905,7 +1972,7 @@ function showBio(adventureData, buttonPressed, characterData, stats) {
 
 	const backgroundDescription = overlayBody.querySelector('.shortDes');
 	backgroundDescription.addEventListener('click', function () {
-		const message = `${backgroundDescription.textContent}\n${removeHtmlTags(characterData.background.definition.shortDescription).replace(/<br>/g, "\n").replace(/<\/?br\s*>/g, "\n")}`;
+		const message = `${backgroundDescription.textContent}\n${removeHtmlTags(characterData.background.definition.shortDescription).replace(/<br>/g, "\n").replace(/<\/?br\s*>/g, "\n") }`;
 		if (message !== "") {
 			sendDataToSidebar(message, characterData.name);
 		}
@@ -1929,7 +1996,7 @@ function showBio(adventureData, buttonPressed, characterData, stats) {
 
 	const bond = overlayBody.querySelector('.bond');
 	bond.addEventListener('click', function () {
-		const message = `${bond.textContent}\n${characterData.traits.bonds.replace(/<br>/g, "").replace(/<\/?br\s*>/g, "")}`;
+		const message = `${bond.textContent}\n${characterData.traits.bonds.replace(/<br>/g, "").replace(/<\/?br\s*>/g, "") }`;
 		if (message !== "") {
 			sendDataToSidebar(message, characterData.name);
 		}
@@ -1937,7 +2004,7 @@ function showBio(adventureData, buttonPressed, characterData, stats) {
 
 	const flaws = overlayBody.querySelector('.flaws');
 	flaws.addEventListener('click', function () {
-		const message = `${flaws.textContent}\n${characterData.traits.flaws.replace(/<br>/g, "").replace(/<\/?br\s*>/g, "")}`;
+		const message = `${flaws.textContent}\n${characterData.traits.flaws.replace(/<br>/g, "").replace(/<\/?br\s*>/g, "") }`;
 		if (message !== "") {
 			sendDataToSidebar(message, characterData.name);
 		}
@@ -1945,7 +2012,7 @@ function showBio(adventureData, buttonPressed, characterData, stats) {
 
 	const ideals = overlayBody.querySelector('.ideals');
 	ideals.addEventListener('click', function () {
-		const message = `${ideals.textContent}\n${characterData.traits.ideals.replace(/<br>/g, "").replace(/<\/?br\s*>/g, "")}`;
+		const message = `${ideals.textContent}\n${characterData.traits.ideals.replace(/<br>/g, "").replace(/<\/?br\s*>/g, "") }`;
 		if (message !== "") {
 			sendDataToSidebar(message, characterData.name);
 		}
@@ -2028,6 +2095,13 @@ function showFeatures(adventureData, buttonPressed, characterData, stats) {
 
 	const overlayBody = content; //document.querySelector('.panel-body');
 	overlayBody.innerHTML = `
+	<style>
+    		.character-menu {
+        		display: grid;
+        		grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); /* Adjust minmax values as needed */
+        		gap: 10px; /* Adjust gap as needed */
+    		}
+		</style>
 			<div id="overlayContainer">
 				<div class="Character-menu-container" style="margin-top: -10px; height: 40px; margin-left: 465px;">
 					<div class="character-menu" style="border: 2px solid #336699; padding 5px; height: 230px; width: 110px; margin-left: -120px;">
@@ -2066,6 +2140,8 @@ function showFeatures(adventureData, buttonPressed, characterData, stats) {
 
 				var featureNameButton = document.createElement('button');
 				featureNameButton.id = "featureButton";
+				featureNameButton.style.color = "#6385C1";
+				featureNameButton.style.fontWeight = 'bold';
 				featureNameButton.textContent = action.name;
 
 				var featureDescription = document.createElement('p');
@@ -2099,6 +2175,8 @@ function showFeatures(adventureData, buttonPressed, characterData, stats) {
 				var featureNameButton = document.createElement('button');
 				featureNameButton.id = "featureButton";
 				featureNameButton.textContent = option.definition.name;
+				featureNameButton.style.color = "#6385C1";
+				featureNameButton.style.fontWeight = 'bold';
 
 				var featureDescription = document.createElement('p');
 				featureDescription.textContent = descriptionToCharacterData(action.snippet, characterData, stats).replace("proficiency#signed", "+" + characterProf).replace('<strong>', '').replace('</strong>', '');
@@ -2221,6 +2299,12 @@ function showInventory(adventureData, buttonPressed, characterData, stats) {
 					margin: 0;
 					padding: 20;
 				}
+
+    		.character-menu {
+        		display: grid;
+        		grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); /* Adjust minmax values as needed */
+        		gap: 10px; /* Adjust gap as needed */
+    		}
 			</style>
 			<div id="overlayContainer">
 				<div class="Character-menu-container" style="margin-top: -10px; height: 40px; margin-left: 465px;">
@@ -2393,6 +2477,21 @@ function showSpells(adventureData, buttonPressed, characterData, stats) {
 						margin: 0;
 						padding: 20;
 					}
+
+			table {
+			  border-spacing: 200 50px; 
+			}
+
+			td {
+			  padding: 5px 1px;
+			}
+
+    		.character-menu {
+        		display: grid;
+        		grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); /* Adjust minmax values as needed */
+        		gap: 10px; /* Adjust gap as needed */
+    		}
+
 			</style>
 			<div id="overlayContainer">
 				<div class="Character-menu-container" style="margin-top: -10px; height: 40px; margin-left: 465px;">
@@ -2418,104 +2517,120 @@ function showSpells(adventureData, buttonPressed, characterData, stats) {
 					</div>
 				</div>
 				<div class="spellDiv" style="height: 495px; width: 345px; margin-left: -10px; margin-top: -490px; overflow: auto; border: 2px solid #336699; padding: 10px;">
-					<ul id="spellList">
 					<div id="allSpells">
-							<h4><b>Name&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspTime&nbsp&nbsp&nbspRange&nbsp&nbsp&nbspAoE</b></h4>
-						<div id="level0">
-							<h2><b>Cantrips</b></h2>
-						</div>
-						<div id="level1">
-						<h2><b>Level 1</b></h2>
-						<p>Spell Slots&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspExpended Spell Slots</p>
-						<div style="display: flex; justify-content: space-between;">
-    							<input class="spellSlots1" value="${characterData.spellSlots[0].available}" disabled=true style="width: 40px;">
-							<div style="width: 5px;"></div>
-    							<input class="spellSlotsUsed1" value="${data[0].used}" disabled=true style="width: 40px;">
-						</div>
-						<br>
-						</div>
-						<div id="level2">
-  							<h2><b>Level 2</b></h2>
-							<p>Spell Slots&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspExpended Spell Slots</p>
-						<div style="display: flex; justify-content: space-between;">
-    							<input class="spellSlots2" value="${characterData.spellSlots[1].available}" disabled=true style="width: 40px;">
-							<div style="width: 5px;"></div>
-    							<input class="spellSlotsUsed" value="${data[1].used}" disabled=true style="width: 40px;">
-						</div>
-						<br>
-						</div>
-						<div id="level3">
-  							<h2><b>Level 3</b></h2>
-						<p>Spell Slots&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspExpended Spell Slots</p>
-						<div style="display: flex; justify-content: space-between;">
-    							<input class="spellSlots3" value="${characterData.spellSlots[2].available}" disabled=true style="width: 40px;">
-							<div style="width: 5px;"></div>
-    							<input class="spellSlotsUsed" value="${data[2].used}" disabled=true style="width: 40px;">
-						</div>
-						<br>
-						</div>
-						<div id="level4">
-   							<h2><b>Level 4</b></h2>
-						<p>Spell Slots&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspExpended Spell Slots</p>
-						<div style="display: flex; justify-content: space-between;">
-    							<input class="spellSlots4" value="${characterData.spellSlots[3].available}" disabled=true style="width: 40px;">
-							<div style="width: 5px;"></div>
-    							<input class="spellSlotsUsed" value="${data[3].used}" disabled=true style="width: 40px;">
-						</div>
-						<br>
-						</div>
-						<div id="level5">
-   							<h2><b>Level 5</b></h2>
-						<p>Spell Slots&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspExpended Spell Slots</p>
-						<div style="display: flex; justify-content: space-between;">
-    							<input class="spellSlots5" value="${characterData.spellSlots[4].available}" disabled=true style="width: 40px;">
-							<div style="width: 5px;"></div>
-    							<input class="spellSlotsUsed" value="${data[4].used}" disabled=true style="width: 40px;">
-						</div>
-						<br>
-						</div>
-						<div id="level6">
-  							<h2><b>Level 6</b></h2>
-						<p>Spell Slots&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspExpended Spell Slots</p>
-						<div style="display: flex; justify-content: space-between;">
-    							<input class="spellSlots6" value="${characterData.spellSlots[5].available}" disabled=true style="width: 40px;">
-							<div style="width: 5px;"></div>
-    							<input class="spellSlotsUsed" value="${data[5].used}" disabled=true style="width: 40px;">
-						</div>
-						<br>
-						</div>
-						<div id="level7">
-  							<h2><b>Level 7</b></h2>
-						<p>Spell Slots&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspExpended Spell Slots</p>
-						<div style="display: flex; justify-content: space-between;">
-    							<input class="spellSlots7" value="${characterData.spellSlots[6].available}" disabled=true style="width: 40px;">
-							<div style="width: 5px;"></div>
-    							<input class="spellSlotsUsed" value="${data[6].used}" disabled=true style="width: 40px;">
-						</div>
-						<br>
-						</div>
-						<div id="level8">
-  							<h2><b>Level 8</b></h2>
-						<p>Spell Slots&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspExpended Spell Slots</p>
-						<div style="display: flex; justify-content: space-between;">
-    							<input class="spellSlots8" value="${characterData.spellSlots[7].available}" disabled=true style="width: 40px;">
-							<div style="width: 5px;"></div>
-    							<input class="spellSlotsUsed" value="${data[7].used}" disabled=true style="width: 40px;">
-						</div>
-						<br>
-						</div>
-						<div id="level9">
-  							<h2><b>Level 9</b></h2>
-						<p>Spell Slots&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbspExpended Spell Slots</p>
-						<div style="display: flex; justify-content: space-between;">
-    							<input class="spellSlots9" value="${characterData.spellSlots[8].available}" disabled=true style="width: 40px;">
-							<div style="width: 5px;"></div>
-    							<input class="spellSlotsUsed" value="${data[8].used}" disabled=true style="width: 40px;">
-						</div>
-						<br>
-						</div>
+					    <table style="width: 100%;">
+					        <thead>
+							    <tr>
+								    <th><b>Name</b></th>
+								    <th><b>Time</b></th>
+								    <th><b>Range</b></th>
+								    <th><b>AOE</b></th>
+								</tr>
+								<tr id="level0">
+									<th colspan="4"><h2><b>Cantrips</b></h2></th>
+								</tr>
+								<tr id="level1">
+									<th colspan="4"><h2><b>Level 1</b></h2></th>
+									<tr>
+										<td colspan="4">
+											<div style="display: flex; justify-content: space-between;">
+												<input class="spellSlots1" value="${characterData.spellSlots[0].available}" disabled=true style="width: 40px; margin-right: 5px;">
+												<input class="spellSlotsUsed1" value="${data[0].used}" disabled=true style="width: 40px; margin-left: 5px;">
+											</div>
+										</td>
+									</tr>
+								</tr>
+								<tr id="level2">
+									<th colspan="4"><h2><b>Level 2</b></h2></th>
+									<tr>
+										<td colspan="4">
+											<div style="display: flex; justify-content: space-between;">
+												<input class="spellSlots2" value="${characterData.spellSlots[1].available}" disabled=true style="width: 40px; margin-right: 5px;">
+												<input class="spellSlotsUsed2" value="${data[1].used}" disabled=true style="width: 40px; margin-left: 5px;">
+											</div>
+										</td>
+									</tr>
+								</tr>
+								<tr id="level3">
+									<th colspan="4"><h2><b>Level 3</b></h2></th>
+									<tr>
+										<td colspan="4">
+											<div style="display: flex; justify-content: space-between;">
+												<input class="spellSlots3" value="${characterData.spellSlots[2].available}" disabled=true style="width: 40px; margin-right: 5px;">
+												<input class="spellSlotsUsed3" value="${data[2].used}" disabled=true style="width: 40px; margin-left: 5px;">
+											</div>
+										</td>
+									</tr>
+								</tr>
+								<tr id="level4">
+									<th colspan="4"><h2><b>Level 4</b></h2></th>
+									<tr>
+										<td colspan="4">
+											<div style="display: flex; justify-content: space-between;">
+												<input class="spellSlots4" value="${characterData.spellSlots[3].available}" disabled=true style="width: 40px; margin-right: 5px;">
+												<input class="spellSlotsUsed4" value="${data[3].used}" disabled=true style="width: 40px; margin-left: 5px;">
+											</div>
+										</td>
+									</tr>
+								</tr>
+								<tr id="level5">
+									<th colspan="4"><h2><b>Level 5</b></h2></th>
+									<tr>
+										<td colspan="4">
+											<div style="display: flex; justify-content: space-between;">
+												<input class="spellSlots5" value="${characterData.spellSlots[4].available}" disabled=true style="width: 40px; margin-right: 5px;">
+												<input class="spellSlotsUsed5" value="${data[4].used}" disabled=true style="width: 40px; margin-left: 5px;">
+											</div>
+										</td>
+									</tr>
+								</tr>
+								<tr id="level6">
+									<th colspan="4"><h2><b>Level 6</b></h2></th>
+									<tr>
+										<td colspan="4">
+											<div style="display: flex; justify-content: space-between;">
+												<input class="spellSlots6" value="${characterData.spellSlots[5].available}" disabled=true style="width: 40px; margin-right: 5px;">
+												<input class="spellSlotsUsed6" value="${data[5].used}" disabled=true style="width: 40px; margin-left: 5px;">
+											</div>
+										</td>
+									</tr>
+								</tr>
+								<tr id="level7">
+									<th colspan="4"><h2><b>Level 7</b></h2></th>
+									<tr>
+										<td colspan="4">
+											<div style="display: flex; justify-content: space-between;">
+												<input class="spellSlots7" value="${characterData.spellSlots[6].available}" disabled=true style="width: 40px; margin-right: 5px;">
+												<input class="spellSlotsUsed7" value="${data[6].used}" disabled=true style="width: 40px; margin-left: 5px;">
+											</div>
+										</td>
+									</tr>
+								</tr>
+								<tr id="level8">
+									<th colspan="4"><h2><b>Level 8</b></h2></th>
+									<tr>
+										<td colspan="4">
+											<div style="display: flex; justify-content: space-between;">
+												<input class="spellSlots8" value="${characterData.spellSlots[7].available}" disabled=true style="width: 40px; margin-right: 5px;">
+												<input class="spellSlotsUsed8" value="${data[7].used}" disabled=true style="width: 40px; margin-left: 5px;">
+											</div>
+										</td>
+									</tr>
+								</tr>
+								<tr id="level9">
+									<th colspan="4"><h2><b>Level 9</b></h2></th>
+									<tr>
+										<td colspan="4">
+											<div style="display: flex; justify-content: space-between;">
+												<input class="spellSlots9" value="${characterData.spellSlots[8].available}" disabled=true style="width: 40px; margin-right: 5px;">
+												<input class="spellSlotsUsed9" value="${data[8].used}" disabled=true style="width: 40px; margin-left: 5px;">
+											</div>
+										</td>
+									</tr>
+								</tr>
+							</thead>
+					    <tbody id="allSpells">
 					</div>
-					</ul>
 				</div>
 			</div>
 			`;
@@ -2531,15 +2646,15 @@ function showSpells(adventureData, buttonPressed, characterData, stats) {
 				spellDC.textContent = "Spell Save DC: " + (8 + Math.floor((stats.totalWisdom - 10) / 2) + characterProf);
 			} else if (characterData.classes[0].definition.name === "Druid") {
 				spellDC.textContent = "Spell Save DC: " + (8 + Math.floor((stats.totalWisdom - 10) / 2) + characterProf);
-			} else if (characterDAta.classes[0].definition.name === "Paladin") {
+			} else if (characterData.classes[0].definition.name === "Paladin") {
 				spellDC.textContent = "Spell Save DC: " + (8 + Math.floor((stats.totalCharisma - 10) / 2) + characterProf);
-			} else if (characterDAta.classes[0].definition.name === "Ranger") {
+			} else if (characterData.classes[0].definition.name === "Ranger") {
 				spellDC.textContent = "Spell Save DC: " + (8 + Math.floor((stats.totalWisdom - 10) / 2) + characterProf);
-			} else if (characterDAta.classes[0].definition.name === "Bard") {
+			} else if (characterData.classes[0].definition.name === "Bard") {
 				spellDC.textContent = "Spell Save DC: " + (8 + Math.floor((stats.totalCharisma - 10) / 2) + characterProf);
-			} else if (characterDAta.classes[0].definition.name === "Warlock") {
+			} else if (characterData.classes[0].definition.name === "Warlock") {
 				spellDC.textContent = "Spell Save DC: " + (8 + Math.floor((stats.totalCharisma - 10) / 2) + characterProf);
-			} else if (characterDAta.classes[0].definition.name === "Artificer") {
+			} else if (characterData.classes[0].definition.name === "Artificer") {
 				spellDC.textContent = "Spell Save DC: " + (8 + Math.floor((stats.totalIntelligence - 10) / 2) + characterProf);
 			}
 
@@ -2857,79 +2972,168 @@ function showSpells(adventureData, buttonPressed, characterData, stats) {
 
 						})
 
+						const newRow = document.createElement('tr');
+						const buttonCell = document.createElement('td');
+						const timeLabelCell = document.createElement('td');
+						const rangeLabelCell = document.createElement('td');
+						const aoeCell = document.createElement('td');
+						const breakCell = document.createElement('td');
+
 						//breakline
 						const breakline = document.createElement('hr');
 
 						switch (spellLocation[j][i].definition.level) {
 							case 0:
-								cantripsDiv.appendChild(nameButton);
-								cantripsDiv.appendChild(timeLabel);
-								cantripsDiv.appendChild(rangeLabel);
-								cantripsDiv.appendChild(aoeLabel);
-								cantripsDiv.appendChild(breakline);
+								buttonCell.appendChild(nameButton);
+								timeLabelCell.appendChild(timeLabel);
+								rangeLabelCell.appendChild(rangeLabel);
+								aoeCell.appendChild(aoeLabel);
+								breakCell.appendChild(breakline);
+
+								newRow.appendChild(buttonCell);
+								newRow.appendChild(timeLabelCell);
+								newRow.appendChild(rangeLabelCell);
+								newRow.appendChild(aoeCell);
+								newRow.appendChild(breakCell);
+
+								newRow.style.marginBottom = '-10px';
+
+								cantripsDiv.parentNode.insertBefore(newRow, cantripsDiv.nextSibling)
 								break;
 							case 1:
-								level1Div.appendChild(nameButton);
-								level1Div.appendChild(timeLabel);
-								level1Div.appendChild(rangeLabel);
-								level1Div.appendChild(aoeLabel);
-								level1Div.appendChild(breakline);
+								buttonCell.appendChild(nameButton);
+								timeLabelCell.appendChild(timeLabel);
+								rangeLabelCell.appendChild(rangeLabel);
+								aoeCell.appendChild(aoeLabel);
+								breakCell.appendChild(breakline);
+
+								newRow.appendChild(buttonCell);
+								newRow.appendChild(timeLabelCell);
+								newRow.appendChild(rangeLabelCell);
+								newRow.appendChild(aoeCell);
+								newRow.appendChild(breakCell);
+
+								level1Div.parentNode.insertBefore(newRow, level1Div.nextSibling)
 								break;
 							case 2:
-								level2Div.appendChild(nameButton);
-								level2Div.appendChild(timeLabel);
-								level2Div.appendChild(rangeLabel);
-								level2Div.appendChild(aoeLabel);
-								level2Div.appendChild(breakline);
+								buttonCell.appendChild(nameButton);
+								timeLabelCell.appendChild(timeLabel);
+								rangeLabelCell.appendChild(rangeLabel);
+								aoeCell.appendChild(aoeLabel);
+								breakCell.appendChild(breakline);
+
+								newRow.appendChild(buttonCell);
+								newRow.appendChild(timeLabelCell);
+								newRow.appendChild(rangeLabelCell);
+								newRow.appendChild(aoeCell);
+								newRow.appendChild(breakCell);
+
+								level2Div.parentNode.insertBefore(newRow, level2Div.nextSibling)
 								break;
 							case 3:
-								level3Div.appendChild(nameButton);
-								level3Div.appendChild(timeLabel);
-								level3Div.appendChild(rangeLabel);
-								level3Div.appendChild(aoeLabel);
-								level3Div.appendChild(breakline);
+								buttonCell.appendChild(nameButton);
+								timeLabelCell.appendChild(timeLabel);
+								rangeLabelCell.appendChild(rangeLabel);
+								aoeCell.appendChild(aoeLabel);
+								breakCell.appendChild(breakline);
+
+								newRow.appendChild(buttonCell);
+								newRow.appendChild(timeLabelCell);
+								newRow.appendChild(rangeLabelCell);
+								newRow.appendChild(aoeCell);
+								newRow.appendChild(breakCell);
+
+								level3Div.parentNode.insertBefore(newRow, level3Div.nextSibling)
 								break;
 							case 4:
-								level4Div.appendChild(nameButton);
-								level4Div.appendChild(timeLabel);
-								level4Div.appendChild(rangeLabel);
-								level4Div.appendChild(aoeLabel);
-								level4Div.appendChild(breakline);
+								buttonCell.appendChild(nameButton);
+								timeLabelCell.appendChild(timeLabel);
+								rangeLabelCell.appendChild(rangeLabel);
+								aoeCell.appendChild(aoeLabel);
+								breakCell.appendChild(breakline);
+
+								newRow.appendChild(buttonCell);
+								newRow.appendChild(timeLabelCell);
+								newRow.appendChild(rangeLabelCell);
+								newRow.appendChild(aoeCell);
+								newRow.appendChild(breakCell);
+
+								level4Div.parentNode.insertBefore(newRow, level4Div.nextSibling)
 								break;
 							case 5:
-								level5Div.appendChild(nameButton);
-								level5Div.appendChild(timeLabel);
-								level5Div.appendChild(rangeLabel);
-								level5Div.appendChild(aoeLabel);
-								level5Div.appendChild(breakline);
+								buttonCell.appendChild(nameButton);
+								timeLabelCell.appendChild(timeLabel);
+								rangeLabelCell.appendChild(rangeLabel);
+								aoeCell.appendChild(aoeLabel);
+								breakCell.appendChild(breakline);
+
+								newRow.appendChild(buttonCell);
+								newRow.appendChild(timeLabelCell);
+								newRow.appendChild(rangeLabelCell);
+								newRow.appendChild(aoeCell);
+								newRow.appendChild(breakCell);
+
+								level5Div.parentNode.insertBefore(newRow, level5Div.nextSibling)
 								break;
 							case 6:
-								level6Div.appendChild(nameButton);
-								level6Div.appendChild(timeLabel);
-								level6Div.appendChild(rangeLabel);
-								level6Div.appendChild(aoeLabel);
-								level6Div.appendChild(breakline);
+								buttonCell.appendChild(nameButton);
+								timeLabelCell.appendChild(timeLabel);
+								rangeLabelCell.appendChild(rangeLabel);
+								aoeCell.appendChild(aoeLabel);
+								breakCell.appendChild(breakline);
+
+								newRow.appendChild(buttonCell);
+								newRow.appendChild(timeLabelCell);
+								newRow.appendChild(rangeLabelCell);
+								newRow.appendChild(aoeCell);
+								newRow.appendChild(breakCell);
+
+								level6Div.parentNode.insertBefore(newRow, level6Div.nextSibling)
 								break;
 							case 7:
-								level7Div.appendChild(nameButton);
-								level7Div.appendChild(timeLabel);
-								level7Div.appendChild(rangeLabel);
-								level7Div.appendChild(aoeLabel);
-								level7Div.appendChild(breakline);
+								buttonCell.appendChild(nameButton);
+								timeLabelCell.appendChild(timeLabel);
+								rangeLabelCell.appendChild(rangeLabel);
+								aoeCell.appendChild(aoeLabel);
+								breakCell.appendChild(breakline);
+
+								newRow.appendChild(buttonCell);
+								newRow.appendChild(timeLabelCell);
+								newRow.appendChild(rangeLabelCell);
+								newRow.appendChild(aoeCell);
+								newRow.appendChild(breakCell);
+
+								level7Div.parentNode.insertBefore(newRow, level7Div.nextSibling)
 								break;
 							case 8:
-								level8Div.appendChild(nameButton);
-								level8Div.appendChild(timeLabel);
-								level8Div.appendChild(rangeLabel);
-								level8Div.appendChild(aoeLabel);
-								level8Div.appendChild(breakline);
+								buttonCell.appendChild(nameButton);
+								timeLabelCell.appendChild(timeLabel);
+								rangeLabelCell.appendChild(rangeLabel);
+								aoeCell.appendChild(aoeLabel);
+								breakCell.appendChild(breakline);
+
+								newRow.appendChild(buttonCell);
+								newRow.appendChild(timeLabelCell);
+								newRow.appendChild(rangeLabelCell);
+								newRow.appendChild(aoeCell);
+								newRow.appendChild(breakCell);
+
+								level8Div.parentNode.insertBefore(newRow, level8Div.nextSibling)
 								break;
 							case 9:
-								level9Div.appendChild(nameButton);
-								level9Div.appendChild(timeLabel);
-								level9Div.appendChild(rangeLabel);
-								level9Div.appendChild(aoeLabel);
-								level9Div.appendChild(breakline);
+								buttonCell.appendChild(nameButton);
+								timeLabelCell.appendChild(timeLabel);
+								rangeLabelCell.appendChild(rangeLabel);
+								aoeCell.appendChild(aoeLabel);
+								breakCell.appendChild(breakline);
+
+								newRow.appendChild(buttonCell);
+								newRow.appendChild(timeLabelCell);
+								newRow.appendChild(rangeLabelCell);
+								newRow.appendChild(aoeCell);
+								newRow.appendChild(breakCell);
+
+								level9Div.parentNode.insertBefore(newRow, level9Div.nextSibling)
 								break;
 							default:
 								allSpellDiv.appendChild(nameButton);
@@ -3314,32 +3518,10 @@ function getCharacterStats(characterData) {
 		}
 	}
 
-	/*for (let i = 0; i < characterData.modifiers.item.length; i++) {
-		const abilities = ["Strength", "Dexterity", "Constitution", "Intelligence", "Wisdom", "Charisma"]
-		const type = characterData.modifiers.item[i].friendlySubtypeName.replace(' Score', '');
-
-		if (abilities.includes(type) && characterData.modifiers.item[i].type === "bonus") {
-			const ability = abilities.includes(type);
-			if (type === "Strength" && ability === true) {
-				totalStrength += characterData.modifiers.item[i].value;
-			} else if (type === 'Dexterity' && ability === true) {
-				totalDexterity += characterData.modifiers.item[i].value;
-			} else if (type === 'Constitution' && ability === true) {
-				totalConstitution += characterData.modifiers.item[i].value;
-			} else if (type === 'Intelligence' && ability === true) {
-				totalIntelligence += characterData.modifiers.item[i].value;
-			} else if (type === 'Wisdom' && ability === true) {
-				totalWisdom += characterData.modifiers.item[i].value;
-			} else if (type === 'Charisma' && ability === true) {
-				totalCharisma += characterData.modifiers.item[i].value;
-			}
-		}
-	}*/
-
 	for (let i = 0; i < characterData.modifiers.condition.length; i++) {
 		const abilities = ["Strength", "Dexterity", "Constitution", "Intelligence", "Wisdom", "Charisma"]
 		const type = characterData.modifiers.condition[i].friendlySubtypeName.replace(' Score', '');
-
+		
 		if (abilities.includes(type) && characterData.modifiers.condition[i].type === "bonus") {
 			const ability = abilities.includes(type);
 			if (type === "Strength" && ability === true) {
