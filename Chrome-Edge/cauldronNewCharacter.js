@@ -197,8 +197,12 @@ function addAC(armourClass) {
             //looks for armour that is equipped
             for (let i = 0; i < inventory.length; i++) {
                 if (inventory[i].definition.armorClass != null) {
-
-                    totalArmourClass = totalArmourClass + checkArmour(inventory[i].definition.name, stats);
+                    if (inventory[i].equipped === true) {
+                        totalArmourClass = totalArmourClass + checkArmour(inventory[i].definition.name, stats);
+                    } else {
+                        totalArmourClass = totalArmourClass + 10 + Math.floor((stats.totalDexterity-10)/2);
+                    }
+                    
                     if (inventory[i].definition.name === "Shield") {
                         totalArmourClass = totalArmourClass + 2;
                     }  
@@ -264,9 +268,10 @@ function addAC(armourClass) {
 function addInitiative(initiative) {
     chrome.storage.local.get('characterData', function (result) {
         const characterData = result.characterData;
+        stats = getCharacterStats(characterData);
         if (characterData) {
 
-            const dexStat = Math.floor((characterData.stats[1].value - 10) / 2)//ability score -10/2 to get modifier (round up)
+            const dexStat = Math.floor((stats.totalDexterity - 10) / 2)//ability score -10/2 to get modifier (round up)
             initiative.value = dexStat;
         } else {
             console.log('Character Data not found in storage');
