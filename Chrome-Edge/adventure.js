@@ -118,11 +118,47 @@ function showDmView(buttonPressed, adventureData) {
 		}
 	});
 
-	console.log(adventureData);
-
 	// Create overlay body
 	const overlayBody = document.createElement('div');
 	overlayBody.classList.add('panel-body');
+
+	// Create a div with the id "overlayContainer"
+	const overlayContainerDiv = document.createElement('div');
+	overlayContainerDiv.id = 'overlayContainer';
+
+	// Create the table element inside the overlayContainerDiv
+	const overlayTable = document.createElement('table');
+	overlayTable.style.width = '100%';
+
+	const headerRow = document.createElement('tr');
+	const headerCell1 = document.createElement('th');
+	headerCell1.textContent = 'PC';
+	const headerCell2 = document.createElement('th');
+	headerCell2.textContent = 'HP';
+	const headerCell3 = document.createElement('th');
+	headerCell3.textContent = 'AC';
+	headerRow.style.borderBottom = '25px solid transparent';
+
+	headerRow.appendChild(headerCell1);
+	headerRow.appendChild(headerCell2);
+	headerRow.appendChild(headerCell3);
+
+	overlayTable.appendChild(headerRow);
+
+	if (adventureData.characters.character.length == null) {
+		const rowData = adventureData.characters.character;
+		addRowToTable(rowData, overlayTable);
+	} else {
+		adventureData.characters.character.forEach(rowData => {
+			addRowToTable(rowData, overlayTable);
+		});
+	}
+
+	// Append the table to the overlayContainerDiv
+	overlayContainerDiv.appendChild(overlayTable);
+
+	// Append the overlayContainerDiv to the overlayBody
+	overlayBody.appendChild(overlayContainerDiv);
 
 	overlayContainer.appendChild(overlayHeader);
 	overlayContainer.appendChild(overlayBody);
@@ -133,142 +169,58 @@ function showDmView(buttonPressed, adventureData) {
 	// Show overlay
 	overlayContainer.style.display = 'block';
 
-	const overlayDiv = document.createElement('div');
-	overlayDiv.id = "overlayContainer";
+	function addRowToTable(rowData, table) {
+		const newRow = document.createElement('tr');
+		newRow.style.borderBottom = '10px solid transparent';
 
-	const pElement = document.createElement('p');
-	pElement.style.fontSize = "18px";
-	pElement.style.fontWeight = "bold";
-	pElement.innerHTML = "<b>PC&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;HP&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;AC</b>";
+		const nameCell = document.createElement('td');
+		const hpCell = document.createElement('td');
+		const acCell = document.createElement('td');
 
-	const breakline = document.createElement('hr');
-
-	overlayDiv.appendChild(pElement);
-	overlayDiv.appendChild(breakline);
-
-	//this is where all the elements will be added.
-	if (adventureData.characters.character.length == null) {
 		const pcButton = document.createElement('button');
-		pcButton.textContent = adventureData.characters.character.name;
+
+		if (rowData.sheet_url.includes('.pdf')) {
+			pcButton.textContent = rowData.name + '  ⚠️';
+		} else {
+			pcButton.textContent = rowData.name;
+		}
 		pcButton.style.backgroundColor = "white";
 		pcButton.style.color = "black";
 		pcButton.style.padding = "5px";
 		pcButton.style.border = "1px solid black";
+		pcButton.style.color = "#6385C1";
 		pcButton.style.borderRadius = '5px';
 		pcButton.style.cursor = "pointer";
 		pcButton.style.fontSize = "13px";
 
-		//label
-		var splitLabel = document.createElement('label');
-		splitLabel.style.fontSize = "22px";
-		splitLabel.style.fontWeight = 'bold';
-		splitLabel.textContent = "｜";
+		nameCell.appendChild(pcButton);
+		hpCell.textContent = `${rowData.hitpoints - rowData.damage}/${rowData.hitpoints}`;
+		acCell.textContent = rowData.armor_class;
 
-		const hitPointsPc = document.createElement('label');
-		hitPointsPc.textContent = (adventureData.characters.character.hitpoints - adventureData.characters.character.damage) + "/" + adventureData.characters.character.hitpoints;
+		newRow.appendChild(nameCell);
+		newRow.appendChild(hpCell);
+		newRow.appendChild(acCell);
 
-		var splitLabelSecond = document.createElement('label');
-		splitLabelSecond.style.fontSize = "22px";
-		splitLabelSecond.style.fontWeight = 'bold';
-		splitLabelSecond.textContent = "｜";
+		table.appendChild(newRow);
 
-		const armourClassPc = document.createElement('label');
-		armourClassPc.textContent = adventureData.characters.character.armor_class;
-
-		var splitLabelThird = document.createElement('label');
-		splitLabelThird.style.fontSize = "22px";
-		splitLabelThird.style.fontWeight = 'bold';
-		splitLabelThird.textContent = "｜";
-
-		const breakLine = document.createElement('hr');
-
-		overlayDiv.appendChild(pcButton);
-		overlayDiv.appendChild(splitLabel);
-		overlayDiv.appendChild(hitPointsPc);
-		overlayDiv.appendChild(splitLabelSecond);
-		overlayDiv.appendChild(armourClassPc);
-		overlayDiv.appendChild(splitLabelThird);
-		overlayDiv.appendChild(breakLine);
-
-		overlayBody.appendChild(overlayDiv);
+		const buttonIndex = Array.isArray(adventureData.characters.character) ? table.rows.length - 2 : 0;
 
 		pcButton.addEventListener('click', function () {
-			const characterSheetId = adventureData.characters.character.sheet_url.split('/')[4];
-			const buttonIndex = 1; // Store the index of the button being clicked
+			const characterSheetId = rowData.sheet_url.split('/')[4];
 
 			chrome.runtime.sendMessage({ action: 'fetchCharacterInfo', characterId: characterSheetId, buttonIndex: buttonIndex }, function (response) {
 				const characterInfo = response.characterInfo;
 
 				// Access the correct adventureData based on the button index
-				const clickedCharacter = adventureData.characters.character;
+				const clickedCharacter = adventureData.characters.character[buttonIndex];
 
 				const a = { "characters": { "character": [clickedCharacter] } };
 				showCharacterSheet(a, false);
 			});
 		});
-	} else {
-		for (let i = 0; i < adventureData.characters.character.length; i++) {
-			const pcButton = document.createElement('button');
-			pcButton.textContent = adventureData.characters.character[i].name;
-			pcButton.style.backgroundColor = "white";
-			pcButton.style.color = "black";
-			pcButton.style.padding = "5px";
-			pcButton.style.border = "1px solid black";
-			pcButton.style.borderRadius = '5px';
-			pcButton.style.cursor = "pointer";
-			pcButton.style.fontSize = "13px";
-
-			//label
-			var splitLabel = document.createElement('label');
-			splitLabel.style.fontSize = "22px";
-			splitLabel.style.fontWeight = 'bold';
-			splitLabel.textContent = "｜";
-
-			const hitPointsPc = document.createElement('label');
-			hitPointsPc.textContent = (adventureData.characters.character[i].hitpoints - adventureData.characters.character[i].damage) + "/" + adventureData.characters.character[i].hitpoints;
-
-			var splitLabelSecond = document.createElement('label');
-			splitLabelSecond.style.fontSize = "22px";
-			splitLabelSecond.style.fontWeight = 'bold';
-			splitLabelSecond.textContent = "｜";
-
-			const armourClassPc = document.createElement('label');
-			armourClassPc.textContent = adventureData.characters.character[i].armor_class;
-
-			var splitLabelThird = document.createElement('label');
-			splitLabelThird.style.fontSize = "22px";
-			splitLabelThird.style.fontWeight = 'bold';
-			splitLabelThird.textContent = "｜";
-
-			const breakLine = document.createElement('hr');
-
-			overlayDiv.appendChild(pcButton);
-			overlayDiv.appendChild(splitLabel);
-			overlayDiv.appendChild(hitPointsPc);
-			overlayDiv.appendChild(splitLabelSecond);
-			overlayDiv.appendChild(armourClassPc);
-			overlayDiv.appendChild(splitLabelThird);
-			overlayDiv.appendChild(breakLine);
-
-			overlayBody.appendChild(overlayDiv);
-
-			pcButton.addEventListener('click', function () {
-				const characterSheetId = adventureData.characters.character[i].sheet_url.split('/')[4];
-				const buttonIndex = i; // Store the index of the button being clicked
-
-				chrome.runtime.sendMessage({ action: 'fetchCharacterInfo', characterId: characterSheetId, buttonIndex: buttonIndex }, function (response) {
-					const characterInfo = response.characterInfo;
-
-					// Access the correct adventureData based on the button index
-					const clickedCharacter = adventureData.characters.character[buttonIndex];
-
-					const a = { "characters": { "character": [clickedCharacter] } };
-					showCharacterSheet(a, false);
-				});
-			});
-		}
 	}
 }
+
 
 function createCharacterSheet(adventureData, buttonPressed, recreateOverlay) {
 	if (characterSheetOverlayOpen && buttonPressed === true) {
@@ -419,7 +371,7 @@ function createCharacterSheet(adventureData, buttonPressed, recreateOverlay) {
 					<input type="text" id="maxHitPoints" disabled="true" value="${totalHitPoints}" style="width: 30px; height: 30px; margin-left: -35px;">
   			    		<input type="text" id="CurrentHitPoints" disabled=true value="${String(currentCauldronHitPoints)}" style="width: 30px; height: 30px; margin-left: -78px;">
 					<label style="margin-left: -6px; font-size: 20px;">／</label>
-						<label style="width: 30px; height: 30px; margin-left: -70px; font-size: 16px;">HP</label>
+						<label style="width: 30px; height: 30px; margin-left: -65px; font-size: 16px;">HP</label>
 					</div>
 					<div>
 					<input type="text" id="armourClass" disabled="true" value="${currentArmourClass}" style="margin-left: -65px; margin-top: 55px; width: 40px; height: 30px;">
@@ -774,7 +726,7 @@ function showCharacterSheet(adventureData, buttonPressed) {
 		}
 
 		var header = document.getElementById('titleBar');
-		header.innerHTML = `${characterData.name} - Action ${characterHidden} <span class="glyphicon glyphicon-remove close" aria-hidden="true"></span>`;
+		header.innerHTML = `${characterData.name} - Character ${characterHidden} <span class="glyphicon glyphicon-remove close" aria-hidden="true"></span>`;
 
 		const closeButton = header.querySelector('.close');
 		closeButton.addEventListener('click', function () {
@@ -856,7 +808,7 @@ function showCharacterSheet(adventureData, buttonPressed) {
 					<input type="text" id="maxHitPoints" disabled="true" value="${totalHitPoints}" style="width: 30px; height: 30px; margin-left: -35px;">
   			    	<input type="text" id="CurrentHitPoints" disabled=true value="${String(currentCauldronHitPoints)}" style="width: 30px; height: 30px; margin-left: -78px;">
 					<label style="margin-left: -6px; font-size: 20px;">／</label>
-						<label style="width: 30px; height: 30px; margin-left: -80px; font-size: 14px;">Hit Points</label>
+						<label style="width: 30px; height: 30px; margin-left: -65px; font-size: 14px;">HP</label>
 					</div>
 					<div>
 					<input type="text" id="armourClass" disabled="true" value="${currentArmourClass}" style="margin-left: -65px; margin-top: 55px; width: 40px; height: 30px;">

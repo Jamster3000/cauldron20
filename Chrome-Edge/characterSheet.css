@@ -197,6 +197,6 @@
 
 .buttonContainer {
     display: flex;
-    justify-content: flex-end; /* Align items to the end of the container */
-    margin-top: 10px; /* Adjust spacing between content and button */
+    justify-content: flex-end; 
+    margin-top: 10px;
 }
