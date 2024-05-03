@@ -212,8 +212,15 @@ function showDmView(buttonPressed, adventureData) {
 				const characterInfo = response.characterInfo;
 
 				// Access the correct adventureData based on the button index
-				const clickedCharacter = adventureData.characters.character[buttonIndex];
+				var clickedCharacter;
+				if (buttonIndex > 0) {
+					clickedCharacter = adventureData.characters.character[buttonIndex];
+				} else {
+					clickedCharacter = adventureData.characters.character;
+				}
 
+				console.log(clickedCharacter);
+				
 				const a = { "characters": { "character": [clickedCharacter] } };
 				showCharacterSheet(a, false);
 			});
