@@ -179,11 +179,16 @@ function showDmView(buttonPressed, adventureData) {
 
 		const pcButton = document.createElement('button');
 
-		if (rowData.sheet_url.includes('.pdf')) {
-			pcButton.textContent = rowData.name + '  ⚠️';
-		} else {
+		//ensure the url is the correct input
+		const regex = /^https:\/\/www\.dndbeyond\.com\/characters\/\d+$/;
+		const url = rowData.sheet_url.trim();
+
+		if (regex.test(url)) {
 			pcButton.textContent = rowData.name;
+		} else {
+			pcButton.textContent = rowData.name + '  ⚠️';
 		}
+
 		pcButton.style.backgroundColor = "white";
 		pcButton.style.color = "black";
 		pcButton.style.padding = "5px";
