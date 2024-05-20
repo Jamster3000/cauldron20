@@ -7,7 +7,9 @@ body {
 }
 
 header {
-    background-color: #337ab7;
+    background-image: url('https://github.com/Jamster3000/cauldron20/blob/master/images/image-header.jpg');
+    background-size: cover; /* Ensures the image covers the entire header */
+    background-position: center; /* Centers the image within the header */
     padding: 20px;
     text-align: center;
 }
