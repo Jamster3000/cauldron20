@@ -61,14 +61,14 @@ nav a:hover {
 }
 
 a {
-    color: #337ab7; /* Sets the color of the link */
-    text-decoration: none; /* Removes underline */
+    color: #337ab7;
+    text-decoration: none; 
 }
 
 a:hover {
-    color: #1e6c9f; /* Sets the color of the link when hovered */
+    color: #1e6c9f;
 }
 
 a:visited {
-    color: #3e8f3e; /* Sets the color of the link after it has been visited */
+    color: #3e8f3e; !important;
 }
