@@ -20,6 +20,7 @@ header h1 {
     margin: 0;
     font-size: 40px; 
     color: #eee;
+    text-shadow: 1px 1px 2px #000000;
 }
 
 nav {
