@@ -9,7 +9,7 @@ body {
 header {
     background-image: url('https://raw.githubusercontent.com/Jamster3000/cauldron20/master/images/image-header.jpg');
     background-size: cover;
-    background-position: center top 100px;
+    background-position: center;
     padding: 75px;
     text-align: center;
     color: #fff; /* Set text color to white for better visibility */
