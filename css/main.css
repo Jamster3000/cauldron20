@@ -7,11 +7,13 @@ body {
 }
 
 header {
-    background-image: url('https://github.com/Jamster3000/cauldron20/blob/master/images/image-header.jpg');
-    background-size: cover; /* Ensures the image covers the entire header */
-    background-position: center; /* Centers the image within the header */
+    background-image: url('https://raw.githubusercontent.com/Jamster3000/cauldron20/master/images/image-header.jpg');
+    background-size: cover;
+    background-position: center;
     padding: 20px;
     text-align: center;
+    color: #fff; /* Set text color to white for better visibility */
+    font-size: 24px; /* Adjust font size as needed */
 }
 
 header h1 {
