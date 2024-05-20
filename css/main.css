@@ -105,7 +105,7 @@ nav a:hover {
 footer {
     background-color: #222; /* Background color of the footer */
     color: #fff; /* Text color of the footer */
-    padding: -2px; /* Padding around the footer content */
+    padding: -10px; /* Padding around the footer content */
     text-align: center; /* Align text in the center */
     position: fixed; /* Fixed position to keep the footer at the bottom */
     bottom: 0; /* Position the footer at the bottom of the viewport */
