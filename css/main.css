@@ -60,15 +60,18 @@ nav a:hover {
     color: #ccc;
 }
 
-.post a {
+.post h2 a,
+.post p a {
     color: #337ab7; /* Sets the color of the link */
     text-decoration: none; /* Removes underline */
 }
 
-.post a:hover {
-    color:  #3e8f3e; /* Sets the color of the link when hovered */
+.post h2 a:hover,
+.post p a:hover {
+    color: #3e8f3e; /* Sets the color of the link when hovered */
 }
 
-.post a:visited {
+.post h2 a:visited,
+.post p a:visited {
     color: #1e6c9f; /* Sets the color of the link after it has been visited */
 }
