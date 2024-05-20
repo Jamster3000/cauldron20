@@ -19,6 +19,8 @@ To install and try this extension
 5) Top left, choose "load unpacked" and choose the folder that contains the code.
 6) Clicking on the extention and input the number that identifies your character (make sure that your character sheet on dndbeyond is in public so it can be accessed by the extension).
 
+Alternatively if you are using **Firefox** as your web browser you can search up cauldron20 as it's an add-on on Firefox's store.
+
 See [wiki](https://github.com/Jamster3000/cauldron20/wiki) for more in depth instructions on how to setup the extension and use it.
 
 > [!NOTE]
@@ -51,6 +53,8 @@ spells
 Spell Details
 ![image](https://github.com/Jamster3000/cauldron20/assets/148760154/7733d18c-1870-4cf7-b886-737eb87ff009)
 
+## Folder
+The only folders you may need for the extension are either `chrome-edge` or `firefox` Any other folders present in this repository are for the github page.
 
 ![GitHub issues](https://img.shields.io/github/issues/jamster3000/Joan-smart-assistant)
 ![Last Commit](https://img.shields.io/github/last-commit/jamster3000/Joan-smart-assistant)
