@@ -1,3 +1,4 @@
+/* General styling */
 body {
     font-family: Arial, sans-serif;
     background-color: #333;
@@ -6,6 +7,7 @@ body {
     padding: 0;
 }
 
+/* Header styling */
 header {
     background-image: url('https://raw.githubusercontent.com/Jamster3000/cauldron20/master/images/image-header.jpg');
     background-size: cover;
@@ -23,30 +25,37 @@ header h1 {
     text-shadow: 1px 1px 2px #000000;
 }
 
-@media (max-width: 600px) {
-    nav {
-        padding: 10px; /* Increase padding for better touch interaction */
-    }
+/* Navigation styling */
+nav {
+    background-color: #337ab7;
+    padding: 10px 0;
+    text-align: center;
+}
 
-    nav a {
-        padding: 8px 12px; /* Adjust padding for better touch targets */
-        margin: 0 5px; /* Adjust margin for better spacing */
-    }
+nav a {
+    color: #eee;
+    text-decoration: none;
+    padding: 10px 20px;
+    margin: 0 10px;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
 }
 
 nav a:hover {
     background-color: #1e6c9f;
 }
 
+/* Container for main content */
 .container {
     max-width: 1200px;
     margin: 20px auto;
     padding: 0 20px;
 }
 
+/* Post styling */
 .post {
     background-color: #444;
-    padding: 30px; /* Increased padding */
+    padding: 30px;
     margin-bottom: 20px;
     border-radius: 10px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -55,16 +64,17 @@ nav a:hover {
 .post h2 {
     margin-top: 0;
     color: #eee;
-    font-size: 24px; /* Increased font size */
-    font-weight: bold; /* Added font weight */
+    font-size: 24px;
+    font-weight: bold;
 }
 
 .post p {
     color: #ccc;
-    line-height: 1.6; /* Increased line height */
+    line-height: 1.6;
     font-size: 18px;
 }
 
+/* Link styling */
 .post h2 a,
 .post p a {
     color: #337ab7;
@@ -79,4 +89,16 @@ nav a:hover {
 .post h2 a:visited,
 .post p a:visited {
     color: #1e6c9f;
+}
+
+/* Responsive styling for mobile */
+@media (max-width: 600px) {
+    nav {
+        padding: 10px;
+    }
+
+    nav a {
+        padding: 8px 12px;
+        margin: 0 5px;
+    }
 }
