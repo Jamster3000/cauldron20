@@ -118,3 +118,21 @@ footer {
 footer:hover {
     background-color: #444;
 }
+
+
+/* Link styling */
+.footer h2 a,
+.footer p a {
+    color: #337ab7;
+    text-decoration: none;
+}
+
+.footer h2 a:hover,
+.footer p a:hover {
+    color: #3e8f3e;
+}
+
+.footer h2 a:visited,
+.footer p a:visited {
+    color: #1e6c9f;
+}
