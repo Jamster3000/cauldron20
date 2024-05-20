@@ -23,19 +23,15 @@ header h1 {
     text-shadow: 1px 1px 2px #000000;
 }
 
-nav {
-    background-color: #337ab7;
-    padding: 7px 0;
-    text-align: center;
-}
+@media (max-width: 600px) {
+    nav {
+        padding: 10px; /* Increase padding for better touch interaction */
+    }
 
-nav a {
-    color: #eee;
-    text-decoration: none;
-    padding: 12px 24px; /* Increased padding */
-    margin: 0 10px;
-    border-radius: 5px;
-    transition: background-color 0.3s ease;
+    nav a {
+        padding: 8px 12px; /* Adjust padding for better touch targets */
+        margin: 0 5px; /* Adjust margin for better spacing */
+    }
 }
 
 nav a:hover {
