@@ -12,19 +12,19 @@ header {
     background-position: center;
     padding: 75px;
     text-align: center;
-    color: #fff; /* Set text color to white for better visibility */
-    font-size: 24px; /* Adjust font size as needed */
+    color: #fff;
+    font-size: 24px;
 }
 
 header h1 {
     margin: 0;
-    font-size: 40px; /* Increased font size */
+    font-size: 40px; 
     color: #eee;
 }
 
 nav {
     background-color: #337ab7;
-    padding: 10px 0;
+    padding: 7px 0;
     text-align: center;
 }
 
