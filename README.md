@@ -1,5 +1,6 @@
 ![cauldronIconLarge](https://github.com/Jamster3000/cauldron20/assets/148760154/29aacd8f-604f-43f4-a758-3635c2c32ac6)
 
+<iframe src="https://discord.com/widget?id=1243623853976981504&theme=dark" width="350" height="500" allowtransparency="true" frameborder="0" sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts"></iframe>
 
 # What is this? 🔮
 
