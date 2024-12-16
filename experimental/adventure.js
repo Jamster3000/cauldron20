@@ -2,7 +2,7 @@
 
 let characterSheetOverlayOpen = false;
 let commonActionOpen = false;
-let overlayContainer; //this is for the commonActions fucntion
+let overlayContainerOpen = false; //this is for the commonActions fucntion
 let commonActionClickListener = null; //a check to ensure mulitple listeners aren't added to the common action menu
 saveSpellSlots(null);
 
@@ -52,7 +52,7 @@ if (!excludeRegex.test(currentURL)) {
 						if (adventureData["@is_dm"] === "yes") {
 							//for the time being, do nothing as this isn't a feature for the DM as of yet
 						} else {
-							if (!overlayContainer) {
+							if (overlayContainerOpen == false) {
 								const urlWithJsonOutput = window.location.href + "?output=json";
 								fetchJsonDataFromUrl(urlWithJsonOutput)
 									.then(adventureData => {
@@ -110,7 +110,7 @@ if (!excludeRegex.test(currentURL)) {
 						if (adventureData["@is_dm"] === "yes") {
 							//for the time being, do nothing as this isn't a feature for the DM as of yet
 						} else {
-							if (!overlayContainer) {
+							if (overlayContainerOpen == false) {
 								const urlWithJsonOutput = window.location.href + "?output=json";
 								fetchJsonDataFromUrl(urlWithJsonOutput)
 									.then(adventureData => {
@@ -119,6 +119,7 @@ if (!excludeRegex.test(currentURL)) {
 										toggleCommonActionOverlay();
 									});
 							} else {
+								console.log(overlayContainerOpen);
 								toggleCommonActionOverlay();
 							}
 						}
@@ -147,177 +148,200 @@ if (!excludeRegex.test(currentURL)) {
 }
 
 function toggleCommonActionOverlay() {
-	if (!overlayContainer) {
+	if (!overlayContainerDiv) {
 		console.error('Overlay Container not found');
 		return;
 	}
 
+	try {
+		characterSheetOverlayOpen = false;
+
+		const characterSheetOverlay = document.getElementById('customOverlay');
+		if (characterSheetOverlay) {
+			characterSheetOverlay.remove();
+		}
+	} catch (TypeError) { }
+
 	commonActionOpen = !commonActionOpen;
-	overlayContainer.style.display = commonActionOpen ? 'block' : 'none';
+	overlayContainerDiv.style.display = commonActionOpen ? 'block' : 'none';
 
 	console.log('Toggle called. Menu is now:', commonActionOpen ? 'open' : 'closed');
 }
 
 
 function createCommonActionMenu(adventureData) {
-	if (overlayContainer) {
+	console.log(overlayContainerOpen);
+	if (overlayContainerOpen) {
+		console.log("Returning")
 		return; // Menu already exists, no need to create it again
 	}
 
 	const topbar = document.querySelector('.topbar');
 
-	overlayContainer = document.createElement('div');
-	overlayContainer.id = 'customCommonActionMenu';
-	overlayContainer.classList.add('panel', 'panel-primary');
-	overlayContainer.style.display = 'none';
-	overlayContainer.style.position = 'fixed';
-	overlayContainer.style.right = '178px';
-	overlayContainer.style.backgroundColor = '#d0d0d0';
-	overlayContainer.style.zIndex = '1012';
-	overlayContainer.style.width = "254.2px";
-	overlayContainer.style.position = "absolute";
-	overlayContainer.style.border = "1px solid #808080";
-	overlayContainer.style.borderRadius = '4px';
-	overlayContainer.style.boxShadow = '10px 10px 10px';
-	overlayContainer.style.padding = '-5px';
-	overlayContainer.style.paddingBottom = '-150px';
-	overlayContainer.style.boxSizing = "border-box";
+	overlayContainerDiv = document.createElement('div');
+	overlayContainerDiv.id = 'customCommonActionMenu';
+	overlayContainerDiv.classList.add('panel', 'panel-primary');
+	overlayContainerDiv.style.display = 'none';
+	overlayContainerDiv.style.position = 'fixed';
+	overlayContainerDiv.style.right = '178px';
+	overlayContainerDiv.style.backgroundColor = '#d0d0d0';
+	overlayContainerDiv.style.zIndex = '1012';
+	overlayContainerDiv.style.width = "254.2px";
+	overlayContainerDiv.style.position = "absolute";
+	overlayContainerDiv.style.border = "1px solid #808080";
+	overlayContainerDiv.style.borderRadius = '4px';
+	overlayContainerDiv.style.boxShadow = '10px 10px 10px';
+	overlayContainerDiv.style.padding = '-5px';
+	overlayContainerDiv.style.paddingBottom = '-150px';
+	overlayContainerDiv.style.boxSizing = "border-box";
 
-	//Checks will include ability checks, skill checks and also concentration saving throws too	
+	// Use CSS text injection for styles to reduce redundancy
+	const style = document.createElement('style');
+	style.innerHTML = `
+        .check, .saving-throw, .actions, .spells, .usable-items{
+            width: 224.2px;
+            margin-bottom: 5px;
+        }
+
+        .menu-item {
+            position: relative;
+            width: 100%;
+            text-align: left;
+            margin-bottom: 5px;
+        }
+
+        .menu-item > button::after {
+            content: '◀';
+            float: left;
+            font-size: 0.8em;
+            margin-top: 3px;
+        }
+
+        .submenu {
+            display: none;
+            position: absolute;
+            right: 100%;
+            top: 0px;
+            background-color: #d0d0d0;
+            border: 1px solid #808080;
+            border-radius: 4px;
+            box-shadow: 5px 5px 5px rgba(0,0,0,0.2);
+            z-index: 1014;
+        }
+
+        .menu-item:hover .submenu {
+            display: block;
+        }
+
+        .submenu-item {
+            padding: 5px 10px;
+            width: 152.1px;
+            cursor: pointer;
+            white-space: normal;
+            word-wrap: normal;
+        }
+
+        .submenu-item:hover {
+            background-color: #0c0c0c0;
+        }
+
+        .submenu hr {
+            margin: 5px;
+            border-top: 1px solid #dee2e6;
+        }
+    `;
+	document.head.appendChild(style);
+
+	// Build the menu structure
 	const overlayBody = document.createElement('div');
 	overlayBody.classList.add('panel-body');
 	overlayBody.innerHTML = `
-		<style>
-			.check, .saving-throw, .actions, .spells, .usable-items{
-				width: 224.2px;
-				margin-bottom: 5px;
-			}
+        <div class="menu-container">
+            <div class="menu-item">
+                <button class="btn btn-default btn-sm check">Checks</button>
+                <div class="submenu">
+                    <button class="submenu-item btn btn-default btn-sm">Strength Check</button>
+                    <button class="submenu-item btn btn-default btn-sm">Dexterity Check</button>
+                    <button class="submenu-item btn btn-default btn-sm">Constitution Check</button>
+                    <button class="submenu-item btn btn-default btn-sm">Intelligence Check</button>
+                    <button class="submenu-item btn btn-default btn-sm">Wisdom Check</button>
+                    <button class="submenu-item btn btn-default btn-sm">Charisma Check</button>
+                    <hr>
+                    <button class="submenu-item btn btn-default btn-sm">Acrobatics</button>
+                    <button class="submenu-item btn btn-default btn-sm">Animal Handling</button>
+                    <button class="submenu-item btn btn-default btn-sm">Arcana</button>
+                    <button class="submenu-item btn btn-default btn-sm">Athletics</button>
+                    <button class="submenu-item btn btn-default btn-sm">Deception</button>
+                    <button class="submenu-item btn btn-default btn-sm">History</button>
+                    <button class="submenu-item btn btn-default btn-sm">Insight</button>
+                    <button class="submenu-item btn btn-default btn-sm">Intimidation</button>
+                    <button class="submenu-item btn btn-default btn-sm">Investigation</button>
+                    <button class="submenu-item btn btn-default btn-sm">Medicine</button>
+                    <button class="submenu-item btn btn-default btn-sm">Nature</button>
+                    <button class="submenu-item btn btn-default btn-sm">Perception</button>
+                    <button class="submenu-item btn btn-default btn-sm">Performance</button>
+                    <button class="submenu-item btn btn-default btn-sm">Persuasion</button>
+                    <button class="submenu-item btn btn-default btn-sm">Religion</button>
+                    <button class="submenu-item btn btn-default btn-sm">Sleight of Hand</button>
+                    <button class="submenu-item btn btn-default btn-sm">Stealth</button>
+                    <button class="submenu-item btn btn-default btn-sm">Survival</button>
+                </div>
+            </div>
+            <div class="menu-item">
+                <button class="btn btn-default btn-sm saving-throw">Saving Throw</button>
+                <div class="submenu">
+                    <div class="submenu-item btn btn-default btn-sm">Strength</div>
+                    <div class="submenu-item btn btn-default btn-sm">Dexterity</div>
+                    <div class="submenu-item btn btn-default btn-sm">Constitution</div>
+                    <div class="submenu-item btn btn-default btn-sm">Intelligence</div>
+                    <div class="submenu-item btn btn-default btn-sm">Wisdom</div>
+                    <div class="submenu-item btn btn-default btn-sm">Charisma</div>
+                </div>
+            </div>
+            <div class="menu-item">
+                <button class="btn btn-default btn-sm actions">Actions</button>
+                <div class="submenu">
+                    <div class="submenu-item btn btn-default btn-sm">Attack</div>
+                    <div class="submenu-item btn btn-default btn-sm">Dash</div>
+                    <div class="submenu-item btn btn-default btn-sm">Disengage</div>
+                    <div class="submenu-item btn btn-default btn-sm">Dodge</div>
+                </div>
+            </div>
+            <div class="menu-item">
+                <button class="btn btn-default btn-sm spells">Spells</button>
+                <div class="submenu">
+                    <!-- Add spell items here -->
+                </div>
+            </div>
+            <div class="menu-item">
+                <button class="btn btn-default btn-sm usable-items">Usable Items</button>
+                <div class="submenu">
+                    <!-- Add usable item options here -->
+                </div>
+            </div>
+        </div>
+    `;
 
-			.menu-item {
-				position: relative;
-				width: 100%;
-				text-align: left;
-				margin-bottom: 5px;
-			}
-			.menu-item > button::after {
-				content: '◀';
-				float: right;
-				font-size: 0.8em;
-				margin-top: 3px;
-			}
-			.submenu {
-				display: none;
-				position: absolute;
-				right: 100%;
-				top: 0px;
-				background-color: #d0d0d0;
-				border: 1px solid #808080;
-				border-radius: 4px;
-				box-shadow: 5px 5px 5px rgba(0,0,0,0.2);
-				z-index: 1014;
-			}
-			.menu-item:hover .submenu {
-				display: block;
-			}
-			.submenu-item {
-				padding: 5px 10px;
-				width: 152.1px;
-				cursor: pointer;
-				white-space: normal;
-				word-wrap: normal;
-			}
-			.submenu-item:hover {
-				backgroun-color: #0c0c0c0;
-			}
-			.submenu hr {
-				margin: 5px;
-				border-top: 1px solid #dee2e6;
-			}
-		</style>
-		<div class="menu-container">
-			<div class="menu-item">
-				<button class="btn btn-default btn-sm check">Checks</button>
-				<div class="submenu">
-					<button class="submenu-item btn btn-default btn-sm">Strength Check</button>
-					<button class="submenu-item btn btn-default btn-sm">Dexterity Check</button>
-					<button class="submenu-item btn btn-default btn-sm">Constitution Check</button>
-					<button class="submenu-item btn btn-default btn-sm">Intellegence Check</button>
-					<button class="submenu-item btn btn-default btn-sm">Wisdom Check</button>
-					<button class="submenu-item btn btn-default btn-sm">Charisma Check</button>
-					<hr>
-					<button class="submenu-item btn btn-default btn-sm">Acrobatics</button>
-					<button class="submenu-item btn btn-default btn-sm">Animal Handling</button>
-					<button class="submenu-item btn btn-default btn-sm">Arcana</button>
-					<button class="submenu-item btn btn-default btn-sm">Athletics</button>
-					<button class="submenu-item btn btn-default btn-sm">Deception</button>
-					<button class="submenu-item btn btn-default btn-sm">History</button>
-					<button class="submenu-item btn btn-default btn-sm">Insight</button>
-					<button class="submenu-item btn btn-default btn-sm">Intimidation</button>
-					<button class="submenu-item btn btn-default btn-sm">Investigation</button>
-					<button class="submenu-item btn btn-default btn-sm">Medicine</button>
-					<button class="submenu-item btn btn-default btn-sm">Nature</button>
-					<button class="submenu-item btn btn-default btn-sm">Perception</button>
-					<button class="submenu-item btn btn-default btn-sm">Performance</button>
-					<button class="submenu-item btn btn-default btn-sm">Persuasion</button>
-					<button class="submenu-item btn btn-default btn-sm">Religion</button>
-					<button class="submenu-item btn btn-default btn-sm">Sleight of Hand</button>
-					<button class="submenu-item btn btn-default btn-sm">Stealth</button>
-					<button class="submenu-item btn btn-default btn-sm">Survival</button>
-				</div>
-			</div>
-			<div class="menu-item">
-				<button class="btn btn-default btn-sm saving-throw">Saving Throw</button>
-				<div class="submenu">
-					<div class="submenu-item btn btn-default btn-sm">Strength</div>
-					<div class="submenu-item btn btn-default btn-sm">Dexterity</div>
-					<div class="submenu-item btn btn-default btn-sm">Constitution</div>
-					<div class="submenu-item btn btn-default btn-sm">Intelligence</div>
-					<div class="submenu-item btn btn-default btn-sm">Wisdom</div>
-					<div class="submenu-item btn btn-default btn-sm">Charisma</div>
-				</div>
-			</div>
-			<div class="menu-item">
-				<button class="btn btn-default btn-sm actions">Actions</button>
-				<div class="submenu">
-					<div class="submenu-item btn btn-default btn-sm">Attack</div>
-					<div class="submenu-item btn btn-default btn-sm">Dash</div>
-					<div class="submenu-item btn btn-default btn-sm">Disengage</div>
-					<div class="submenu-item btn btn-default btn-sm">Dodge</div>
-				</div>
-			</div>
-			<div class="menu-item">
-				<button class="btn btn-default btn-sm spells">Spells</button>
-				<div class="submenu">
-					<!-- Add spell items here -->
-				</div>
-			</div>
-			<div class="menu-item">
-				<button class="btn btn-default btn-sm usable-items">Usable Items</button>
-				<div class="submenu">
-					<!-- Add usable item options here -->
-				</div>
-			</div>
-		</div>
-		`;
+	overlayContainerDiv.appendChild(overlayBody);
+	topbar.appendChild(overlayContainerDiv);
 
-	overlayContainer.appendChild(overlayBody);
-	topbar.appendChild(overlayContainer);
-
-	//remove any existing event listeners
+	// Remove any existing event listeners to avoid memory leaks
 	if (commonActionClickListener) {
 		document.removeEventListener('click', commonActionClickListener);
 	}
 
-	// Create and add the new listener
+	// Create and add the new listener only when necessary
 	commonActionClickListener = function (event) {
 		const commonActionButton = document.getElementById('common-action-button');
-		if (commonActionOpen && !overlayContainer.contains(event.target) && event.target !== commonActionButton) {
+		if (commonActionOpen && !overlayContainerDiv.contains(event.target) && event.target !== commonActionButton) {
 			toggleCommonActionOverlay();
 		}
 	};
 
 	document.addEventListener('click', commonActionClickListener);
+	overlayContainerOpen = true;
 }
+
 
 function showDmView(buttonPressed, adventureData) {
 	if (characterSheetOverlayOpen && buttonPressed === true) {
@@ -3954,32 +3978,43 @@ function descriptionToCharacterData(description, characterData, stats) {
 }
 
 function sendDataToSidebar(information, characterName) {
-	let script = document.createElement('script');
-
-	script.textContent = `
-			  // Call the page's function with the provided arguments
-			  send_message(${JSON.stringify(information)}, '${characterName}');
-			`;
-
-	(document.head || document.documentElement).appendChild(script);
+	chrome.runtime.sendMessage({
+		type: 'SEND_DATA_TO_SIDEBAR',
+		information: information,
+		characterName: characterName
+	}, (response) => {
+		//console.log('Content Script: Received response:', response);
+		if (chrome.runtime.lastError) {
+			//console.error('Message sending error:', chrome.runtime.lastError);
+		}
+	});
 }
 
 function roll_dice(dice) {
-	let script = document.createElement('script');
+	//console.log('Content script roll_dice called with:', dice);
+	//console.log('Current window keys:', Object.keys(window));
 
-	script.textContent = `
-		roll_dice(${JSON.stringify(dice)})
-		`;
+	//Tries teo find the funtion roll_dice
+	const potentialRollFunctions = Object.entries(window)
+		.filter(([key, value]) =>
+			typeof value === 'function' &&
+			value.toString().includes('roll_dice')
+		);
 
-	(document.head || document.documentElement).appendChild(script);
-}
+	//console.log('Potential roll_dice functions:', potentialRollFunctions);
 
-function rollDice(numberOfDice, sides) {
-	let total = 0;
-	for (let i = 0; i < numberOfDice; i++) {
-		total += Math.floor(Math.random() * sides) + 1;
-	}
-	return total;
+	//due to manifest version 3, the background script now has to 
+	//execute the website's roll_dice function
+	chrome.runtime.sendMessage({
+		type: 'ROLL_DICE',
+		dice: dice
+	}, (response) => {
+		//if (chrome.runtime.lastError) {
+		//	console.error('Message sending error:', chrome.runtime.lastError);
+		//} else {
+		//	console.log('Message sent successfully', response);
+		//}
+	});
 }
 
 function fetchJsonDataFromUrl(url) {
