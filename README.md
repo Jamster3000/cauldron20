@@ -23,9 +23,9 @@ Alternatively if you are using **Firefox** as your web browser you can search up
 See [wiki](https://github.com/Jamster3000/cauldron20/wiki) for more in depth instructions on how to setup the extension and use it.
 
 > [!NOTE]
-> This project is as spare time so there may not be activity for long periods of time.
+> This project is something I develop and update in my spare time, don't expect any miricales from me 🪄
 
-This is my first project using javascript so I've certainly learnt a lot of also learnt javascript is a headache.
+This was my first first JavaScript project which has pretty much helped me learn all the basics of JavaScript, making it much less of a headache than it used to be.
 
 # Screenshots
 Character Creation
