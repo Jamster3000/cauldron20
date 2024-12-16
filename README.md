@@ -28,33 +28,30 @@ See [wiki](https://github.com/Jamster3000/cauldron20/wiki) for more in depth ins
 This was my first first JavaScript project which has pretty much helped me learn all the basics of JavaScript, making it much less of a headache than it used to be.
 
 # Screenshots
-Character Creation
+Character Creation<br>
 ![image](https://github.com/Jamster3000/cauldron20/assets/148760154/19c31f2c-5034-4be9-a1a3-79afcf6a69bf)
 
-Character Sheet
+Character Sheet<br>
 ![image](https://github.com/Jamster3000/cauldron20/assets/148760154/01db889d-2bd1-4d97-97bc-41fbec3331b5)
 
-Actions
+Actions<br>
 ![image](https://github.com/Jamster3000/cauldron20/assets/148760154/afb6736e-b1ef-468c-95f1-174ba1685b63)
 
-Bio
+Bio<br>
 ![image](https://github.com/Jamster3000/cauldron20/assets/148760154/00814970-1746-40d1-8d6b-aad8bcf2e113)
 
-Features
+Features<br>
 ![image](https://github.com/Jamster3000/cauldron20/assets/148760154/fcf65c09-7936-4d2f-9d23-605c26e92201)
 
-Inventory
+Inventory<br>
 ![image](https://github.com/Jamster3000/cauldron20/assets/148760154/7ebd71b6-9b6b-4ffa-93fe-0973ef38fa6c)
 
-spells
+spells<br>
 ![image](https://github.com/Jamster3000/cauldron20/assets/148760154/4939eda3-5033-480d-9314-ac9203ba9954)
 
-Spell Details
+Spell Details<br>
 ![image](https://github.com/Jamster3000/cauldron20/assets/148760154/7733d18c-1870-4cf7-b886-737eb87ff009)
-
-## Folder
-The only folders you may need for the extension are either `chrome-edge` or `firefox` Any other folders present in this repository are for the github page.
-
+<br><br>
 ![GitHub issues](https://img.shields.io/github/issues/jamster3000/Joan-smart-assistant)
 ![Last Commit](https://img.shields.io/github/last-commit/jamster3000/Joan-smart-assistant)
 ![GitHub Stars](https://img.shields.io/github/stars/jamster3000/Joan-smart-assistant?style=social)![Code Size](https://img.shields.io/github/languages/code-size/jamster3000/Joan-smart-assistant)
