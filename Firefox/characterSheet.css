@@ -8,9 +8,9 @@
     font-size: 15px;
 }
 
-    #strButton:hover {
-        background-color: white;
-    }
+#strButton:hover {
+    background-color: white;
+}
 
 #dexButton {
     background-color: white;
@@ -22,9 +22,9 @@
     font-size: 15px;
 }
 
-    #dexButton:hover {
-        background-color: white;
-    }
+#dexButton:hover {
+    background-color: white;
+}
 
 #conButton {
     background-color: white;
@@ -36,9 +36,9 @@
     font-size: 15px;
 }
 
-    #conButton:hover {
-        background-color: white;
-    }
+#conButton:hover {
+    background-color: white;
+}
 
 #intButton {
     background-color: white;
@@ -50,9 +50,9 @@
     font-size: 15px;
 }
 
-    #intButton:hover {
-        background-color: white;
-    }
+#intButton:hover {
+    background-color: white;
+}
 
 #wisButton {
     background-color: white;
@@ -64,9 +64,9 @@
     font-size: 15px;
 }
 
-    #wisButton:hover {
-        background-color: white;
-    }
+#wisButton:hover {
+    background-color: white;
+}
 
 #chaButton {
     background-color: white;
@@ -78,9 +78,9 @@
     font-size: 15px;
 }
 
-    #chaButton:hover {
-        background-color: white;
-    }
+#chaButton:hover {
+    background-color: white;
+}
 
 #unarmedStrike {
     background-color: white;
@@ -92,9 +92,9 @@
     font-size: 15px;
 }
 
-    #unarmedStrike:hover {
-        background-color: white;
-    }
+#unarmedStrike:hover {
+    background-color: white;
+}
 
 #unarmedStrikeAttackRoll {
     background-color: white;
@@ -106,9 +106,9 @@
     font-size: 15px;
 }
 
-    #unarmedStrikeAttackRoll:hover {
-        background-color: white;
-    }
+#unarmedStrikeAttackRoll:hover {
+    background-color: white;
+}
 
 #unarmedStrikeDamage {
     background-color: white;
@@ -120,10 +120,9 @@
     font-size: 15px;
 }
 
-    #unarmedStrikeDamage:hover {
-        background-color: white;
-    }
-
+#unarmedStrikeDamage:hover {
+    background-color: white;
+}
 #weapon {
     background-color: white;
     color: black;
@@ -134,9 +133,9 @@
     font-size: 15px;
 }
 
-    #weapon:hover {
-        background-color: white;
-    }
+#weapon:hover {
+    background-color: white;
+}
 
 #actionName {
     background-color: white;
@@ -148,9 +147,9 @@
     font-size: 15px;
 }
 
-    #actionName:hover {
-        background-color: white;
-    }
+#actionName:hover {
+    background-color: white;
+}
 
 #bioButton {
     background-color: white;
@@ -162,9 +161,9 @@
     font-size: 15px;
 }
 
-    #bioButton:hover {
-        background-color: white;
-    }
+#bioButton:hover {
+    background-color: white;
+}
 
 #featureButton {
     background-color: white;
@@ -176,9 +175,9 @@
     font-size: 15px;
 }
 
-    #featureButton:hover {
-        background-color: white;
-    }
+#featureButton:hover {
+    background-color: white;
+}
 
 #buttonNameWrap {
     white-space: normal;
@@ -192,12 +191,12 @@
     font-size: 15px;
 }
 
-    #buttonNameWrap:hover {
-        background-color: white;
-    }
+#buttonNameWrap:hover {
+    background-color: white;
+}
 
 .buttonContainer {
     display: flex;
-    justify-content: flex-end; /* Align items to the end of the container */
-    margin-top: 10px; /* Adjust spacing between content and button */
+    justify-content: flex-end; 
+    margin-top: 10px;
 }

@@ -36,7 +36,7 @@ function fetchCharacterInfo() {
     // Clear input field
     characterIdInput.value = '';
 
-    fetch(`https://character-service.dndbeyond.com/character/v3/character/${characterId}`)
+    fetch(`https://character-service.dndbeyond.com/character/v5/character/${characterId}`)
         .then(response => {
             if (!response.ok) {
                 if (response.status === 403) {

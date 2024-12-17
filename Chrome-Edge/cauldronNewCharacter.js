@@ -165,22 +165,24 @@ function addHP(hitPoints) {
     chrome.storage.local.get('characterData', function (result) {
         const characterData = result.characterData;
         if (characterData) {
-            stats = getCharacterStats(characterData);
+            const stats = getCharacterStats(characterData);
 
-            const conStat = Math.floor((stats.totalConstitution - 10) / 2)//ability score -10/2 to get modifier (round up)
+            const conMod = Math.floor((stats.totalConstitution - 10) / 2); // Constitution modifier
             const level = characterData.classes[0].level;
-            var totalHitPoints = characterData.baseHitPoints + (Number(conStat) * Number(level));//constitustion modifier X level + base hit points = total hp
+            let totalHitPoints = characterData.baseHitPoints + (conMod * level);
 
-            for (let i = 0; i < characterData.modifiers.class.length; i++) {
-                if (characterData.modifiers.class[i].subType === "hit-points-per-level") {
-                    totalHitPoints += parseInt(characterData.modifiers.class[i].value) * level;
+            // Adding hit points from modifiers
+            for (let modifier of characterData.modifiers.class) {
+                if (modifier.subType === "hit-points-per-level") {
+                    totalHitPoints += parseInt(modifier.value) * level;
                 }
             }
 
+            // Additional hit points for specific class features
             if (characterData.classes[0].definition.name === "Sorcerer" && characterData.classes[0].subclassDefinition.name === "Draconic Bloodline") {
-                totalHitPoints += 1 * level;
+                totalHitPoints += level; // Draconic Bloodline feature adds 1 HP per level
             }
-
+            
             hitPoints.value = totalHitPoints;
         } else {
             console.log('Character Data not found in storage');
@@ -188,100 +190,94 @@ function addHP(hitPoints) {
     });
 }
 
+
 function addAC(armourClass) {
     chrome.storage.local.get('characterData', function (result) {
         const characterData = result.characterData;
-        stats = getCharacterStats(characterData);
+        const stats = getCharacterStats(characterData);
 
-        totalArmourClass = 0;
+        let totalArmourClass = 0;
         const inventory = characterData.inventory;
 
-        //looks for armour that is equipped which includes shields that could be equiped
-        for (let i = 0; i < inventory.length; i++) {
-            if (inventory[i].definition.armorClass != null) {
-                if (inventory[i].equipped === true) {
-                    totalArmourClass = totalArmourClass + checkArmour(inventory[i].definition.name, stats, inventory[i]);
-                } else {
-                    totalArmourClass = totalArmourClass + 10 + Math.floor((stats.totalDexterity - 10) / 2);
-                }
+        let hasEquippedArmor = false;
+        let shieldAC = 0;
 
-                if (inventory[i].definition.name === "Shield") {
-                    totalArmourClass = totalArmourClass + 2;
-                }
-
-                if (characterData.classes[0].definition.name === "Sorcerer" && characterData.classes[0].subclassDefinition.name === "Draconic Bloodline") {
-                    totalArmourClass = totalArmourClass + 13 + Math.floor((stats.totalDexterity - 10) / 2);
-                }
-
-                armourClass.value = totalArmourClass;
-                break;
-            } else {
-                if (totalArmourClass === 0) {
-                    const features = characterData.classes[0].classFeatures;
-                    const currentIteratedFeature = features[i]
-                    if (currentIteratedFeature.definition.name === "Unarmored Defense" || currentIteratedFeature.definition.name === "Natural Armor") {
-                        //the unarmored defense gives additional AC without the need for armour
-                        if (characterData.classes[0].definition.name === "Monk") {
-                            const dexStat = Math.floor((characterData.stats[1].value - 10) / 2);
-                            const wisStat = Math.floor((characterData.stats[4].value - 10) / 2);
-                            const armourClassWorkedTotal = 10 + dexStat + wisStat;
-                            armourClass.value = armourClassWorkedTotal;
-                            break;
-                        } else if (characterData.classes[0].definition.name === "Barbarian") {
-                            const dexStat = Math.floor((characterData.stats[1]['value'] - 10) / 2)//(dex total -10) /2
-                            const conStat = Math.floor((characterData.stats[2]['value'] - 10) / 2)
-                            const armourClassWorkedTotal = 10 + dexStat + conStat;
-                            armourClass.value = armourClassWorkedTotal;
-                            break;
-                        } else if (characterData.race.baseName === "Lizardfolk") {
-                            const dexStat = Math.floor((characterData.stats[1]['value'] - 10) / 2)//(dex total -10) / 2
-                            const armourClassWorkedTotal = 13 + dexStat;
-                            armourClass.value = armourClassWorkedTotal;
-                            break;
-                        } else if (characterData.classes[0].definition.name === "Sorcerer" && characterData.classes[0].subClassDefinition.name === "Draconic") {
-                            const dexStat = Math.floor((characterData.stats[1]['value'] - 10) / 2)//(dex total -10) / 2
-                            const armourClassWorkedTotal = 13 + dexStat;
-                            armourClass.value = armourClassWorkedTotal;
-                            break;
-                        } else if (characterDara.race.baseName === "Locathah") {
-                            const dexStat = Math.floor((characterData.stats[1]['value'] - 10) / 2)//(dex total -10) / 2
-                            const armourClassWorkedTotal = 12 + dexStat;
-                            armourClass.value = armourClassWorkedTotal;
-                            break;
-                        } else if (characterData.race.baseName === "Loxodon") {
-                            const dexStat = Math.floor((characterData.stats[1]['value'] - 10) / 2)//(dex total -10) / 2
-                            const armourClassWorkedTotal = 13 + dexStat;
-                            armourClass.value = armourClassWorkedTotal;
-                            break;
-                        } else if (characterData.race.baseName === "Tortle") {
-                            const dexStat = Math.floor((characterData.stats[1]['value'] - 10) / 2)//(dex total -10) / 2
-                            const armourClassWorkedTotal = 13 + dexStat;
-                            armourClass.value = armourClassWorkedTotal;
-                            break;
-                        }
+        // Loop through inventory to calculate AC from equipped armor and shields
+        for (let item of inventory) {
+            if (item.definition.armorClass != null) {
+                if (item.equipped) {
+                    const armourAC = checkArmour(item.definition.name, stats, item, characterData);
+                    if (item.definition.name === "Shield") {
+                        shieldAC = 2;  // Store shield AC separately
+                    } else {
+                        totalArmourClass += armourAC;
+                        hasEquippedArmor = true;
                     }
                 }
             }
         }
 
-        //checks for custom shield items
-        for (let i = 0; i < characterData.customItems.length; i++) {
-            if (characterData.customItems.length > 0) {
-                try {
-                    if (characterData.customItems[i].name.includes("shield") || characterData.customItems[i].notes.includes("shield") || characterData.customItems[i].description.includes("shield")) {
-                        armourClass.value = Number(armourClass.value) + 2;
-                    }
-                } catch (TypeError) { }
+        // If no armor is equipped, calculate default AC
+        if (!hasEquippedArmor) {
+            const defaultAC = 10 + Math.floor((stats.totalDexterity - 10) / 2);
+            totalArmourClass = defaultAC;
+        }
+
+        // Apply shield AC if applicable
+        totalArmourClass += shieldAC;
+
+        // Apply class-based AC bonuses
+        const characterClass = characterData.classes[0].definition.name;
+        const subclass = characterData.classes[0].subclassDefinition ? characterData.classes[0].subclassDefinition.name : "";
+
+        if (characterClass === "Sorcerer" && subclass === "Draconic Bloodline") {
+            const sorcererAC = 13 + Math.floor((stats.totalDexterity - 10) / 2);
+            totalArmourClass = Math.max(totalArmourClass, sorcererAC);
+        } else if (characterClass === "Monk") {
+            const dexStat = Math.floor((characterData.stats[1].value - 10) / 2);
+            const wisStat = Math.floor((characterData.stats[4].value - 10) / 2);
+            const monkAC = 10 + dexStat + wisStat;
+            totalArmourClass = Math.max(totalArmourClass, monkAC);
+        } else if (characterClass === "Barbarian") {
+            const dexStat = Math.floor((characterData.stats[1].value - 10) / 2);
+            const conStat = Math.floor((characterData.stats[2].value - 10) / 2);
+            const barbarianAC = 10 + dexStat + conStat;
+            totalArmourClass = Math.max(totalArmourClass, barbarianAC);
+        }
+
+        // Apply race-based AC bonuses
+        const raceBaseName = characterData.race.baseName;
+        if (raceBaseName === "Lizardfolk") {
+            const dexStat = Math.floor((characterData.stats[1].value - 10) / 2);
+            const lizardfolkAC = 13 + dexStat;
+            totalArmourClass = Math.max(totalArmourClass, lizardfolkAC);
+        } else if (raceBaseName === "Locathah") {
+            const dexStat = Math.floor((characterData.stats[1].value - 10) / 2);
+            const locathahAC = 12 + dexStat;
+            totalArmourClass = Math.max(totalArmourClass, locathahAC);
+        } else if (raceBaseName === "Loxodon" || raceBaseName === "Tortle") {
+            const dexStat = Math.floor((characterData.stats[1].value - 10) / 2);
+            const loxodonTortleAC = 13 + dexStat;
+            totalArmourClass = Math.max(totalArmourClass, loxodonTortleAC);
+        }
+
+        // Check for custom shield items
+        for (let item of characterData.customItems) {
+            try {
+                if (item.name.toLowerCase().includes("shield") || item.notes.toLowerCase().includes("shield") || item.description.toLowerCase().includes("shield")) {
+                    totalArmourClass += 2;
+                }
+            } catch (TypeError) {}
+        }
+
+        // Check for the Armoured Bonus for a fighting style
+        for (let option of characterData.options.class) {
+            if (option.definition.name === "Defense") {
+                totalArmourClass += 1;
             }
         }
 
-        //checks for the Armoured Bonus for a fighting style
-        for (let i = 0; i < characterData.options.class.length; i++) {
-            console.log(characterData.options.class);
-            if (characterData.options.class[i].definition.name === "Defense") {
-                armourClass.value = Number(armourClass.value) + 1;
-            }
-        }
+        armourClass.value = totalArmourClass;
     });
 }
 
@@ -299,41 +295,30 @@ function addInitiative(initiative) {
     })
 }
 
-function checkArmour(name, stats, armourData) {
+function checkArmour(name, stats, armourData, characterData) {
     const dexterityMod = Math.floor((stats.totalDexterity - 10) / 2);
-    var number = 0;
-    console.log("name: ", name);
-    console.log("dex: ", stats.totalDexterity);
-    console.log("armour: ", armourData);
+    let number = 0;
+
+    // Light Armor
     if (name === "Padded" || name === "Leather") {
         number = 11 + dexterityMod;
     } else if (name === "Studded Leather") {
         number = 12 + dexterityMod;
-    } else if (name === "Hide") {
-        if (dexterityMod > 1) {
-            number = 12 + 2;
-        } else {
-            number = 12 + dexterityMod;
-        }
+    }
+
+    // Medium Armor
+    else if (name === "Hide") {
+        number = 12 + Math.min(dexterityMod, 2);
     } else if (name === "Chain Shirt") {
-        if (dexterityMod > 1) {
-            number = 13 + 2;
-        } else {
-            number = 13 + dexterityMod;
-        }
+        number = 13 + Math.min(dexterityMod, 2);
     } else if (name === "Scale Mail" || name === "Breastplate") {
-        if (dexterityMod > 1) {
-            number = 14 + 2;
-        } else {
-            number = 14 + dexterityMod;
-        }
+        number = 14 + Math.min(dexterityMod, 2);
     } else if (name === "Half Plate") {
-        if (dexterityMod > 1) {
-            number = 15 + 2;
-        } else {
-            number = 15 + dexterityMod;
-        }
-    } else if (name == "Ring Mail") {
+        number = 15 + Math.min(dexterityMod, 2);
+    }
+
+    // Heavy Armor
+    else if (name === "Ring Mail") {
         number = 14;
     } else if (name === "Chain Mail") {
         number = 16;
@@ -341,23 +326,22 @@ function checkArmour(name, stats, armourData) {
         number = 17;
     } else if (name === "Plate") {
         number = 18;
-    } else {
-        console.log(armourData);
-
-        if (armourData.definition.baseArmorName === "Breastplate") {
-            if (Math.floor((stats.totalDexterity - 10) / 2) >= 2) {
-                number = armourData.definition.armourClass + 2
-            }
-            else {
-                numberasdkfjhasfhjalksdhjflaksdhjflaksdfjhalkdjfhla <<< work on this you muppet
-            }
-        }
-
-        number = armourData.definition.armorClass
     }
 
+    // Default Armor
+    else {
+        number = armourData.definition.armorClass;
+    }
+
+    for (let i = 0; i < characterData.feats.length; i++) {
+        if (characterData.feats[i].definition.name === "Medium Armour Master") {
+            number = number + 1
+        }
+    }
+    
     return number;
 }
+
 
 function getCharacterStats(characterData) {
     let totalStrength = characterData.stats[0].value;
@@ -537,6 +521,30 @@ function getCharacterStats(characterData) {
         } catch (TypeError) {
             continue
         }
+    }
+
+    if (characterData.overrideStats[0].value != null) {
+        totalStrength = characterData.overrideStats[0].value;
+    }
+
+    if (characterData.overrideStats[1].value != null) {
+        totalDexterity = characterData.overrideStats[1].value;
+    }
+
+    if (characterData.overrideStats[2].value != null) {
+        totalConstitution = characterData.overrideStats[2].value;
+    }
+
+    if (characterData.overrideStats[3].value != null) {
+        totalIntellegence = characterData.overrideStats[3].value;
+    }
+
+    if (characterData.overrideStats[4].value != null) {
+        totalWisdom = characterData.overrideStats[4].value;
+    }
+
+    if (characterData.overrideStats[5].value != null) {
+        totalCharisma = characterData.overrideStats[5].value;
     }
 
     return {

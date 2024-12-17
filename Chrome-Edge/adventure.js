@@ -1,81 +1,677 @@
 //chromium based adventure.js
 
 let characterSheetOverlayOpen = false;
+let commonActionOpen = false;
+let overlayContainerOpen = false; //this is for the commonActions fucntion
+let commonActionClickListener = null; //a check to ensure mulitple listeners aren't added to the common action menu
 saveSpellSlots(null);
 
-setTimeout(function () {
-    const urlWithJsonOutput = window.location.href + "?output=json";
-    fetchJsonDataFromUrl(urlWithJsonOutput)
-        .then(adventureData => {
-            adventureData = adventureData.adventure;
-            try {
-                const container = document.querySelector('.btn-group');//contains each section of the page (playArea, chat, header, etc.)
+const currentURL = window.location.href;
+const excludeRegex = /^https:\/\/www\.cauldron-vtt\.net\/adventure\/?$/;
 
-                const viewCharacter = document.createElement('button');
-				
-				viewCharacter.classList.add('btn', 'btn-primary', 'btn-xs');
-				viewCharacter.display = 'inline-block';
-				viewCharacter.style.position = 'fixed';
-				viewCharacter.style.height = '19.6px';
-				viewCharacter.style.top = '7px';
-				viewCharacter.style.right = '100px';
-				container.appendChild(viewCharacter); // Appended the button to the container
+if (!excludeRegex.test(currentURL)) {
+	setTimeout(function () {
+		const urlWithJsonOutput = window.location.href + "?output=json";
+		fetchJsonDataFromUrl(urlWithJsonOutput)
+			.then(adventureData => {
+				adventureData = adventureData.adventure;
+				try {
+					const container = document.querySelector('.topbar'); //contains each section of the page (playArea, chat, header, etc.)
 
-				if (adventureData["@is_dm"] === "yes") {					
-                    viewCharacter.textContent = "Player Character Sheets";
-                } else {
-					viewCharacter.textContent = "Character Sheet";
-				}
+					const viewCharacter = document.createElement('button');
 
-				viewCharacter.addEventListener('click', function (event) {
-					event.preventDefault();
+					const viewCommonActions = document.createElement('button');
+
+					viewCharacter.classList.add('btn', 'btn-primary', 'btn-xs');
+					viewCharacter.display = 'inline-block';
+					viewCharacter.style.position = 'fixed';
+					viewCharacter.style.height = '19.6px';
+					viewCharacter.style.top = '7px';
+					viewCharacter.style.right = '100px';
+					container.appendChild(viewCharacter); // Appended the button to the container
+
+					viewCommonActions.classList.add('btn', 'btn-primary', 'btn-xs');
+					viewCommonActions.id = 'common-action-button';
+					viewCommonActions.display = 'inline-block';
+					viewCommonActions.style.position = 'fixed';
+					viewCommonActions.style.height = '19.6px';
+					viewCommonActions.style.top = '7px';
+					viewCommonActions.style.right = '250px';
+					container.appendChild(viewCommonActions);
 
 					if (adventureData["@is_dm"] === "yes") {
-						showDmView(false, adventureData);
+						viewCharacter.textContent = "Player Character Sheets";
 					} else {
-						const urlWithJsonOutput = window.location.href + "?output=json";
-						fetchJsonDataFromUrl(urlWithJsonOutput)
-							.then(adventureData => {
-								adventureData = adventureData.adventure;
-								createCharacterSheet(adventureData, true);
-							})
+						viewCharacter.textContent = "Character Sheet";
+						viewCommonActions.textContent = "Common Actions";
 					}
+
+					viewCommonActions.addEventListener('click', function (event) {
+						event.preventDefault();
+
+						if (adventureData["@is_dm"] === "yes") {
+							//for the time being, do nothing as this isn't a feature for the DM as of yet
+						} else {
+							if (overlayContainerOpen == false) {
+								const urlWithJsonOutput = window.location.href + "?output=json";
+								fetchJsonDataFromUrl(urlWithJsonOutput)
+									.then(adventureData => {
+										adventureData = adventureData.adventure;
+										createCommonActionMenu(adventureData);
+										toggleCommonActionOverlay();
+									});
+							} else {
+								toggleCommonActionOverlay();
+							}
+						}
+					});
+
+
+					viewCharacter.addEventListener('click', function (event) {
+						event.preventDefault();
+
+						if (adventureData["@is_dm"] === "yes") {
+							showDmView(false, adventureData);
+						} else {
+							const urlWithJsonOutput = window.location.href + "?output=json";
+							fetchJsonDataFromUrl(urlWithJsonOutput)
+								.then(adventureData => {
+									adventureData = adventureData.adventure;
+									createCharacterSheet(adventureData, true);
+								})
+						}
+					});
+
+				} catch {
+					const container = document.querySelector('topbar');
+
+					const viewCharacter = document.createElement('button');
+					viewCharacter.textContent = "View Character Sheet";
+					viewCharacter.classList.add('btn', 'btn-primary', 'btn-xs');
+					viewCharacter.display = 'inline-block';
+					viewCharacter.style.position = 'fixed';
+					viewCharacter.style.height = '19.6px';
+					viewCharacter.style.top = '7px';
+					viewCharacter.style.right = '100px';
+					container.appendChild(viewCharacter);
+
+					viewCommonActions.classList.add('btn', 'btn-primary', 'btn-xs');
+					viewCommonActions.id = 'common-action-button';
+					viewCommonActions.display = 'inline-block';
+					viewCommonActions.style.position = 'fixed';
+					viewCommonActions.style.height = '19.6px';
+					viewCommonActions.style.top = '7px';
+					viewCommonActions.style.right = '250px';
+					container.appendChild(viewCommonActions);
+
+					viewCommonActions.addEventListener('click', function (event) {
+						event.preventDefault();
+
+						if (adventureData["@is_dm"] === "yes") {
+							//for the time being, do nothing as this isn't a feature for the DM as of yet
+						} else {
+							if (overlayContainerOpen == false) {
+								const urlWithJsonOutput = window.location.href + "?output=json";
+								fetchJsonDataFromUrl(urlWithJsonOutput)
+									.then(adventureData => {
+										adventureData = adventureData.adventure;
+										createCommonActionMenu(adventureData);
+										toggleCommonActionOverlay();
+									});
+							} else {
+								console.log(overlayContainerOpen);
+								toggleCommonActionOverlay();
+							}
+						}
+					});
+
+					viewCharacter.addEventListener('click', function (event) {
+						event.preventDefault();
+
+						if (adventureData["@is_dm"] === "yes") {
+							showDmView(false, adventureData);
+						} else {
+							const urlWithJsonOutput = window.location.href + "?output=json";
+							fetchJsonDataFromUrl(urlWithJsonOutput)
+								.then(adventureData => {
+									adventureData = adventureData.adventure;
+									showCharacterSheet(adventureData, true);
+								})
+						}
+					});
+				}
+			})
+			.catch(error => {
+				console.error('Error fetching JSON data:', error);
+			});
+	}, 0);
+}
+
+function toggleCommonActionOverlay() {
+	if (!overlayContainerDiv) {
+		console.error('Overlay Container not found');
+		return;
+	}
+
+	try {
+		characterSheetOverlayOpen = false;
+
+		const characterSheetOverlay = document.getElementById('customOverlay');
+		if (characterSheetOverlay) {
+			characterSheetOverlay.remove();
+		}
+	} catch (TypeError) { }
+
+	commonActionOpen = !commonActionOpen;
+	overlayContainerDiv.style.display = commonActionOpen ? 'block' : 'none';
+
+	console.log('Toggle called. Menu is now:', commonActionOpen ? 'open' : 'closed');
+}
+
+
+function createCommonActionMenu(adventureData) {
+	console.log(overlayContainerOpen);
+	if (overlayContainerOpen) {
+		console.log("Returning")
+		return; // Menu already exists, no need to create it again
+	}
+
+	const topbar = document.querySelector('.topbar');
+
+	overlayContainerDiv = document.createElement('div');
+	overlayContainerDiv.id = 'customCommonActionMenu';
+	overlayContainerDiv.classList.add('panel', 'panel-primary');
+	overlayContainerDiv.style.display = 'none';
+	overlayContainerDiv.style.position = 'fixed';
+	overlayContainerDiv.style.right = '178px';
+	overlayContainerDiv.style.backgroundColor = '#d0d0d0';
+	overlayContainerDiv.style.zIndex = '1012';
+	overlayContainerDiv.style.width = "254.2px";
+	overlayContainerDiv.style.position = "absolute";
+	overlayContainerDiv.style.border = "1px solid #808080";
+	overlayContainerDiv.style.borderRadius = '4px';
+	overlayContainerDiv.style.boxShadow = '10px 10px 10px';
+	overlayContainerDiv.style.padding = '-5px';
+	overlayContainerDiv.style.paddingBottom = '-150px';
+	overlayContainerDiv.style.boxSizing = "border-box";
+
+	chrome.storage.local.get('characterData', function (result) {
+		const characterData = result.characterData;
+		const stats = getCharacterStats(characterData);
+
+		// Use CSS text injection for styles to reduce redundancy
+		const style = document.createElement('style');
+		style.innerHTML = `
+			.check, .saving-throw, .actions, .spells, .usable-items{
+				width: 224.2px;
+				margin-bottom: 5px;
+			}
+
+			.menu-item {
+				position: relative;
+				width: 100%;
+				text-align: left;
+				margin-bottom: 5px;
+			}
+
+			.menu-item > button::after {
+				content: '◀';
+				float: left;
+				font-size: 0.8em;
+				margin-top: 3px;
+			}
+
+			.submenu {
+				display: none;
+				position: absolute;
+				right: 100%;
+				top: 0px;
+				background-color: #d0d0d0;
+				border: 1px solid #808080;
+				border-radius: 4px;
+				box-shadow: 5px 5px 5px rgba(0,0,0,0.2);
+				z-index: 1014;
+			}
+
+			.menu-item:hover .submenu {
+				display: block;
+			}
+
+			.submenu-item {
+				height: 20px;
+				width: 152.1px;
+				cursor: pointer;
+				white-space: normal;
+				word-wrap: normal;
+			}
+
+			.submenu-item:hover {
+				background-color: #0c0c0c0;
+			}
+
+			.submenu hr {
+				margin: 5px;
+				border-top: 1px solid #dee2e6;
+			}
+
+			.submenu-item-button {
+				display: flex;
+				align-items: flex-start;
+				padding-top:0;
+				padding-right: 0;
+			}
+		`;
+		document.head.appendChild(style);
+
+		// Build the menu structure
+		const overlayBody = document.createElement('div');
+		overlayBody.classList.add('panel-body');
+		overlayBody.innerHTML = `
+			<div class="menu-container">
+				<div class="menu-item">
+					<button class="btn btn-default btn-sm check">Checks</button>
+					<div class="submenu" id="checks">
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm" data-action="Strength Check"><b>Strength</b>&nbsp;Check</button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm" data-action="Dexterity Check"><b>Dexterity</b> Check</button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm" data-action="Constitution Check"><b>Constitution</b> Check</button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm" data-action="Intelligence Check"><b>Intelligence</b> Check</button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm" data-action="Wisdom Check"><b>Wisdom</b> Check</button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm" data-action="Charisma Check"><b>Charisma</b> Check</button>
+						<hr>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm"><b>Acrobatics</b> &nbsp;<small>(Dex)</small></button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm"><b>Animal Handling</b> &nbsp;<small>(Wis)</small></button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm"><b>Arcana</b>&nbsp; <small>(Int)</small></button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm"><b>Athletics</b> &nbsp;<small>(Str)</small></button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm"><b>Deception</b> &nbsp;<small>(Cha)</small></button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm"><b>History</b> &nbsp;<small>(Int)</small></button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm"><b>Insight</b> &nbsp;<small>(Wis)</small></button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm"><b>Intimidation</b> &nbsp;<small>(Cha)</small></button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm"><b>Investigation</b>&nbsp; <small>(Int)</small></button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm"><b>Medicine</b> &nbsp;<small>(Wis)</small></button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm"><b>Nature</b>&nbsp; <small>(Int)</small></button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm"><b>Perception</b> &nbsp;<small>(Wis)</small></button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm"><b>Performance</b> &nbsp;<small>(Cha)</small></button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm"><b>Persuasion</b> &nbsp;<small>(Cha)</small></button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm"><b>Religion</b> &nbsp;<small>(Int)</small></button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm"><b>Sleight of Hand</b>&nbsp; <small>(Dex)</small></button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm"><b>Stealth</b> &nbsp;<small>(Dex)</small></button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm"><b>Survival</b> &nbsp;<small>(Wis)</small></button>
+					</div>
+				</div>
+				<div class="menu-item">
+					<button class="btn btn-default btn-sm saving-throw">Saving Throw</button>
+					<div class="submenu" id="saving-throws">
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm"><b>Strength</b></button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm"><b>Dexterity</b></button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm"><b>Constitution</b></button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm"><b>Intelligence</b></button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm"><b>Wisdom</b></button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm"><b>Charisma</b></button>
+					</div>
+				</div>
+				<div class="menu-item">
+					<button class="btn btn-default btn-sm actions">Actions</button>
+					<div class="submenu" id="actions">
+					</div>
+				</div>
+			</div>
+		`;
+
+		overlayContainerDiv.appendChild(overlayBody);
+		topbar.appendChild(overlayContainerDiv);
+
+		// Remove any existing event listeners to avoid memory leaks
+		if (commonActionClickListener) {
+			document.removeEventListener('click', commonActionClickListener);
+		}
+
+		// Create and add the new listener only when necessary
+		commonActionClickListener = function (event) {
+			const commonActionButton = document.getElementById('common-action-button');
+			if (commonActionOpen && !overlayContainerDiv.contains(event.target) && event.target !== commonActionButton) {
+				toggleCommonActionOverlay();
+			}
+		};
+
+		//add buttons for weapon available for attacks
+		const actions = document.getElementById('actions');
+
+		let secondDagger = false;
+		//loop for weapons
+		for (let i = 0; i < characterData.inventory.length; i++) {
+			const weaponReach = ["Glaive", "Halberd", "Lance", "Pike", "Whip"];
+			const rangeWeapon = ["Crossbow, light", "Dart", "Shortbow", "Sling", "Blowgun", "Crossbow hand", "Crossbow, heavy", "Longbow", "Net", "Javelin"];
+
+			if (characterData.inventory[i].definition.filterType === "Weapon" || characterData.inventory[i].definition.filterType === "Rod" || characterData.inventory[i].definition.filterType === "Staff") {
+				const itemName = characterData.inventory[i].definition.name;
+				const range = characterData.inventory[i].definition.range;
+				const longRange = characterData.inventory[i].definition.longRange;
+
+				const characterLevel = characterData.classes[0].level;
+				const profBonus = calculateProf(characterLevel);
+
+				let weaponAttack = null;
+				let damage = null;
+
+				// Calculate weapon attack roll
+				if (secondDagger === true || rangeWeapon.includes(characterData.inventory[i].definition.type)) {
+					const dex = Math.floor((stats.totalDexterity - 10) / 2);
+					weaponAttack = (dex >= 0) ? `+${profBonus + dex}` : `${profBonus + dex}`;
+				} else {
+					const str = Math.floor((stats.totalStrength - 10) / 2);
+					weaponAttack = (str >= 0) ? `+${profBonus + str}` : `${profBonus + str}`;
+				}
+
+				if (itemName === "Dagger") {
+					secondDagger = true;
+				}
+
+				try {
+					if (range < 6 || itemName.includes("Handaxe")) {
+						for (const feature in characterData.classes[0].classFeatures) {
+							if (characterData.classes[0].classFeatures[feature].definition.name === "Aura of Hate") {
+								damage = `${characterData.inventory[i].definition.damage.diceString}${(Math.floor((stats.totalStrength - 10) / 2 + 3) >= 0 ? `+${Math.floor((stats.totalStrength - 10) / 2 + 3)}` : Math.floor(stats.totalStrength - 10) / 2 + 3)}`;
+								break;
+							}
+						}
+						if (!damage) {
+							damage = `${characterData.inventory[i].definition.damage.diceString}${(Math.floor((stats.totalStrength - 10) / 2) >= 0 ? `+${Math.floor((stats.totalStrength - 10) / 2)}` : Math.floor((stats.totalStrength - 10) / 2))}`;
+						}
+					} else if (itemName.includes("Dagger of Venom")) {
+						damage = `${characterData.inventory[i].definition.damage.diceString}${(Math.floor((stats.totalStrength - 10) / 2) >= 0 ? `+${Math.floor((stats.totalStrength - 10) / 2)}` : Math.floor((stats.totalStrength - 10) / 2))}`;
+					} else {
+						damage = `${characterData.inventory[i].definition.damage.diceString}${(Math.floor((stats.totalDexterity - 10) / 2) >= 0 ? `+${Math.floor((stats.totalDexterity - 10) / 2)}` : Math.floor((stats.totalDexterity - 10) / 2))}`;
+					}
+				} catch (TypeError) {
+					try {
+						damage = `${characterData.inventory[i].definition.grantedModifiers[0].dice.diceString}`;
+					} catch (TypeError) {
+						console.error(`Error processing weapon: ${itemName}`);
+					}
+				}
+
+				// Create button for this weapon
+				const weaponButton = document.createElement('button');
+				weaponButton.textContent = itemName;
+				weaponButton.classList.add('submenu-item', 'submenu-item-button', 'btn', 'btn-default', 'btn-sm');
+
+				// Attach event listener for button click (this can be customized)
+				weaponButton.addEventListener('click', () => {
+					commonAction.style.display = 'none';
+					commonActionOpen = false;
+					roll_dice(`1d20${weaponAttack}`);
 				});
 
-            } catch {
-                const container = document.querySelector('.btn-group');//contains each section of the page (playArea, chat, header, etc.)
+				// Append the button to the actions section
+				actions.appendChild(weaponButton);
+			}
+		}
 
-                const viewCharacter = document.createElement('button');
-                viewCharacter.textContent = "View Character Sheet";
-                viewCharacter.classList.add('btn', 'btn-primary', 'btn-xs');
-                viewCharacter.display = 'inline-block';
-                viewCharacter.style.position = 'fixed';
-                viewCharacter.style.height = '19.6px';
-                viewCharacter.style.top = '7px';
-                viewCharacter.style.right = '100px';
-                container.appendChild(viewCharacter); // Appended the button to the container
+		for (let i = 0; i < characterData.actions.class.length; i++) {
+			var allActionsDiv = overlayBody.querySelector('#allActions');
+			const snippet = characterData.actions.class[i].snippet.toLowerCase();
+
+			// Name button
+			var nameButton = document.createElement('button');
+			nameButton.textContent = characterData.actions.class[i].name;
+			nameButton.id = "actionName";
+			nameButton.style.color = "#6385C1";
+			nameButton.style.fontWeight = "bold";
+
+			// Label for description/snippet
+			var snippetLabel = document.createElement('label');
+			snippetLabel.textContent = characterData.actions.class[i].snippet;
+			snippetLabel.style.whiteSpace = "pre-wrap";
+
+			// Replace tokens in the snippet for all action types
+			snippetLabel.textContent = snippetLabel.textContent.replace(/<em>/g, "").replace(/<\/em>/g, "").replace(/<strong>/g, "").replace(/<\/strong>/g, "");
+			snippetLabel.textContent = snippetLabel.textContent.replace(/{{proficiency}}/g, calculateProf(characterData.classes[0].level));
+
+			const characterInt = Math.floor((stats.totalIntelligence - 1) / 2);
+			snippetLabel.textContent = snippetLabel.textContent.replace(/{{modifier:int@min:1}}/g, characterInt > 0 ? characterInt : 1);
+
+			if (characterData.classes[0].definition.name === "Blood Hunter") {
+				snippetLabel.textContent = snippetLabel.textContent.replace(/{{scalevalue}}/g, "1d6");
+			}
+			if (characterData.classes[0].definition.name === "Barbarian") {
+				let level = characterData.classes[0].level;
+				let scaleValue = level < 9 ? "+2" : level < 16 ? "+3" : "+4";
+				snippetLabel.textContent = snippetLabel.textContent.replace(/{{scalevalue#signed}}/g, scaleValue);
+			}
+			try {
+				snippetLabel.textContent = snippetLabel.textContent.replace(/{{scalevalue}}/g, characterData.actions.class[i].dice.diceString);
+			} catch { }
+
+			// Character Wisdom calculation for reactions
+			const characterWisdom = Math.floor((stats.totalWisdom - 10) / 2) >= 0 ? `+${Math.floor((stats.totalWisdom - 10) / 2)}` : Math.floor((stats.totalWisdom - 10) / 2);
+			snippetLabel.textContent = snippetLabel.textContent.replace(/{{modifier:wis@min:1#signed}}/g, characterWisdom);
+
+			// Click listener for the button to send data to the sidebar
+			(function () {
+				const currentNameButton = nameButton;
+				const label = snippetLabel;
+				currentNameButton.addEventListener('click', function () {
+					message = `${currentNameButton.textContent}\n_______________\n${label.textContent}`;
+					sendDataToSidebar(message, characterData.name);
+				});
+			})();
+
+			var breakLine = document.createElement('hr');
+
+			try {
+				allActionsDiv.appendChild(nameButton);
+				allActionsDiv.appendChild(snippetLabel);
+				allActionsDiv.appendChild(breakLine);
+			} catch { }
+		}
 
 
-                viewCharacter.addEventListener('click', function (event) {
-                    event.preventDefault();
 
-                    if (adventureData["@is_dm"] === "yes") {
-                        showDmView(false, adventureData);
-                    } else {
-                        const urlWithJsonOutput = window.location.href + "?output=json";
-                        fetchJsonDataFromUrl(urlWithJsonOutput)
-                            .then(adventureData => {
-                                adventureData = adventureData.adventure;
-                                showCharacterSheet(adventureData, true);
-                            })
-                    }
-                });
-            }
-        })
-        .catch(error => {
-            console.error('Error fetching JSON data:', error);
-        });
-}, 0);
+		document.addEventListener('click', commonActionClickListener);
+		overlayContainerOpen = true;
+
+		const commonAction = document.getElementById('customCommonActionMenu');		
+
+		document.querySelectorAll('.submenu-item-button').forEach(button => {
+			button.addEventListener('click', event => {
+				const target = event.target.closest('button');
+				if (!target) return; 
+
+				const buttonText = target.cloneNode(true);
+				buttonText.querySelector('small')?.remove(); 
+				const action = buttonText.textContent.trim(); 
+
+                const actionData = target.getAttribute('data-action');
+
+				switch (actionData) {
+					//ability checks in the common action menu
+					case 'Strength Check':
+						commonAction.style.display = 'none';
+						commonActionOpen = false;
+						roll_dice(`1d20+${Math.floor((stats.totalStrength - 10) / 2)}`);
+						break;
+
+					case 'Dexterity Check':
+						commonAction.style.display = 'none';
+						commonActionOpen = false;
+						roll_dice(`1d20+${Math.floor((stats.totalDexterity - 10) / 2)}`);
+						break;
+
+					case 'Constitution Check':
+						commonAction.style.display = 'none';
+						commonActionOpen = false;
+						roll_dice(`1d20+${Math.floor((stats.totalConstitution - 10) / 2)}`);
+						break;
+
+					case 'Intelligence Check':
+						commonAction.style.display = 'none';
+						commonActionOpen = false;
+						roll_dice(`1d20+${Math.floor((stats.totalIntelligence - 10) / 2)}`);
+						break;
+
+					case 'Wisdom Check':
+						commonAction.style.display = 'none';
+						commonActionOpen = false;
+						roll_dice(`1d20+${Math.floor((stats.totalWisdom - 10) / 2)}`);
+						break;
+
+					case 'Charisma Check':
+						commonAction.style.display = 'none';
+						commonActionOpen = false;
+						roll_dice(`1d20+${Math.floor((stats.totalCharisma - 10) / 2)}`);
+						break;
+				}
+
+				switch (action) {
+                    //saving throws in the common action menu
+					case 'Strength':
+						commonAction.style.display = 'none';
+						commonActionOpen = false;
+						rollSavingThrow(action, characterData, stats);
+						break;
+					case 'Dexterity':
+						commonAction.style.display = 'none';
+						commonActionOpen = false;
+						rollSavingThrow(action, characterData, stats);
+						break;
+					case 'Constitution':
+						commonAction.style.display = 'none';
+						commonActionOpen = false;
+						rollSavingThrow(action, characterData, stats);
+						break;
+					case 'Intelligence':
+						commonAction.style.display = 'none';
+						commonActionOpen = false;
+						rollSavingThrow(action, characterData, stats);
+						break;
+					case 'Wisdom':
+						commonAction.style.display = 'none';
+						commonActionOpen = false;
+						rollSavingThrow(action, characterData, stats);
+						break;
+					case 'Charisma':
+						commonAction.style.display = 'none';
+						commonActionOpen = false;
+						rollSavingThrow(action, characterData, stats);
+						break;
+
+					//checks
+					case 'Acrobatics':
+						commonAction.style.display = 'none';
+						commonActionOpen = false;
+						rollSkill(action, characterData, stats);
+						break;
+
+					case 'Animal Handling':
+						commonAction.style.display = 'none';
+						commonActionOpen = false;
+						rollSkill(action, characterData, stats);
+						break;
+
+					case 'Arcana':
+						commonAction.style.display = 'none';
+						commonActionOpen = false;
+						rollSkill(action, characterData, stats);
+						break;
+
+					case 'Athletics':
+						commonAction.style.display = 'none';
+						commonActionOpen = false;
+						rollSkill(action, characterData, stats);
+						break;
+
+					case 'Deception':
+						commonAction.style.display = 'none';
+						commonActionOpen = false;
+						rollSkill(action, characterData, stats);
+						break;
+
+					case 'History':
+						commonAction.style.display = 'none';
+						commonActionOpen = false;
+						rollSkill(action, characterData, stats);
+						break;
+
+					case 'Insight':
+						commonAction.style.display = 'none';
+						commonActionOpen = false;
+						rollSkill(action, characterData, stats);
+						break;
+
+					case 'Intimidation':
+						commonAction.style.display = 'none';
+						commonActionOpen = false;
+						rollSkill(action, characterData, stats);
+						break;
+
+					case 'Investigation':
+						commonAction.style.display = 'none';
+						commonActionOpen = false;
+						rollSkill(action, characterData, stats);
+						break;
+
+					case 'Medicine':
+						commonAction.style.display = 'none';
+						commonActionOpen = false;
+						rollSkill(action, characterData, stats);
+						break;
+
+					case 'Nature':
+						commonAction.style.display = 'none';
+						commonActionOpen = false;
+						rollSkill(action, characterData, stats);
+						break;
+
+					case 'Perception':
+						commonAction.style.display = 'none';
+						commonActionOpen = false;
+						rollSkill(action, characterData, stats);
+						break;
+
+					case 'Performance':
+						commonAction.style.display = 'none';
+						commonActionOpen = false;
+						rollSkill(action, characterData, stats);
+						break;
+
+					case 'Persuasion':
+						commonAction.style.display = 'none';
+						commonActionOpen = false;
+						rollSkill(action, characterData, stats);
+						break;
+
+					case 'Religion':
+						commonAction.style.display = 'none';
+						commonActionOpen = false;
+						rollSkill(action, characterData, stats);
+						break;
+
+					case 'Sleight of Hand':
+						commonAction.style.display = 'none';
+						commonActionOpen = false;
+						rollSkill(action, characterData, stats);
+						break;
+
+					case 'Stealth ':
+						commonAction.style.display = 'none';
+						commonActionOpen = false;
+						rollSkill(action, characterData, stats);
+						break;
+
+					case 'Survival':
+						commonAction.style.display = 'none';
+						commonActionOpen = false;
+						rollSkill(action, characterData, stats);
+						break;
+
+					default:
+						//console.log('Unknown button clicked:', action);
+						break;
+				}
+			});
+		});
+	});
+}
 
 
 function showDmView(buttonPressed, adventureData) {
@@ -611,7 +1207,7 @@ function createCharacterSheet(adventureData, buttonPressed, recreateOverlay) {
 
 			if (listElement.checked === true) {
 				let total = 0;
-				const characterProf = calculateProf(characterData.classes[0].level);//calculateLevel(characterData.currentXp, characterData));
+				const characterProf = calculateProf(characterData.classes[0].level);
 
 				for (const feature in characterData.classes[0].classFeatures) {
 					if (characterData.classes[0].classFeatures[feature].definition.name === "Aura of Protection") {
@@ -1098,7 +1694,7 @@ function showActions(adventureData, buttonPressed, characterData, stats) {
 	}
 
 	const characterSheetOverlay = document.getElementById('customOverlay');
-	characterSheetOverlay.style.width = "500px";
+	characterSheetOverlay.style.width = "540px";
 
 	const content = document.getElementById('overlayContainer');
 	content.innerHTML = ''; // Clear existing content
@@ -1139,26 +1735,26 @@ function showActions(adventureData, buttonPressed, characterData, stats) {
 		<style>
     		.character-menu {
         		display: grid;
-        		grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); /* Adjust minmax values as needed */
-        		gap: 10px; /* Adjust gap as needed */
+        		grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+        		gap: 10px;
     		}
 		</style>
 		    <div style="display: flex;">
 				<div>
-					<div id="actionsList" style="height: 495px; width: 350px; margin-left: 0px; margin-top: 0px; overflow: auto; border: 2px solid #336699; padding: 10px;">
+					<div id="actionsList" style="height: 495px; width: 385px; margin-left: 0px; margin-top: 0px; overflow: auto;overflow: auto; border: 2px solid #336699; padding: 10px;">
 						<ul id="ContentList">
 							<p style="font-size: 20px;"><b>Actions</b></p>
-							<div style="margin-left: 20px;">
+							<div>
 								<ul id="actionList">
 									<div id="allActions">
 										<p><b>Actions In Combat</b></p>
 										<p style="max-width: 400px; font-size: 12px;">Attack, Cast a Spell, Dash, Disengage, Dodge, Grapple, Help, Hide, Improvise, Ready, Search, Shove, Use an Object</p>
 										<button id="unarmedStrike" style="color: #6385C1;"><b>Unarmed Strike</b></button>
-										<label style="font-size: 22px;">｜</label>
-										<label id="actionReach">reach: 5ft.</label>
-										<label style="font-size: 22px;">｜</label>
+										<label style="font-size: 20px;">｜</label>
+										<label id="actionReach" style="font-size: 14px;">reach: 5ft.</label>
+										<label style="font-size: 20px;">｜</label>
 										<button id="unarmedStrikeAttackRoll" style="color: #6385C1;" class="unarmedStrikeAttackRoll">0</button>
-										<label style="font-size: 22px;">｜</label>
+										<label style="font-size: 20px;">｜</label>
 										<button id="unarmedStrikeDamage" style="color: #6385C1;" class="unarmedStrikeDamage">1${parseInt(Math.floor((stats.totalStrength - 10) / 2)) >= 0 ? `+${Math.floor((stats.totalStrength - 10) / 2)}` : ''}</button>
 										<hr>
 									</div>
@@ -1187,7 +1783,7 @@ function showActions(adventureData, buttonPressed, characterData, stats) {
 						<button id="spells" class="btn btn-primary btn-xs" style="font-size: 12px; margin-top: -10px; margin-left: 2px; width: 100px; height: 28px;">Spells</button>
 					</div>
 				</div>
-				<div id="ammoList" style="border: 2px solid #336699; padding 5px; height: 230px; width: 110px; margin-left: -140px; margin-top: 240px;"></div>	
+				<div id="ammoList" style="border: 2px solid #336699; padding 5px; height: 230px; width: 110px; margin-left: -140px; margin-top: 265px;"></div>
 			</div>
         `;
 
@@ -1198,7 +1794,7 @@ function showActions(adventureData, buttonPressed, characterData, stats) {
 			var allActionsDiv = overlayBody.querySelector('#allActions');
 
 			const weaponReach = ["Glaive", "Halberd", "Lance", "Pike", "Whip"];
-			const rangeWeapon = ["Crossbow, light", "Dart", "Shortbow", "Sling", "Blowgun", "Crossbow hand", "Crossbow, heavy", "Longbow", "Net"];
+			const rangeWeapon = ["Crossbow, light", "Dart", "Shortbow", "Sling", "Blowgun", "Crossbow hand", "Crossbow, heavy", "Longbow", "Net", "Javelin"];
 
 			if (characterData.inventory[i].definition.filterType === "Weapon" || characterData.inventory[i].definition.filterType === "Rod" || characterData.inventory[i].definition.filterType === "Staff") {
 				const itemName = characterData.inventory[i].definition.name;
@@ -1217,14 +1813,18 @@ function showActions(adventureData, buttonPressed, characterData, stats) {
 
 				//label
 				var splitLabel = document.createElement('label');
-				splitLabel.style.fontSize = "22px";
+				splitLabel.style.fontSize = "20px";
 				splitLabel.style.fontWeight = 'bold';
 				splitLabel.textContent = "｜";
 
 				//weapon reach
+				var reachLabel = document.createElement('label');
+				reachLabel.style.fontSize = "14px";
+
 				if (secondDagger === true || rangeWeapon.includes(characterData.inventory[i].definition.type)) {
-					var reachLabel = document.createElement('label');
 					reachLabel.textContent = range + "/" + longRange + "ft.";
+				} else if (characterData.inventory[i].definition.name.includes("Dagger of Venom")) {
+					reachLabel.textContent = "5 - " + range + "/" + longRange + "ft.";
 				} else {
 					let reach = 5;
 					if (characterData.race.baseName === "Bugbear") {
@@ -1265,7 +1865,7 @@ function showActions(adventureData, buttonPressed, characterData, stats) {
 
 				//label
 				var SecondSplitLabel = document.createElement('label');
-				SecondSplitLabel.style.fontSize = "22px";
+				SecondSplitLabel.style.fontSize = "20px";
 				SecondSplitLabel.style.fontWeight = 'bold';
 				SecondSplitLabel.textContent = "｜";
 
@@ -1276,7 +1876,7 @@ function showActions(adventureData, buttonPressed, characterData, stats) {
 				damageButton.style.color = "#6385C1";
 
 				try {
-					if (characterData.inventory[i].definition.range < 6) { //5 or less assume thats the range in feet meaning it's a melee weapon
+					if (characterData.inventory[i].definition.range < 6 || characterData.inventory[i].definition.name.includes("Handaxe")) { //5 or less assume thats the range in feet meaning it's a melee weapon
 						for (const feature in characterData.classes[0].classFeatures) {
 							if (characterData.classes[0].classFeatures[feature].definition.name === "Aura of Hate") {
 								damageButton.textContent = `${characterData.inventory[i].definition.damage.diceString}${(Math.floor((stats.totalStrength - 10) / 2 + 3) >= 0 ? `+${Math.floor((stats.totalStrength - 10) / 2 + 3)}` : Math.floor(stats.totalStrength - 10) / 2 + 3)}`;
@@ -1287,6 +1887,8 @@ function showActions(adventureData, buttonPressed, characterData, stats) {
 						if (damageButton.textContent === "") {
 							damageButton.textContent = `${characterData.inventory[i].definition.damage.diceString}${(Math.floor((stats.totalStrength - 10) / 2) >= 0 ? `+${Math.floor((stats.totalStrength - 10) / 2)}` : Math.floor((stats.totalStrength - 10) / 2))}`;
 						}
+					} else if (characterData.inventory[i].definition.name.includes("Dagger of Venom")) {
+						damageButton.textContent = `${characterData.inventory[i].definition.damage.diceString}${(Math.floor((stats.totalStrength - 10) / 2) >= 0 ? `+${Math.floor((stats.totalStrength - 10) / 2)}` : Math.floor((stats.totalStrength - 10) / 2))}`;
 					} else {
 						damageButton.textContent = `${characterData.inventory[i].definition.damage.diceString}${(Math.floor((stats.totalDexterity - 10) / 2) >= 0 ? `+${Math.floor((stats.totalDexterity - 10) / 2)}` : Math.floor((stats.totalDexterity - 10) / 2))}`;
 					}
@@ -1303,12 +1905,13 @@ function showActions(adventureData, buttonPressed, characterData, stats) {
 
 				//label
 				var thirdSplitLabel = document.createElement('label');
-				thirdSplitLabel.style.fontSize = "22px";
+				thirdSplitLabel.style.fontSize = "20px";
 				thirdSplitLabel.style.fontWeight = 'bold';
 				thirdSplitLabel.textContent = "｜";
 
 				//description
 				var weaponDescription = document.createElement('label');
+				weaponDescription.style.whiteSpace = "pre-wrap";
 				weaponDescription.textContent = characterData.inventory[i].definition.description.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, "");
 
 				const breakLine = document.createElement('hr');
@@ -1360,6 +1963,7 @@ function showActions(adventureData, buttonPressed, characterData, stats) {
 									message = `${itemName}\nReach: ${range}/${longRange}ft.\n${weaponDescription}`;
 								}
 							}
+				
 						} else {
 							if (damageModifier < 0) {
 								roll_dice(`${damageDice}${damageModifier}`);
@@ -1424,6 +2028,7 @@ function showActions(adventureData, buttonPressed, characterData, stats) {
 
 				snippetLabel = document.createElement('label');
 				snippetLabel.textContent = characterData.actions.class[i].snippet;
+				snippetLabel.style.whiteSpace = "pre-wrap";
 
 				breakLine = document.createElement('hr');
 
@@ -1446,7 +2051,7 @@ function showActions(adventureData, buttonPressed, characterData, stats) {
 			catch { }
 
 			var allBonusActionsDiv = overlayBody.querySelector('#allBonusActions');
-			
+
 			const characterProf = calculateProf(characterData.classes[0].level);
 			const characterInt = Math.floor((stats.totalIntelligence - 1) / 2);
 			if (characterData.actions.class[i].activation.activationType === 3) {
@@ -1457,10 +2062,22 @@ function showActions(adventureData, buttonPressed, characterData, stats) {
 				nameButton.style.color = "#6385C1";
 
 				var snippetLabel = document.createElement('label');
+				snippetLabel.style.whiteSpace = "pre-wrap";
+				
 				snippetLabel.textContent = characterData.actions.class[i].snippet.replace(/{{proficiency}}/g, characterProf);
-
 				if (characterData.classes[0].definition.name === "Blood Hunter") {
 					snippetLabel.textContent = snippetLabel.textContent.replace(/{{scalevalue}}/g, "1d6");
+				}
+
+				if (characterData.classes[0].definition.name === "Barbarian") {
+					let level = characterData.classes[0].level;
+					if (level < 9) {
+						snippetLabel.textContent = snippetLabel.textContent.replace(/{{scalevalue#signed}}/g, "+2");
+					} else if (level > 8 && level < 16) {
+						snippetLabel.textContent = snippetLabel.textContent.replace(/{{scalevalue#signed}}/g, "+3");
+					} else {
+						snippetLabel.textContent = snippetLabel.textContent.replace(/{{scalevalue#signed}}/g, "+4");
+					}
 				}
 
 				if (characterInt > 0) {
@@ -1501,6 +2118,7 @@ function showActions(adventureData, buttonPressed, characterData, stats) {
 				nameButton.style.color = "#6385C1";
 
 				var snippetLabel = document.createElement('label');
+				snippetLabel.style.whiteSpace = "pre-wrap";
 				snippetLabel.textContent = characterData.actions.class[i].snippet;
 
 				try {
@@ -1540,6 +2158,7 @@ function showActions(adventureData, buttonPressed, characterData, stats) {
 		for (let i = 0; i < characterData.actions.feat.length; i++) {
 			var allActionsDiv = overlayBody.querySelector('#allActions');
 			const snippet = characterData.actions.feat[i].snippet.toLowerCase();
+			snippet.style.whiteSpace = "pre-wrap";
 
 			//name button
 			var nameButton = null
@@ -1584,6 +2203,7 @@ function showActions(adventureData, buttonPressed, characterData, stats) {
 		for (let i = 0; i < characterData.actions.race.length; i++) {
 			var allActionsDiv = overlayBody.querySelector('#allActions');
 			const snippet = characterData.actions.race[i].snippet.toLowerCase();
+			snippet.style.whiteSpace = "pre-wrap";
 
 			//name button
 			var nameButton = null
@@ -1634,8 +2254,6 @@ function showActions(adventureData, buttonPressed, characterData, stats) {
 				//attack roll
 				unarmedStrikeAttackRoll.textContent = (Math.floor((stats.totalStrength - 10) / 2 + profBonus) >= 0 ? `+${Math.floor((stats.totalStrength - 10) / 2 + profBonus)}` : Math.floor((stats.totalStrength - 10) / 2 + profBonus))
 			} else {
-				console.error("Button not found.");
-				console.error("Please refresh page");
 				if (confirm("The page needs to reload to continue using the Character Sheet!")) {
 					window.location.reload();
 				}
@@ -1696,10 +2314,6 @@ function showActions(adventureData, buttonPressed, characterData, stats) {
 		const unarmedStrikeButton = overlayBody.querySelector('#unarmedStrike');//the name unarmed attack
 		const unarmedStrikeMod = overlayBody.querySelector('#unarmedStrikeAttackRoll');//the attack roll
 		const unarmedStrikeDamage = overlayBody.querySelector('#unarmedStrikeDamage');//the damage for attack roll
-
-		unarmedStrikeButton.addEventListener('click', function () {
-			//nothing here
-		});
 
 		unarmedStrikeMod.addEventListener('click', function () {
 			roll_dice(`1d20+${parseInt(unarmedStrikeMod.textContent)}`)
@@ -1817,59 +2431,59 @@ function showBio(adventureData, buttonPressed, characterData, stats) {
 					<ul id="ContentList">
 						<button id=bioButton class=backstory style="font-size: 20px; color: #6385C1;"><b>Backstory</b></button>
 						<div id="backstoryDiv" style="margin-left: 20px;">
-							<label class=backstoryLabel style="font-size: 13px;">${characterData.notes.backstory ? characterData.notes.backstory : ""}</label>
+							<label class=backstoryLabel style="font-size: 13px; white-space: pre-wrap;">${characterData.notes.backstory ? characterData.notes.backstory : ""}</label>
 						</div>
 						<button id=bioButton class=allies style="font-size: 20px; color: #6385C1;"><b>Allies</b></button>
 						<div id="alliesDiv" style="margin-left: 20px;">
-							<label class=alliesLabel style="font-size: 13px;">${characterData.notes.allies ? characterData.notes.allies : ""}</label>
+							<label class=alliesLabel style="font-size: 13px; white-space: pre-wrap;">${characterData.notes.allies ? characterData.notes.allies : ""}</label>
 						</div>
 						<button id=bioButton class=enemies style="font-size: 20px; color: #6385C1;"><b>Enemies</b></button>
-						<div id="enemiesDiv" style="margin-left: 20px;">
+						<div id="enemiesDiv" style="margin-left: 20px; white-space: pre-wrap;">
 							<label class=enemiesLabel style="font-size: 13px;">${characterData.notes.enemies ? characterData.notes.enemies : ""}</label>
 						</div>
 						<button id=bioButton class=organizations style="font-size: 20px; color: #6385C1;"><b>Organizations</b></button>
-						<div id="organizationsDiv" style="margin-left: 20px;">
+						<div id="organizationsDiv" style="margin-left: 20px; white-space: pre-wrap;">
 							<label class=organizationLabel style="font-size: 13px;">${characterData.notes.organizations ? characterData.notes.organizations : ""}</label>
 						</div>
 						<button id=bioButton class=otherHoldings style="font-size: 20px; color: #6385C1;"><b>Other holdings</b></button>
-						<div id="otherHoldingsDiv" style="margin-left: 20px;">
+						<div id="otherHoldingsDiv" style="margin-left: 20px; white-space: pre-wrap;">
 							<label class=otherHoldingLabel style="font-size: 13px;">${characterData.notes.otherHoldings ? characterData.notes.otherHoldings : ""}</label>
 						</div>
 						<button id=bioButton class=otherNotes style="font-size: 20px; color: #6385C1;"><b>Other Notes</b></button>
-						<div id="otherNotesDiv" style="margin-left: 20px;">
+						<div id="otherNotesDiv" style="margin-left: 20px; white-space: pre-wrap;">
 							<label class=otherNoteLabel style="font-size: 13px;">${characterData.notes.otherNotes ? characterData.notes.otherNotes : ""}</label>
 						</div>
 						<button id=bioButton class=personalposs style="font-size: 20px; color: #6385C1;"><b>Personal Possessions</b></button>
 						<div id="personalPossessionsDiv" style="margin-left: 20px;">
-							<label class=personalPossLabel style="font-size: 13px;">${characterData.notes.personalPossessions ? characterData.notes.personalPossessions : ""}</label>
+							<label class=personalPossLabel style="font-size: 13px; white-space: pre-wrap;">${characterData.notes.personalPossessions ? characterData.notes.personalPossessions : ""}</label>
 						</div>
 						<button id=bioButton class=shortDes style="font-size: 20px; color: #6385C1;"><b>Background: ${characterData.background.definition.name ? characterData.background.definition.name: ""}</b></button>
-						<div id="backgroundDescription" style="margin-left: 20px;">
+						<div id="backgroundDescription" style="margin-left: 20px; white-space: pre-wrap;">
 							<label class=backgroundDescLabel style="font-size: 13px;">${removeHtmlTags(characterData.background.definition.shortDescription ? characterData.background.definition.shortDescription: "")}
 						</div>
 						<button id=bioButton class=features style="font-size: 12px; color: #6385C1;"><b>Background Feature: ${characterData.background.definition.featureName ? characterData.background.definition.featureName: ""}</b></button>
 						<div id="backgroundFeature" style="margin-left: 20px;">
-							<label class=backgroundFeatureLabel style="font-size: 13px;">${removeHtmlTags(characterData.background.definition.featureDescription ? characterData.background.definition.featureDescription: "")}
+							<label class=backgroundFeatureLabel style="font-size: 13px; white-space: pre-wrap;">${removeHtmlTags(characterData.background.definition.featureDescription ? characterData.background.definition.featureDescription: "")}
 						</div>
 						<button id=bioButton class=appearance style="font-size: 16px; color: #6385C1;"><b>Appearance</b></button>
 						<div id="apperance" style="margin-left: 20px;">
-							<label class=apperanceLabel style="font-size: 13px;">${characterData.traits.appearance ? characterData.traits.appearance : ""}
+							<label class=apperanceLabel style="font-size: 13px; white-space: pre-wrap;">${characterData.traits.appearance ? characterData.traits.appearance : ""}
 						</div>
 						<button id=bioButton class=bond style="font-size: 16px; color: #6385C1;"><b>Bond</b></button>
 						<div id="bond" style="margin-left: 20px;">
-							<label class=bondLabel style="font-size: 13px;">${characterData.traits.bonds ? characterData.traits.bonds : ""}
+							<label class=bondLabel style="font-size: 13px; white-space: pre-wrap;">${characterData.traits.bonds ? characterData.traits.bonds : ""}
 						</div>
 						<button id=bioButton class=flaws style="font-size: 16px; color: #6385C1;"><b>Flaws</b></button>
 						<div id="flaws" style="margin-left: 20px;">
-							<label class=flawsLabel style="font-size: 13px;">${characterData.traits.flaws ? characterData.traits.bonds: ""}
+							<label class=flawsLabel style="font-size: 13px; white-space: pre-wrap;">${characterData.traits.flaws ? characterData.traits.bonds: ""}
 						</div>
 						<button id=bioButton class=ideals style="font-size: 16px; color: #6385C1;"><b>Ideals</b></button>
 						<div id="ideals" style="margin-left: 20px;">
-							<label class=idealsLabel style="font-size: 13px;">${characterData.traits.ideals ? characterData.traits.bonds: ""}
+							<label class=idealsLabel style="font-size: 13px; white-space: pre-wrap;">${characterData.traits.ideals ? characterData.traits.bonds: ""}
 						</div>
 						<button id=bioButton class=personality style="font-size: 16px; color: #6385C1;"><b>Personality Traits</b></button>
 						<div id="personalityTraits" style="margin-left: 20px;">
-							<label class=personalityTraitsLabel style="font-size: 13px;">${characterData.traits.personalityTraits ? characterData.traits.bonds: ""}
+							<label class=personalityTraitsLabel style="font-size: 13px; white-space: pre-wrap;">${characterData.traits.personalityTraits ? characterData.traits.bonds: ""}
 						</div>
 					</ul>
 				</div>
@@ -2097,8 +2711,8 @@ function showFeatures(adventureData, buttonPressed, characterData, stats) {
 
 			// Loop through the actions array and add elements to the listFeatures array
 			actions.forEach(action => {
-				const characterProf = calculateProf(characterData.classes[0].level);//calculateLevel(characterData.currentXp));
-				const characterLevel = characterData.classes[0].level;//calculateLevel(characterData.currentXp);
+				const characterProf = calculateProf(characterData.classes[0].level);
+				const characterLevel = characterData.classes[0].level;
 
 				var featureNameButton = document.createElement('button');
 				featureNameButton.id = "featureButton";
@@ -2107,8 +2721,21 @@ function showFeatures(adventureData, buttonPressed, characterData, stats) {
 				featureNameButton.textContent = action.name;
 
 				var featureDescription = document.createElement('p');
+				featureDescription.style.whiteSpace = "pre-wrap";
 
-				featureDescription.textContent = descriptionToCharacterData(action.snippet, characterData, stats).replace(/proficiency#signed/g, "+" + characterProf).replace(/<strong>/g, '').replace(/<\/?strong\s*>/g, '').replace(/classlevel/g, characterLevel + " (character Level)").replace(/@min:1#signed/g, "").replace(/<em>/g, "").replace(/<\/?em\s*>/g, '').replace(/scalevalue/g, "1d6").replace(/@min:1/g, "");
+				featureDescription.textContent = descriptionToCharacterData(action.snippet, characterData, stats).replace(/proficiency#signed/g, "+" + characterProf).replace(/<strong>/g, '').replace(/<\/?strong\s*>/g, '').replace(/classlevel/g, characterLevel + " (character Level)").replace(/@min:1#signed/g, "").replace(/<em>/g, "").replace(/<\/?em\s*>/g, '').replace(/@min:1/g, "");
+
+				if (characterData.classes[0].definition.name === "Barbarian") {
+					let level = characterData.classes[0].level;
+					if (level < 9) {
+						featureDescription.textContent = featureDescription.textContent.replace(/scalevalue#signed/g, "+2");
+					} else if (level > 8 && level < 16) {
+						featureDescription.textContent = featureDescription.textContent.replace(/scalevalue#signed/g, "+3");
+					} else {
+						featureDescription.textContent = featureDescription.textContent.replace(/scalevalue#signed/g, "+4");
+					}
+				}
+
 				var breakline = document.createElement('hr');
 
 				// Add all elements to the listFeatures array
@@ -2141,6 +2768,7 @@ function showFeatures(adventureData, buttonPressed, characterData, stats) {
 				featureNameButton.style.fontWeight = 'bold';
 
 				var featureDescription = document.createElement('p');
+				featureDescription.style.whiteSpace = "pre-wrap";
 				featureDescription.textContent = descriptionToCharacterData(action.snippet, characterData, stats).replace("proficiency#signed", "+" + characterProf).replace('<strong>', '').replace('</strong>', '');
 
 				var breakline = document.createElement('hr');
@@ -2468,7 +3096,7 @@ function showSpells(adventureData, buttonPressed, characterData, stats) {
 				</div>
 				<div id="SpellInformation" style="border: 2px solid #336699; padding 5px; height: 230px; width: 110px; margin-left: 345px; margin-top: 220px;">
 					<div style="margin-top: 25px; margin-left: 5px;">
-					<label class=spellAbility>Spell Ability: ${abilityScores[characterData.classes[0].definition.spellCastingAbilityId - 1]}</label>
+					<label class=spellAbility>Spell Ability: ${abilityScores[characterData.classes[0].definition.spellCastingAbilityId - 1] ? abilityScores[characterData.classes[0].definition.spellCastingAbilityId - 1]: "N/A"}</label>
 					<label class=spellSaveDc>Spell Save DC: ${characterData.classes[0].definition.hitDice + calculateProf(characterData.classes[0].level) + Math.floor((stats.totalCharisma - 10) / 2)}</label>
 					<label class=SpellAttack>Spell Attack: ${calculateProf(characterData.classes[0].level) + Math.floor((stats.totalCharisma - 10) / 2)}</label>
 					<label style="margin-left: 10px;">
@@ -2648,7 +3276,7 @@ function showSpells(adventureData, buttonPressed, characterData, stats) {
 
 			//warlocks spells are different to other characters as they always cast at highest spell slots avaliable, so they only have set spell slots for the highest spell level avaliable to them
 			if (characterData.classes[0].definition.name === "Warlock") {
-				const characterLevel = characterData.classes[0].level;//calculateLevel(characterData.currentXp, characterData);
+				const characterLevel = characterData.classes[0].level;
 				var spellSlotElement5 = document.querySelector('.spellSlots5');
 				var spellSlotElement4 = document.querySelector('.spellSlots4');
 				var spellSlotElement3 = document.querySelector('.spellSlots3');
@@ -3549,6 +4177,30 @@ function getCharacterStats(characterData) {
 		}
 	}
 
+	if (characterData.overrideStats[0].value != null) {
+		totalStrength = characterData.overrideStats[0].value;
+	}
+
+	if (characterData.overrideStats[1].value != null) {
+		totalDexterity = characterData.overrideStats[1].value;
+	}
+
+	if (characterData.overrideStats[2].value != null) {
+		totalConstitution = characterData.overrideStats[2].value;
+	}
+
+	if (characterData.overrideStats[3].value != null) {
+		totalIntellegence = characterData.overrideStats[3].value;
+	}
+
+	if (characterData.overrideStats[4].value != null) {
+		totalWisdom = characterData.overrideStats[4].value;
+	}
+
+	if (characterData.overrideStats[5].value != null) {
+		totalCharisma = characterData.overrideStats[5].value;
+	}
+
 	return {
 		totalStrength,
 		totalDexterity,
@@ -3589,6 +4241,7 @@ function removeHtmlTags(htmlString) {
 
 	return result;
 }
+
 //timeing issue here as it gets the spells before the updated spells are updated
 function getSpellSlots(callback) {
 	chrome.storage.local.get('currentSpellSlots', function (result) {
@@ -3656,32 +4309,43 @@ function descriptionToCharacterData(description, characterData, stats) {
 }
 
 function sendDataToSidebar(information, characterName) {
-	let script = document.createElement('script');
-
-	script.textContent = `
-			  // Call the page's function with the provided arguments
-			  send_message(${JSON.stringify(information)}, '${characterName}');
-			`;
-
-	(document.head || document.documentElement).appendChild(script);
+	chrome.runtime.sendMessage({
+		type: 'SEND_DATA_TO_SIDEBAR',
+		information: information,
+		characterName: characterName
+	}, (response) => {
+		//console.log('Content Script: Received response:', response);
+		if (chrome.runtime.lastError) {
+			//console.error('Message sending error:', chrome.runtime.lastError);
+		}
+	});
 }
 
 function roll_dice(dice) {
-	let script = document.createElement('script');
+	//console.log('Content script roll_dice called with:', dice);
+	//console.log('Current window keys:', Object.keys(window));
 
-	script.textContent = `
-		roll_dice(${JSON.stringify(dice)})
-		`;
+	//Tries teo find the funtion roll_dice
+	const potentialRollFunctions = Object.entries(window)
+		.filter(([key, value]) =>
+			typeof value === 'function' &&
+			value.toString().includes('roll_dice')
+		);
 
-	(document.head || document.documentElement).appendChild(script);
-}
+	//console.log('Potential roll_dice functions:', potentialRollFunctions);
 
-function rollDice(numberOfDice, sides) {
-	let total = 0;
-	for (let i = 0; i < numberOfDice; i++) {
-		total += Math.floor(Math.random() * sides) + 1;
-	}
-	return total;
+	//due to manifest version 3, the background script now has to 
+	//execute the website's roll_dice function
+	chrome.runtime.sendMessage({
+		type: 'ROLL_DICE',
+		dice: dice
+	}, (response) => {
+		//if (chrome.runtime.lastError) {
+		//	console.error('Message sending error:', chrome.runtime.lastError);
+		//} else {
+		//	console.log('Message sent successfully', response);
+		//}
+	});
 }
 
 function fetchJsonDataFromUrl(url) {
@@ -3707,4 +4371,139 @@ function calculateDamage(dice, modifier) {
 	const damageRoll = rollDice(numberOfDice, sides);
 	const totalDamage = damageRoll + modifier;
 	return `${totalDamage}`;
+}
+
+function rollSkill(buttonText, characterData, stats) {
+	//Used to roll skill checks straight from the common actions menu
+	let totalBonus = 0;
+	var stop = false;
+	const listSkills = [{ name: "Acrobatics", ability: "Dex" }, { name: "Animal Handling", ability: "Wis" }, { name: "Arcana", ability: "Int" }, { name: "Athletics", ability: "Str" }, { name: "Deception", ability: "Cha" }, { name: "History", ability: "Int" }, { name: "Insight", ability: "Wis" }, { name: "Intimidation", ability: "Cha" }, { name: "Investigation", ability: "Int" }, { name: "Medicine", ability: "Wis" }, { name: "Nature", ability: "Int" }, { name: "Perception", ability: "Wis" }, { name: "Performance", ability: "Cha" }, { name: "Persuasion", ability: "Cha" }, { name: "Religion", ability: "Int" }, { name: "Sleight of Hand", ability: "Dex" }, { name: "Stealth", ability: "Dex" }, { name: "Survival", ability: "Wis" }];
+	const skillText = buttonText.split('(')[0];
+
+	for (let i = 0; i < listSkills.length; i++) {
+		for (let j = 0; j < characterData.modifiers.background.length; j++) {
+			if (characterData.modifiers.background[j].subType.includes(listSkills[i].name.toLowerCase()) & skillText === listSkills[i].name) {
+				totalBonus += 2;
+				stop = true;
+				break;
+			}
+		}
+
+		for (let j = 0; j < characterData.modifiers.class.length; j++) {
+			if (characterData.modifiers.class[j].subType.includes(listSkills[i].name.toLowerCase()) & skillText === listSkills[i].name) {
+				totalBonus += 2;
+				stop = true;
+				break;
+			}
+		}
+
+		for (let j = 0; j < characterData.modifiers.race.length; j++) {
+			if (characterData.modifiers.race[j].subType.includes(listSkills[i].name.toLowerCase()) & skillText === listSkills[i].name) {
+				totalBonus += 2;
+				stop = true;
+				break;
+			}
+		}
+
+		if (stop === true) {
+			if (listSkills[i].ability == "Str") {
+				totalBonus += Math.floor((stats.totalStrength - 10) / 2)
+			} else if (listSkills[i].ability == "Dex") {
+				totalBonus += Math.floor((stats.totalDexterity - 10) / 2)
+            } else if (listSkills[i].ability == "Con") {
+				totalBonus += Math.floor((stats.totalConstitution - 10) / 2)
+            } else if (listSkills[i].ability == "Int") {
+				totalBonus += Math.floor((stats.totalIntelligence - 10) / 2)
+            } else if (listSkills[i].ability == "Wis") {
+				totalBonus += Math.floor((stats.totalWisdom - 10) / 2)
+            } else if (listSkills[i].ability == "Cha") {
+				totalBonus += Math.floor((stats.totalCharisma - 10) / 2)
+            }
+			break;
+		}
+	}
+
+	roll_dice(`1d20+${totalBonus}`);
+}
+
+function rollSavingThrow(action, characterData, stats) {
+	const savingThrowList = ["Strength", "Dexterity", "Constitution", "Intelligence", "Wisdom", "Charisma"];
+	const characterProf = calculateProf(characterData.classes[0].level);
+
+	let totalBonus = 0;
+	let proficiencyAdded = false; // Track if proficiency has already been added
+
+	// Check for proficiency from character class
+	for (let j = 0; j < characterData.modifiers.class.length; j++) {
+		if (characterData.modifiers.class[j].friendlySubtypeName === action + " Saving Throws" && !proficiencyAdded) {
+			totalBonus += checkSavingThrow(action, stats, characterProf);
+			proficiencyAdded = true; // Proficiency added, don't add it again
+			break; // No need to check further
+		}
+	}
+
+	// Check for proficiency from class features
+	for (let j = 0; j < characterData.modifiers.class.length; j++) {
+		if (characterData.modifiers.class[j].subType.includes(action.toLowerCase())
+			&& characterData.modifiers.class[j].type === "proficiency"
+			&& !proficiencyAdded) {
+			totalBonus += checkSavingThrow(action, stats, characterProf);
+			proficiencyAdded = true; // Proficiency added, don't add it again
+			break; // No need to check further
+		}
+	}
+
+	// Check for proficiency from racial traits
+	for (let j = 0; j < characterData.modifiers.race.length; j++) {
+		if (characterData.modifiers.race[j].subType.includes(action.toLowerCase())
+			&& characterData.modifiers.race[j].type === "proficiency"
+			&& !proficiencyAdded) {
+			totalBonus += checkSavingThrow(action, stats, characterProf);
+			proficiencyAdded = true; // Proficiency added, don't add it again
+			break; // No need to check further
+		}
+	}
+
+	// If proficiency was never applied, still calculate the base bonus
+	if (!proficiencyAdded) {
+		totalBonus += checkSavingThrow(action, stats, 0); // No proficiency added
+	}
+
+	roll_dice(`1d20+${totalBonus}`);
+}
+
+function checkSavingThrow(savingThrow, stats, characterProf) {
+	let total = 0;
+
+	switch (savingThrow) {
+		case "Strength":
+			console.log("totalStrength: ", stats.totalStrength);
+			total += Math.floor((stats.totalStrength - 10) / 2) + characterProf;
+			break;
+		case "Dexterity":
+			console.log("totalDexterity: ", stats.totalDexterity);
+			total += Math.floor((stats.totalDexterity - 10) / 2) + characterProf;
+			break;
+		case "Constitution":
+			console.log("totalConstitution: ", stats.totalConstitution);
+			total += Math.floor((stats.totalConstitution - 10) / 2) + characterProf;
+			break;
+		case "Intelligence":
+			console.log("totalIntelligence: ", stats.totalIntelligence);
+			total += Math.floor((stats.totalIntelligence - 10) / 2) + characterProf;
+			break;
+		case "Wisdom":
+			console.log("totalWisdom: ", stats.totalWisdom);
+			total += Math.floor((stats.totalWisdom - 10) / 2) + characterProf;
+			break;
+		case "Charisma":
+			console.log("totalCharisma: ", stats.totalCharisma);
+			total += Math.floor((stats.totalCharisma - 10) / 2) + characterProf;
+			break;
+		default:
+			console.error("Unknown saving throw: ", savingThrow);
+	}
+
+	console.log("total: ", total);
+	return total;
 }

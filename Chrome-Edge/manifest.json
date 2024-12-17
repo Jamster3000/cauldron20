@@ -1,5 +1,5 @@
 {
-  "manifest_version": 2,
+  "manifest_version": 3,
   "name": "Cauldron20",
   "version": "1.1.1",
   "description": "Chrome Extension to incorporate D&D Beyond character into Cauldron VTT.",
@@ -11,15 +11,18 @@
   },
   "permissions": [
     "tabs",
-    "storage",
-    "https://character-service.dndbeyond.com/character/v3/*",
+    "scripting",
+    "storage"
+  ],
+  "host_permissions": [
+    "https://character-service.dndbeyond.com/character/v5/character",
     "https://www.cauldron-vtt.net/adventure/*",
     "https://www.cauldron-vtt.net/character/new",
     "https://www.cauldron-vtt.net/character/weapon/*",
     "https://www.cauldron-vtt.net/character/*",
     "https://www.cauldron-vtt.net/character"
   ],
-  "browser_action": {
+  "action": {
     "default_icon": "icon128.png",
     "default_popup": "popup.html"
   },
@@ -32,9 +35,14 @@
       "js": [ "cauldronNewCharacter.js" ]
     },
     {
-      "matches": [ "https://www.cauldron-vtt.net/adventure/*" ],
+      "matches": [
+        "https://www.cauldron-vtt.net/adventure/*",
+        "https://www.cauldron-vtt.net/adventure"
+      ],
+      "exclude_matches": [
+        "https://www.cauldron-vtt.net/adventure"
+      ],
       "js": [ "adventure.js" ],
-      "exclude_matches": [ "https://www.cauldron-vtt.net/adventure" ],
       "css": [ "characterSheet.css" ]
     }
   ]
