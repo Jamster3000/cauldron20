@@ -195,151 +195,477 @@ function createCommonActionMenu(adventureData) {
 	overlayContainerDiv.style.paddingBottom = '-150px';
 	overlayContainerDiv.style.boxSizing = "border-box";
 
-	// Use CSS text injection for styles to reduce redundancy
-	const style = document.createElement('style');
-	style.innerHTML = `
-        .check, .saving-throw, .actions, .spells, .usable-items{
-            width: 224.2px;
-            margin-bottom: 5px;
-        }
+	chrome.storage.local.get('characterData', function (result) {
+		const characterData = result.characterData;
+		const stats = getCharacterStats(characterData);
 
-        .menu-item {
-            position: relative;
-            width: 100%;
-            text-align: left;
-            margin-bottom: 5px;
-        }
+		// Use CSS text injection for styles to reduce redundancy
+		const style = document.createElement('style');
+		style.innerHTML = `
+			.check, .saving-throw, .actions, .spells, .usable-items{
+				width: 224.2px;
+				margin-bottom: 5px;
+			}
 
-        .menu-item > button::after {
-            content: '◀';
-            float: left;
-            font-size: 0.8em;
-            margin-top: 3px;
-        }
+			.menu-item {
+				position: relative;
+				width: 100%;
+				text-align: left;
+				margin-bottom: 5px;
+			}
 
-        .submenu {
-            display: none;
-            position: absolute;
-            right: 100%;
-            top: 0px;
-            background-color: #d0d0d0;
-            border: 1px solid #808080;
-            border-radius: 4px;
-            box-shadow: 5px 5px 5px rgba(0,0,0,0.2);
-            z-index: 1014;
-        }
+			.menu-item > button::after {
+				content: '◀';
+				float: left;
+				font-size: 0.8em;
+				margin-top: 3px;
+			}
 
-        .menu-item:hover .submenu {
-            display: block;
-        }
+			.submenu {
+				display: none;
+				position: absolute;
+				right: 100%;
+				top: 0px;
+				background-color: #d0d0d0;
+				border: 1px solid #808080;
+				border-radius: 4px;
+				box-shadow: 5px 5px 5px rgba(0,0,0,0.2);
+				z-index: 1014;
+			}
 
-        .submenu-item {
-            padding: 5px 10px;
-            width: 152.1px;
-            cursor: pointer;
-            white-space: normal;
-            word-wrap: normal;
-        }
+			.menu-item:hover .submenu {
+				display: block;
+			}
 
-        .submenu-item:hover {
-            background-color: #0c0c0c0;
-        }
+			.submenu-item {
+				height: 20px;
+				width: 152.1px;
+				cursor: pointer;
+				white-space: normal;
+				word-wrap: normal;
+			}
 
-        .submenu hr {
-            margin: 5px;
-            border-top: 1px solid #dee2e6;
-        }
-    `;
-	document.head.appendChild(style);
+			.submenu-item:hover {
+				background-color: #0c0c0c0;
+			}
 
-	// Build the menu structure
-	const overlayBody = document.createElement('div');
-	overlayBody.classList.add('panel-body');
-	overlayBody.innerHTML = `
-        <div class="menu-container">
-            <div class="menu-item">
-                <button class="btn btn-default btn-sm check">Checks</button>
-                <div class="submenu">
-                    <button class="submenu-item btn btn-default btn-sm">Strength Check</button>
-                    <button class="submenu-item btn btn-default btn-sm">Dexterity Check</button>
-                    <button class="submenu-item btn btn-default btn-sm">Constitution Check</button>
-                    <button class="submenu-item btn btn-default btn-sm">Intelligence Check</button>
-                    <button class="submenu-item btn btn-default btn-sm">Wisdom Check</button>
-                    <button class="submenu-item btn btn-default btn-sm">Charisma Check</button>
-                    <hr>
-                    <button class="submenu-item btn btn-default btn-sm">Acrobatics</button>
-                    <button class="submenu-item btn btn-default btn-sm">Animal Handling</button>
-                    <button class="submenu-item btn btn-default btn-sm">Arcana</button>
-                    <button class="submenu-item btn btn-default btn-sm">Athletics</button>
-                    <button class="submenu-item btn btn-default btn-sm">Deception</button>
-                    <button class="submenu-item btn btn-default btn-sm">History</button>
-                    <button class="submenu-item btn btn-default btn-sm">Insight</button>
-                    <button class="submenu-item btn btn-default btn-sm">Intimidation</button>
-                    <button class="submenu-item btn btn-default btn-sm">Investigation</button>
-                    <button class="submenu-item btn btn-default btn-sm">Medicine</button>
-                    <button class="submenu-item btn btn-default btn-sm">Nature</button>
-                    <button class="submenu-item btn btn-default btn-sm">Perception</button>
-                    <button class="submenu-item btn btn-default btn-sm">Performance</button>
-                    <button class="submenu-item btn btn-default btn-sm">Persuasion</button>
-                    <button class="submenu-item btn btn-default btn-sm">Religion</button>
-                    <button class="submenu-item btn btn-default btn-sm">Sleight of Hand</button>
-                    <button class="submenu-item btn btn-default btn-sm">Stealth</button>
-                    <button class="submenu-item btn btn-default btn-sm">Survival</button>
-                </div>
-            </div>
-            <div class="menu-item">
-                <button class="btn btn-default btn-sm saving-throw">Saving Throw</button>
-                <div class="submenu">
-                    <div class="submenu-item btn btn-default btn-sm">Strength</div>
-                    <div class="submenu-item btn btn-default btn-sm">Dexterity</div>
-                    <div class="submenu-item btn btn-default btn-sm">Constitution</div>
-                    <div class="submenu-item btn btn-default btn-sm">Intelligence</div>
-                    <div class="submenu-item btn btn-default btn-sm">Wisdom</div>
-                    <div class="submenu-item btn btn-default btn-sm">Charisma</div>
-                </div>
-            </div>
-            <div class="menu-item">
-                <button class="btn btn-default btn-sm actions">Actions</button>
-                <div class="submenu">
-                    <div class="submenu-item btn btn-default btn-sm">Attack</div>
-                    <div class="submenu-item btn btn-default btn-sm">Dash</div>
-                    <div class="submenu-item btn btn-default btn-sm">Disengage</div>
-                    <div class="submenu-item btn btn-default btn-sm">Dodge</div>
-                </div>
-            </div>
-            <div class="menu-item">
-                <button class="btn btn-default btn-sm spells">Spells</button>
-                <div class="submenu">
-                    <!-- Add spell items here -->
-                </div>
-            </div>
-            <div class="menu-item">
-                <button class="btn btn-default btn-sm usable-items">Usable Items</button>
-                <div class="submenu">
-                    <!-- Add usable item options here -->
-                </div>
-            </div>
-        </div>
-    `;
+			.submenu hr {
+				margin: 5px;
+				border-top: 1px solid #dee2e6;
+			}
 
-	overlayContainerDiv.appendChild(overlayBody);
-	topbar.appendChild(overlayContainerDiv);
+			.submenu-item-button {
+				display: flex;
+				align-items: flex-start;
+				padding-top:0;
+				padding-right: 0;
+			}
+		`;
+		document.head.appendChild(style);
 
-	// Remove any existing event listeners to avoid memory leaks
-	if (commonActionClickListener) {
-		document.removeEventListener('click', commonActionClickListener);
-	}
+		// Build the menu structure
+		const overlayBody = document.createElement('div');
+		overlayBody.classList.add('panel-body');
+		overlayBody.innerHTML = `
+			<div class="menu-container">
+				<div class="menu-item">
+					<button class="btn btn-default btn-sm check">Checks</button>
+					<div class="submenu" id="checks">
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm">Strength Check</button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm">Dexterity Check</button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm">Constitution Check</button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm">Intelligence Check</button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm">Wisdom Check</button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm">Charisma Check</button>
+						<hr>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm">Acrobatics <small>(Dex)</small></button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm">Animal Handling <small>(Wis)</small></button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm">Arcana <small>(Int)</small></button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm">Athletics <small>(Str)</small></button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm">Deception <small>(Cha)</small></button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm">History <small>(Int)</small></button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm">Insight <small>(Wis)</small></button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm">Intimidation <small>(Cha)</small></button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm">Investigation <small>(Int)</small></button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm">Medicine <small>(Wis)</small></button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm">Nature <small>(Int)</small></button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm">Perception <small>(Wis)</small></button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm">Performance <small>(Cha)</small></button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm">Persuasion <small>(Cha)</small></button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm">Religion <small>(Int)</small></button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm">Sleight of Hand <small>(Dex)</small></button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm">Stealth <small>(Dex)</small></button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm">Survival <small>(Wis)</small></button>
+					</div>
+				</div>
+				<div class="menu-item">
+					<button class="btn btn-default btn-sm saving-throw">Saving Throw</button>
+					<div class="submenu" id="saving-throws">
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm">Strength</button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm">Dexterity</button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm">Constitution</button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm">Intelligence</button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm">Wisdom</button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm">Charisma</button>
+					</div>
+				</div>
+				<div class="menu-item">
+					<button class="btn btn-default btn-sm actions">Actions</button>
+					<div class="submenu" id="actions">
+					</div>
+				</div>
+			</div>
+		`;
 
-	// Create and add the new listener only when necessary
-	commonActionClickListener = function (event) {
-		const commonActionButton = document.getElementById('common-action-button');
-		if (commonActionOpen && !overlayContainerDiv.contains(event.target) && event.target !== commonActionButton) {
-			toggleCommonActionOverlay();
+		overlayContainerDiv.appendChild(overlayBody);
+		topbar.appendChild(overlayContainerDiv);
+
+		// Remove any existing event listeners to avoid memory leaks
+		if (commonActionClickListener) {
+			document.removeEventListener('click', commonActionClickListener);
 		}
-	};
 
-	document.addEventListener('click', commonActionClickListener);
-	overlayContainerOpen = true;
+		// Create and add the new listener only when necessary
+		commonActionClickListener = function (event) {
+			const commonActionButton = document.getElementById('common-action-button');
+			if (commonActionOpen && !overlayContainerDiv.contains(event.target) && event.target !== commonActionButton) {
+				toggleCommonActionOverlay();
+			}
+		};
+
+		//add buttons for weapon available for attacks
+		const actions = document.getElementById('actions');
+
+		let secondDagger = false;
+		//loop for weapons
+		for (let i = 0; i < characterData.inventory.length; i++) {
+			const weaponReach = ["Glaive", "Halberd", "Lance", "Pike", "Whip"];
+			const rangeWeapon = ["Crossbow, light", "Dart", "Shortbow", "Sling", "Blowgun", "Crossbow hand", "Crossbow, heavy", "Longbow", "Net", "Javelin"];
+
+			if (characterData.inventory[i].definition.filterType === "Weapon" || characterData.inventory[i].definition.filterType === "Rod" || characterData.inventory[i].definition.filterType === "Staff") {
+				const itemName = characterData.inventory[i].definition.name;
+				const range = characterData.inventory[i].definition.range;
+				const longRange = characterData.inventory[i].definition.longRange;
+
+				const characterLevel = characterData.classes[0].level;
+				const profBonus = calculateProf(characterLevel);
+
+				let weaponAttack = null;
+				let damage = null;
+
+				// Calculate weapon attack roll
+				if (secondDagger === true || rangeWeapon.includes(characterData.inventory[i].definition.type)) {
+					const dex = Math.floor((stats.totalDexterity - 10) / 2);
+					weaponAttack = (dex >= 0) ? `+${profBonus + dex}` : `${profBonus + dex}`;
+				} else {
+					const str = Math.floor((stats.totalStrength - 10) / 2);
+					weaponAttack = (str >= 0) ? `+${profBonus + str}` : `${profBonus + str}`;
+				}
+
+				if (itemName === "Dagger") {
+					secondDagger = true;
+				}
+
+				try {
+					if (range < 6 || itemName.includes("Handaxe")) {
+						for (const feature in characterData.classes[0].classFeatures) {
+							if (characterData.classes[0].classFeatures[feature].definition.name === "Aura of Hate") {
+								damage = `${characterData.inventory[i].definition.damage.diceString}${(Math.floor((stats.totalStrength - 10) / 2 + 3) >= 0 ? `+${Math.floor((stats.totalStrength - 10) / 2 + 3)}` : Math.floor(stats.totalStrength - 10) / 2 + 3)}`;
+								break;
+							}
+						}
+						if (!damage) {
+							damage = `${characterData.inventory[i].definition.damage.diceString}${(Math.floor((stats.totalStrength - 10) / 2) >= 0 ? `+${Math.floor((stats.totalStrength - 10) / 2)}` : Math.floor((stats.totalStrength - 10) / 2))}`;
+						}
+					} else if (itemName.includes("Dagger of Venom")) {
+						damage = `${characterData.inventory[i].definition.damage.diceString}${(Math.floor((stats.totalStrength - 10) / 2) >= 0 ? `+${Math.floor((stats.totalStrength - 10) / 2)}` : Math.floor((stats.totalStrength - 10) / 2))}`;
+					} else {
+						damage = `${characterData.inventory[i].definition.damage.diceString}${(Math.floor((stats.totalDexterity - 10) / 2) >= 0 ? `+${Math.floor((stats.totalDexterity - 10) / 2)}` : Math.floor((stats.totalDexterity - 10) / 2))}`;
+					}
+				} catch (TypeError) {
+					try {
+						damage = `${characterData.inventory[i].definition.grantedModifiers[0].dice.diceString}`;
+					} catch (TypeError) {
+						console.error(`Error processing weapon: ${itemName}`);
+					}
+				}
+
+				// Create button for this weapon
+				const weaponButton = document.createElement('button');
+				weaponButton.textContent = itemName;
+				weaponButton.classList.add('submenu-item', 'submenu-item-button', 'btn', 'btn-default', 'btn-sm');
+
+				// Attach event listener for button click (this can be customized)
+				weaponButton.addEventListener('click', () => {
+					commonAction.style.display = 'none';
+					commonActionOpen = false;
+					roll_dice(`1d20${weaponAttack}`);
+				});
+
+				// Append the button to the actions section
+				actions.appendChild(weaponButton);
+			}
+		}
+
+		for (let i = 0; i < characterData.actions.class.length; i++) {
+			var allActionsDiv = overlayBody.querySelector('#allActions');
+			const snippet = characterData.actions.class[i].snippet.toLowerCase();
+
+			// Name button
+			var nameButton = document.createElement('button');
+			nameButton.textContent = characterData.actions.class[i].name;
+			nameButton.id = "actionName";
+			nameButton.style.color = "#6385C1";
+			nameButton.style.fontWeight = "bold";
+
+			// Label for description/snippet
+			var snippetLabel = document.createElement('label');
+			snippetLabel.textContent = characterData.actions.class[i].snippet;
+			snippetLabel.style.whiteSpace = "pre-wrap";
+
+			// Replace tokens in the snippet for all action types
+			snippetLabel.textContent = snippetLabel.textContent.replace(/<em>/g, "").replace(/<\/em>/g, "").replace(/<strong>/g, "").replace(/<\/strong>/g, "");
+			snippetLabel.textContent = snippetLabel.textContent.replace(/{{proficiency}}/g, calculateProf(characterData.classes[0].level));
+
+			const characterInt = Math.floor((stats.totalIntelligence - 1) / 2);
+			snippetLabel.textContent = snippetLabel.textContent.replace(/{{modifier:int@min:1}}/g, characterInt > 0 ? characterInt : 1);
+
+			if (characterData.classes[0].definition.name === "Blood Hunter") {
+				snippetLabel.textContent = snippetLabel.textContent.replace(/{{scalevalue}}/g, "1d6");
+			}
+			if (characterData.classes[0].definition.name === "Barbarian") {
+				let level = characterData.classes[0].level;
+				let scaleValue = level < 9 ? "+2" : level < 16 ? "+3" : "+4";
+				snippetLabel.textContent = snippetLabel.textContent.replace(/{{scalevalue#signed}}/g, scaleValue);
+			}
+			try {
+				snippetLabel.textContent = snippetLabel.textContent.replace(/{{scalevalue}}/g, characterData.actions.class[i].dice.diceString);
+			} catch { }
+
+			// Character Wisdom calculation for reactions
+			const characterWisdom = Math.floor((stats.totalWisdom - 10) / 2) >= 0 ? `+${Math.floor((stats.totalWisdom - 10) / 2)}` : Math.floor((stats.totalWisdom - 10) / 2);
+			snippetLabel.textContent = snippetLabel.textContent.replace(/{{modifier:wis@min:1#signed}}/g, characterWisdom);
+
+			// Click listener for the button to send data to the sidebar
+			(function () {
+				const currentNameButton = nameButton;
+				const label = snippetLabel;
+				currentNameButton.addEventListener('click', function () {
+					message = `${currentNameButton.textContent}\n_______________\n${label.textContent}`;
+					sendDataToSidebar(message, characterData.name);
+				});
+			})();
+
+			var breakLine = document.createElement('hr');
+
+			try {
+				allActionsDiv.appendChild(nameButton);
+				allActionsDiv.appendChild(snippetLabel);
+				allActionsDiv.appendChild(breakLine);
+			} catch { }
+		}
+
+
+
+		document.addEventListener('click', commonActionClickListener);
+		overlayContainerOpen = true;
+
+		const commonAction = document.getElementById('customCommonActionMenu');		
+
+		document.querySelectorAll('.submenu-item-button').forEach(button => {
+			button.addEventListener('click', event => {
+				const target = event.target.closest('button');
+				if (!target) return; 
+
+				const buttonText = target.cloneNode(true);
+				buttonText.querySelector('small')?.remove(); 
+				const action = buttonText.textContent.trim(); 
+
+				switch (action) {
+                    //saving throws in the common action menu
+					case 'Strength':
+						commonAction.style.display = 'none';
+						commonActionOpen = false;
+						rollSavingThrow(action, characterData, stats);
+						break;
+					case 'Dexterity':
+						commonAction.style.display = 'none';
+						commonActionOpen = false;
+						rollSavingThrow(action, characterData, stats);
+						break;
+					case 'Constitution':
+						commonAction.style.display = 'none';
+						commonActionOpen = false;
+						rollSavingThrow(action, characterData, stats);
+						break;
+					case 'Intelligence':
+						commonAction.style.display = 'none';
+						commonActionOpen = false;
+						rollSavingThrow(action, characterData, stats);
+						break;
+					case 'Wisdom':
+						commonAction.style.display = 'none';
+						commonActionOpen = false;
+						rollSavingThrow(action, characterData, stats);
+						break;
+					case 'Charisma':
+						commonAction.style.display = 'none';
+						commonActionOpen = false;
+						rollSavingThrow(action, characterData, stats);
+						break;
+
+					//ability checks in the common action menu
+					case 'Strength Check':
+						commonAction.style.display = 'none';
+						commonActionOpen = false;
+						roll_dice(`1d20+${Math.floor((stats.totalStrength - 10) / 2)}`);
+						break;
+
+					case 'Dexterity Check':
+						commonAction.style.display = 'none';
+						commonActionOpen = false;
+						roll_dice(`1d20+${Math.floor((stats.totalDexterity - 10) / 2)}`);
+						break;
+
+					case 'Constitution Check':
+						commonAction.style.display = 'none';
+						commonActionOpen = false;
+						roll_dice(`1d20+${Math.floor((stats.totalConstitution - 10) / 2)}`);
+						break;
+
+					case 'Intelligence Check':
+						commonAction.style.display = 'none';
+						commonActionOpen = false;
+						roll_dice(`1d20+${Math.floor((stats.totalIntelligence - 10) / 2)}`);
+						break;
+
+					case 'Wisdom Check':
+						commonAction.style.display = 'none';
+						commonActionOpen = false;
+						roll_dice(`1d20+${Math.floor((stats.totalWisdom - 10) / 2)}`);
+						break;
+
+					case 'Charisma Check':
+						commonAction.style.display = 'none';
+						commonActionOpen = false;
+						roll_dice(`1d20+${Math.floor((stats.totalCharisma - 10) / 2)}`);
+						break;
+
+					case 'Acrobatics':
+						commonAction.style.display = 'none';
+						commonActionOpen = false;
+						rollSkill(action, characterData, stats);
+						break;
+
+					case 'Animal Handling':
+						commonAction.style.display = 'none';
+						commonActionOpen = false;
+						rollSkill(action, characterData, stats);
+						break;
+
+					case 'Arcana':
+						commonAction.style.display = 'none';
+						commonActionOpen = false;
+						rollSkill(action, characterData, stats);
+						break;
+
+					case 'Athletics':
+						commonAction.style.display = 'none';
+						commonActionOpen = false;
+						rollSkill(action, characterData, stats);
+						break;
+
+					case 'Deception':
+						commonAction.style.display = 'none';
+						commonActionOpen = false;
+						rollSkill(action, characterData, stats);
+						break;
+
+					case 'History':
+						commonAction.style.display = 'none';
+						commonActionOpen = false;
+						rollSkill(action, characterData, stats);
+						break;
+
+					case 'Insight':
+						commonAction.style.display = 'none';
+						commonActionOpen = false;
+						rollSkill(action, characterData, stats);
+						break;
+
+					case 'Intimidation':
+						commonAction.style.display = 'none';
+						commonActionOpen = false;
+						rollSkill(action, characterData, stats);
+						break;
+
+					case 'Investigation':
+						commonAction.style.display = 'none';
+						commonActionOpen = false;
+						rollSkill(action, characterData, stats);
+						break;
+
+					case 'Medicine':
+						commonAction.style.display = 'none';
+						commonActionOpen = false;
+						rollSkill(action, characterData, stats);
+						break;
+
+					case 'Nature':
+						commonAction.style.display = 'none';
+						commonActionOpen = false;
+						rollSkill(action, characterData, stats);
+						break;
+
+					case 'Perception':
+						commonAction.style.display = 'none';
+						commonActionOpen = false;
+						rollSkill(action, characterData, stats);
+						break;
+
+					case 'Performance':
+						commonAction.style.display = 'none';
+						commonActionOpen = false;
+						rollSkill(action, characterData, stats);
+						break;
+
+					case 'Persuasion':
+						commonAction.style.display = 'none';
+						commonActionOpen = false;
+						rollSkill(action, characterData, stats);
+						break;
+
+					case 'Religion':
+						commonAction.style.display = 'none';
+						commonActionOpen = false;
+						rollSkill(action, characterData, stats);
+						break;
+
+					case 'Sleight of Hand':
+						commonAction.style.display = 'none';
+						commonActionOpen = false;
+						rollSkill(action, characterData, stats);
+						break;
+
+					case 'Stealth ':
+						commonAction.style.display = 'none';
+						commonActionOpen = false;
+						rollSkill(action, characterData, stats);
+						break;
+
+					case 'Survival':
+						commonAction.style.display = 'none';
+						commonActionOpen = false;
+						rollSkill(action, characterData, stats);
+						break;
+
+					default:
+						//console.log('Unknown button clicked:', action);
+						break;
+				}
+			});
+		});
+	});
 }
 
 
@@ -876,7 +1202,7 @@ function createCharacterSheet(adventureData, buttonPressed, recreateOverlay) {
 
 			if (listElement.checked === true) {
 				let total = 0;
-				const characterProf = calculateProf(characterData.classes[0].level);//calculateLevel(characterData.currentXp, characterData));
+				const characterProf = calculateProf(characterData.classes[0].level);
 
 				for (const feature in characterData.classes[0].classFeatures) {
 					if (characterData.classes[0].classFeatures[feature].definition.name === "Aura of Protection") {
@@ -1363,7 +1689,7 @@ function showActions(adventureData, buttonPressed, characterData, stats) {
 	}
 
 	const characterSheetOverlay = document.getElementById('customOverlay');
-	characterSheetOverlay.style.width = "515px";
+	characterSheetOverlay.style.width = "540px";
 
 	const content = document.getElementById('overlayContainer');
 	content.innerHTML = ''; // Clear existing content
@@ -1404,16 +1730,16 @@ function showActions(adventureData, buttonPressed, characterData, stats) {
 		<style>
     		.character-menu {
         		display: grid;
-        		grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); /* Adjust minmax values as needed */
-        		gap: 10px; /* Adjust gap as needed */
+        		grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+        		gap: 10px;
     		}
 		</style>
 		    <div style="display: flex;">
 				<div>
-					<div id="actionsList" style="height: 495px; width: 370px; margin-left: 0px; margin-top: 0px; overflow: auto; border: 2px solid #336699; padding: 10px;">
+					<div id="actionsList" style="height: 495px; width: 385px; margin-left: 0px; margin-top: 0px; overflow: auto;overflow: auto; border: 2px solid #336699; padding: 10px;">
 						<ul id="ContentList">
 							<p style="font-size: 20px;"><b>Actions</b></p>
-							<div style="margin-left: 20px;">
+							<div>
 								<ul id="actionList">
 									<div id="allActions">
 										<p><b>Actions In Combat</b></p>
@@ -1452,7 +1778,7 @@ function showActions(adventureData, buttonPressed, characterData, stats) {
 						<button id="spells" class="btn btn-primary btn-xs" style="font-size: 12px; margin-top: -10px; margin-left: 2px; width: 100px; height: 28px;">Spells</button>
 					</div>
 				</div>
-				<div id="ammoList" style="border: 2px solid #336699; padding 5px; height: 230px; width: 110px; margin-left: -140px; margin-top: 240px;"></div>	
+				<div id="ammoList" style="border: 2px solid #336699; padding 5px; height: 230px; width: 110px; margin-left: -140px; margin-top: 265px;"></div>
 			</div>
         `;
 
@@ -4040,4 +4366,139 @@ function calculateDamage(dice, modifier) {
 	const damageRoll = rollDice(numberOfDice, sides);
 	const totalDamage = damageRoll + modifier;
 	return `${totalDamage}`;
+}
+
+function rollSkill(buttonText, characterData, stats) {
+	//Used to roll skill checks straight from the common actions menu
+	let totalBonus = 0;
+	var stop = false;
+	const listSkills = [{ name: "Acrobatics", ability: "Dex" }, { name: "Animal Handling", ability: "Wis" }, { name: "Arcana", ability: "Int" }, { name: "Athletics", ability: "Str" }, { name: "Deception", ability: "Cha" }, { name: "History", ability: "Int" }, { name: "Insight", ability: "Wis" }, { name: "Intimidation", ability: "Cha" }, { name: "Investigation", ability: "Int" }, { name: "Medicine", ability: "Wis" }, { name: "Nature", ability: "Int" }, { name: "Perception", ability: "Wis" }, { name: "Performance", ability: "Cha" }, { name: "Persuasion", ability: "Cha" }, { name: "Religion", ability: "Int" }, { name: "Sleight of Hand", ability: "Dex" }, { name: "Stealth", ability: "Dex" }, { name: "Survival", ability: "Wis" }];
+	const skillText = buttonText.split('(')[0];
+
+	for (let i = 0; i < listSkills.length; i++) {
+		for (let j = 0; j < characterData.modifiers.background.length; j++) {
+			if (characterData.modifiers.background[j].subType.includes(listSkills[i].name.toLowerCase()) & skillText === listSkills[i].name) {
+				totalBonus += 2;
+				stop = true;
+				break;
+			}
+		}
+
+		for (let j = 0; j < characterData.modifiers.class.length; j++) {
+			if (characterData.modifiers.class[j].subType.includes(listSkills[i].name.toLowerCase()) & skillText === listSkills[i].name) {
+				totalBonus += 2;
+				stop = true;
+				break;
+			}
+		}
+
+		for (let j = 0; j < characterData.modifiers.race.length; j++) {
+			if (characterData.modifiers.race[j].subType.includes(listSkills[i].name.toLowerCase()) & skillText === listSkills[i].name) {
+				totalBonus += 2;
+				stop = true;
+				break;
+			}
+		}
+
+		if (stop === true) {
+			if (listSkills[i].ability == "Str") {
+				totalBonus += Math.floor((stats.totalStrength - 10) / 2)
+			} else if (listSkills[i].ability == "Dex") {
+				totalBonus += Math.floor((stats.totalDexterity - 10) / 2)
+            } else if (listSkills[i].ability == "Con") {
+				totalBonus += Math.floor((stats.totalConstitution - 10) / 2)
+            } else if (listSkills[i].ability == "Int") {
+				totalBonus += Math.floor((stats.totalIntelligence - 10) / 2)
+            } else if (listSkills[i].ability == "Wis") {
+				totalBonus += Math.floor((stats.totalWisdom - 10) / 2)
+            } else if (listSkills[i].ability == "Cha") {
+				totalBonus += Math.floor((stats.totalCharisma - 10) / 2)
+            }
+			break;
+		}
+	}
+
+	roll_dice(`1d20+${totalBonus}`);
+}
+
+function rollSavingThrow(action, characterData, stats) {
+	const savingThrowList = ["Strength", "Dexterity", "Constitution", "Intelligence", "Wisdom", "Charisma"];
+	const characterProf = calculateProf(characterData.classes[0].level);
+
+	let totalBonus = 0;
+	let proficiencyAdded = false; // Track if proficiency has already been added
+
+	// Check for proficiency from character class
+	for (let j = 0; j < characterData.modifiers.class.length; j++) {
+		if (characterData.modifiers.class[j].friendlySubtypeName === action + " Saving Throws" && !proficiencyAdded) {
+			totalBonus += checkSavingThrow(action, stats, characterProf);
+			proficiencyAdded = true; // Proficiency added, don't add it again
+			break; // No need to check further
+		}
+	}
+
+	// Check for proficiency from class features
+	for (let j = 0; j < characterData.modifiers.class.length; j++) {
+		if (characterData.modifiers.class[j].subType.includes(action.toLowerCase())
+			&& characterData.modifiers.class[j].type === "proficiency"
+			&& !proficiencyAdded) {
+			totalBonus += checkSavingThrow(action, stats, characterProf);
+			proficiencyAdded = true; // Proficiency added, don't add it again
+			break; // No need to check further
+		}
+	}
+
+	// Check for proficiency from racial traits
+	for (let j = 0; j < characterData.modifiers.race.length; j++) {
+		if (characterData.modifiers.race[j].subType.includes(action.toLowerCase())
+			&& characterData.modifiers.race[j].type === "proficiency"
+			&& !proficiencyAdded) {
+			totalBonus += checkSavingThrow(action, stats, characterProf);
+			proficiencyAdded = true; // Proficiency added, don't add it again
+			break; // No need to check further
+		}
+	}
+
+	// If proficiency was never applied, still calculate the base bonus
+	if (!proficiencyAdded) {
+		totalBonus += checkSavingThrow(action, stats, 0); // No proficiency added
+	}
+
+	roll_dice(`1d20+${totalBonus}`);
+}
+
+function checkSavingThrow(savingThrow, stats, characterProf) {
+	let total = 0;
+
+	switch (savingThrow) {
+		case "Strength":
+			console.log("totalStrength: ", stats.totalStrength);
+			total += Math.floor((stats.totalStrength - 10) / 2) + characterProf;
+			break;
+		case "Dexterity":
+			console.log("totalDexterity: ", stats.totalDexterity);
+			total += Math.floor((stats.totalDexterity - 10) / 2) + characterProf;
+			break;
+		case "Constitution":
+			console.log("totalConstitution: ", stats.totalConstitution);
+			total += Math.floor((stats.totalConstitution - 10) / 2) + characterProf;
+			break;
+		case "Intelligence":
+			console.log("totalIntelligence: ", stats.totalIntelligence);
+			total += Math.floor((stats.totalIntelligence - 10) / 2) + characterProf;
+			break;
+		case "Wisdom":
+			console.log("totalWisdom: ", stats.totalWisdom);
+			total += Math.floor((stats.totalWisdom - 10) / 2) + characterProf;
+			break;
+		case "Charisma":
+			console.log("totalCharisma: ", stats.totalCharisma);
+			total += Math.floor((stats.totalCharisma - 10) / 2) + characterProf;
+			break;
+		default:
+			console.error("Unknown saving throw: ", savingThrow);
+	}
+
+	console.log("total: ", total);
+	return total;
 }
