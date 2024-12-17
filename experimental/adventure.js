@@ -271,42 +271,42 @@ function createCommonActionMenu(adventureData) {
 				<div class="menu-item">
 					<button class="btn btn-default btn-sm check">Checks</button>
 					<div class="submenu" id="checks">
-						<button class="submenu-item submenu-item-button btn btn-default btn-sm">Strength Check</button>
-						<button class="submenu-item submenu-item-button btn btn-default btn-sm">Dexterity Check</button>
-						<button class="submenu-item submenu-item-button btn btn-default btn-sm">Constitution Check</button>
-						<button class="submenu-item submenu-item-button btn btn-default btn-sm">Intelligence Check</button>
-						<button class="submenu-item submenu-item-button btn btn-default btn-sm">Wisdom Check</button>
-						<button class="submenu-item submenu-item-button btn btn-default btn-sm">Charisma Check</button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm"><b>Strength</b>&nbsp;Check</button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm"><b>Dexterity</b>&nbsp;Check</button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm"><b>Constitution</b>&nbsp;Check</button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm"><b>Intelligence</b>&nbsp;Check</button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm"><b>Wisdom</b>&nbsp;Check</button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm"><b>Charisma</b>&nbsp;Check</button>
 						<hr>
-						<button class="submenu-item submenu-item-button btn btn-default btn-sm">Acrobatics <small>(Dex)</small></button>
-						<button class="submenu-item submenu-item-button btn btn-default btn-sm">Animal Handling <small>(Wis)</small></button>
-						<button class="submenu-item submenu-item-button btn btn-default btn-sm">Arcana <small>(Int)</small></button>
-						<button class="submenu-item submenu-item-button btn btn-default btn-sm">Athletics <small>(Str)</small></button>
-						<button class="submenu-item submenu-item-button btn btn-default btn-sm">Deception <small>(Cha)</small></button>
-						<button class="submenu-item submenu-item-button btn btn-default btn-sm">History <small>(Int)</small></button>
-						<button class="submenu-item submenu-item-button btn btn-default btn-sm">Insight <small>(Wis)</small></button>
-						<button class="submenu-item submenu-item-button btn btn-default btn-sm">Intimidation <small>(Cha)</small></button>
-						<button class="submenu-item submenu-item-button btn btn-default btn-sm">Investigation <small>(Int)</small></button>
-						<button class="submenu-item submenu-item-button btn btn-default btn-sm">Medicine <small>(Wis)</small></button>
-						<button class="submenu-item submenu-item-button btn btn-default btn-sm">Nature <small>(Int)</small></button>
-						<button class="submenu-item submenu-item-button btn btn-default btn-sm">Perception <small>(Wis)</small></button>
-						<button class="submenu-item submenu-item-button btn btn-default btn-sm">Performance <small>(Cha)</small></button>
-						<button class="submenu-item submenu-item-button btn btn-default btn-sm">Persuasion <small>(Cha)</small></button>
-						<button class="submenu-item submenu-item-button btn btn-default btn-sm">Religion <small>(Int)</small></button>
-						<button class="submenu-item submenu-item-button btn btn-default btn-sm">Sleight of Hand <small>(Dex)</small></button>
-						<button class="submenu-item submenu-item-button btn btn-default btn-sm">Stealth <small>(Dex)</small></button>
-						<button class="submenu-item submenu-item-button btn btn-default btn-sm">Survival <small>(Wis)</small></button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm"><b>Acrobatics</b> &nbsp;<small>(Dex)</small></button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm"><b>Animal Handling</b> &nbsp;<small>(Wis)</small></button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm"><b>Arcana</b>&nbsp; <small>(Int)</small></button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm"><b>Athletics</b> &nbsp;<small>(Str)</small></button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm"><b>Deception</b> &nbsp;<small>(Cha)</small></button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm"><b>History</b> &nbsp;<small>(Int)</small></button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm"><b>Insight</b> &nbsp;<small>(Wis)</small></button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm"><b>Intimidation</b> &nbsp;<small>(Cha)</small></button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm"><b>Investigation</b>&nbsp; <small>(Int)</small></button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm"><b>Medicine</b> &nbsp;<small>(Wis)</small></button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm"><b>Nature</b>&nbsp; <small>(Int)</small></button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm"><b>Perception</b> &nbsp;<small>(Wis)</small></button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm"><b>Performance</b> &nbsp;<small>(Cha)</small></button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm"><b>Persuasion</b> &nbsp;<small>(Cha)</small></button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm"><b>Religion</b> &nbsp;<small>(Int)</small></button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm"><b>Sleight of Hand</b>&nbsp; <small>(Dex)</small></button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm"><b>Stealth</b> &nbsp;<small>(Dex)</small></button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm"><b>Survival</b> &nbsp;<small>(Wis)</small></button>
 					</div>
 				</div>
 				<div class="menu-item">
 					<button class="btn btn-default btn-sm saving-throw">Saving Throw</button>
 					<div class="submenu" id="saving-throws">
-						<button class="submenu-item submenu-item-button btn btn-default btn-sm">Strength</button>
-						<button class="submenu-item submenu-item-button btn btn-default btn-sm">Dexterity</button>
-						<button class="submenu-item submenu-item-button btn btn-default btn-sm">Constitution</button>
-						<button class="submenu-item submenu-item-button btn btn-default btn-sm">Intelligence</button>
-						<button class="submenu-item submenu-item-button btn btn-default btn-sm">Wisdom</button>
-						<button class="submenu-item submenu-item-button btn btn-default btn-sm">Charisma</button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm"><b>Strength</b></button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm"><b>Dexterity</b></button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm"><b>Constitution</b></button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm"><b>Intelligence</b></button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm"><b>Wisdom</b></button>
+						<button class="submenu-item submenu-item-button btn btn-default btn-sm"><b>Charisma</b></button>
 					</div>
 				</div>
 				<div class="menu-item">
