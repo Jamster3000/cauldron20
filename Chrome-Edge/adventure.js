@@ -4,6 +4,7 @@ let characterSheetOverlayOpen = false;
 let commonActionOpen = false;
 let overlayContainerOpen = false; //this is for the commonActions fucntion
 let commonActionClickListener = null; //a check to ensure mulitple listeners aren't added to the common action menu
+let commonActionMenuCreated = false;
 saveSpellSlots(null);
 
 const currentURL = window.location.href;
@@ -16,28 +17,17 @@ if (!excludeRegex.test(currentURL)) {
 			.then(adventureData => {
 				adventureData = adventureData.adventure;
 				try {
-					const container = document.querySelector('.topbar'); //contains each section of the page (playArea, chat, header, etc.)
+					const container = document.querySelector('.topbar .btn-group'); //contains each section of the page (playArea, chat, header, etc.)
 
 					const viewCharacter = document.createElement('button');
 
 					const viewCommonActions = document.createElement('button');
 
 					viewCharacter.classList.add('btn', 'btn-primary', 'btn-xs');
-					viewCharacter.display = 'inline-block';
-					viewCharacter.style.position = 'fixed';
-					viewCharacter.style.height = '19.6px';
-					viewCharacter.style.top = '7px';
-					viewCharacter.style.right = '100px';
-					container.appendChild(viewCharacter); // Appended the button to the container
+					container.prepend(viewCharacter);
 
 					viewCommonActions.classList.add('btn', 'btn-primary', 'btn-xs');
-					viewCommonActions.id = 'common-action-button';
-					viewCommonActions.display = 'inline-block';
-					viewCommonActions.style.position = 'fixed';
-					viewCommonActions.style.height = '19.6px';
-					viewCommonActions.style.top = '7px';
-					viewCommonActions.style.right = '250px';
-					container.appendChild(viewCommonActions);
+					container.prepend(viewCommonActions);
 
 					if (adventureData["@is_dm"] === "yes") {
 						viewCharacter.textContent = "Player Character Sheets";
@@ -57,7 +47,10 @@ if (!excludeRegex.test(currentURL)) {
 								fetchJsonDataFromUrl(urlWithJsonOutput)
 									.then(adventureData => {
 										adventureData = adventureData.adventure;
-										createCommonActionMenu(adventureData);
+
+										if (commonActionMenuCreated === false) {
+											createCommonActionMenu(adventureData);
+										}
 										toggleCommonActionOverlay();
 									});
 							} else {
@@ -83,26 +76,13 @@ if (!excludeRegex.test(currentURL)) {
 					});
 
 				} catch {
-					const container = document.querySelector('topbar');
+					const container = document.querySelector('topbar btn-group');
 
 					const viewCharacter = document.createElement('button');
-					viewCharacter.textContent = "View Character Sheet";
-					viewCharacter.classList.add('btn', 'btn-primary', 'btn-xs');
-					viewCharacter.display = 'inline-block';
-					viewCharacter.style.position = 'fixed';
-					viewCharacter.style.height = '19.6px';
-					viewCharacter.style.top = '7px';
-					viewCharacter.style.right = '100px';
-					container.appendChild(viewCharacter);
+					container.prepend(viewCharacter);
 
 					viewCommonActions.classList.add('btn', 'btn-primary', 'btn-xs');
-					viewCommonActions.id = 'common-action-button';
-					viewCommonActions.display = 'inline-block';
-					viewCommonActions.style.position = 'fixed';
-					viewCommonActions.style.height = '19.6px';
-					viewCommonActions.style.top = '7px';
-					viewCommonActions.style.right = '250px';
-					container.appendChild(viewCommonActions);
+					container.prepend(viewCommonActions);
 
 					viewCommonActions.addEventListener('click', function (event) {
 						event.preventDefault();
@@ -115,11 +95,13 @@ if (!excludeRegex.test(currentURL)) {
 								fetchJsonDataFromUrl(urlWithJsonOutput)
 									.then(adventureData => {
 										adventureData = adventureData.adventure;
-										createCommonActionMenu(adventureData);
+
+										if (commonActionMenuCreated === false) {
+											createCommonActionMenu(adventureData);
+										}
 										toggleCommonActionOverlay();
 									});
 							} else {
-								console.log(overlayContainerOpen);
 								toggleCommonActionOverlay();
 							}
 						}
@@ -155,6 +137,7 @@ function toggleCommonActionOverlay() {
 
 	try {
 		characterSheetOverlayOpen = false;
+		overlayContainerOpen = false;
 
 		const characterSheetOverlay = document.getElementById('customOverlay');
 		if (characterSheetOverlay) {
@@ -164,15 +147,11 @@ function toggleCommonActionOverlay() {
 
 	commonActionOpen = !commonActionOpen;
 	overlayContainerDiv.style.display = commonActionOpen ? 'block' : 'none';
-
-	console.log('Toggle called. Menu is now:', commonActionOpen ? 'open' : 'closed');
 }
 
 
 function createCommonActionMenu(adventureData) {
-	console.log(overlayContainerOpen);
 	if (overlayContainerOpen) {
-		console.log("Returning")
 		return; // Menu already exists, no need to create it again
 	}
 
@@ -199,7 +178,6 @@ function createCommonActionMenu(adventureData) {
 		const characterData = result.characterData;
 		const stats = getCharacterStats(characterData);
 
-		// Use CSS text injection for styles to reduce redundancy
 		const style = document.createElement('style');
 		style.innerHTML = `
 			.check, .saving-throw, .actions, .spells, .usable-items{
@@ -262,6 +240,8 @@ function createCommonActionMenu(adventureData) {
 			}
 		`;
 		document.head.appendChild(style);
+
+		commonActionMenuCreated = true;
 
 		// Build the menu structure
 		const overlayBody = document.createElement('div');
@@ -395,7 +375,7 @@ function createCommonActionMenu(adventureData) {
 				weaponButton.textContent = itemName;
 				weaponButton.classList.add('submenu-item', 'submenu-item-button', 'btn', 'btn-default', 'btn-sm');
 
-				// Attach event listener for button click (this can be customized)
+				// Attach event listener for button click
 				weaponButton.addEventListener('click', () => {
 					commonAction.style.display = 'none';
 					commonActionOpen = false;
@@ -465,7 +445,41 @@ function createCommonActionMenu(adventureData) {
 			} catch { }
 		}
 
+		var spellAttackButton = document.createElement('button');
+		spellAttackButton.id = "test";
+        spellAttackButton.textContent = "Spell Attack";
+		spellAttackButton.classList.add('submenu-item', 'submenu-item-button', 'btn', 'btn-default', 'btn-sm');
 
+		let spellAttack;
+
+		if (characterData.classes[0].definition.name === "Sorcerer") {
+			spellAttack = (calculateProf(characterData.classes[0].level) + Math.floor((stats.totalCharisma - 10) / 2));
+		} else if (characterData.classes[0].definition.name === "Wizard") {
+			spellAttack = (calculateProf(characterData.classes[0].level) + Math.floor((stats.totalIntelligence - 10) / 2));
+		} else if (characterData.classes[0].definition.name === "Cleric") {
+			spellAttack = (calculateProf(characterData.classes[0].level) + Math.floor((stats.totalWisdom - 10) / 2));
+		} else if (characterData.classes[0].definition.name === "Druid") {
+			spellAttack = (calculateProf(characterData.classes[0].level) + Math.floor((stats.totalWisdom - 10) / 2));
+		} else if (characterData.classes[0].definition.name === "Paladin") {
+			spellAttack = (calculateProf(characterData.classes[0].level) + Math.floor((stats.totalCharisma - 10) / 2));
+		} else if (characterData.classes[0].definition.name === "Ranger") {
+			spellAttack = (calculateProf(characterData.classes[0].level) + Math.floor((stats.totalWisdom - 10) / 2));
+		} else if (characterData.classes[0].definition.name === "Bard") {
+			spellAttack = (calculateProf(characterData.classes[0].level) + Math.floor((stats.totalCharisma - 10) / 2));
+		} else if (characterData.classes[0].definition.name === "Warlock") {
+			spellAttack = (calculateProf(characterData.classes[0].level) + Math.floor((stats.totalCharisma - 10) / 2));
+		} else if (characterData.classes[0].definition.name === "Artificer") {
+			spellAttack = (characterProf + Math.floor((stats.totalIntelligence - 10) / 2)); 
+		}
+
+		spellAttackButton.title = "+" + spellAttack;
+		actions.appendChild(spellAttackButton);
+
+		spellAttackButton.addEventListener('click', function () {
+			commonAction.style.display = 'none';
+			commonActionOpen = false;
+			roll_dice(`1d20+${spellAttack}`);
+		});
 
 		document.addEventListener('click', commonActionClickListener);
 		overlayContainerOpen = true;
@@ -3098,7 +3112,7 @@ function showSpells(adventureData, buttonPressed, characterData, stats) {
 					<div style="margin-top: 25px; margin-left: 5px;">
 					<label class=spellAbility>Spell Ability: ${abilityScores[characterData.classes[0].definition.spellCastingAbilityId - 1] ? abilityScores[characterData.classes[0].definition.spellCastingAbilityId - 1]: "N/A"}</label>
 					<label class=spellSaveDc>Spell Save DC: ${characterData.classes[0].definition.hitDice + calculateProf(characterData.classes[0].level) + Math.floor((stats.totalCharisma - 10) / 2)}</label>
-					<label class=SpellAttack>Spell Attack: ${calculateProf(characterData.classes[0].level) + Math.floor((stats.totalCharisma - 10) / 2)}</label>
+					<label class=SpellAttack></label>
 					<label style="margin-left: 10px;">
 					<hr class="hrBreakline">
 					<label style="margin-left: 10px;">
@@ -3248,6 +3262,27 @@ function showSpells(adventureData, buttonPressed, characterData, stats) {
 				spellDC.textContent = "Spell Save DC: " + (8 + Math.floor((stats.totalIntelligence - 10) / 2) + characterProf);
 			}
 
+			const spellAttack = document.querySelector('.SpellAttack');
+            if (characterData.classes[0].definition.name === "Sorcerer") {
+				spellAttack.textContent = "Spell Attack: +" + (calculateProf(characterData.classes[0].level) + Math.floor((stats.totalCharisma - 10) / 2));
+            } else if (characterData.classes[0].definition.name === "Wizard") {
+				spellAttack.textContent = "Spell Attack: +" + (calculateProf(characterData.classes[0].level) + Math.floor((stats.totalIntelligence - 10) / 2));
+            } else if (characterData.classes[0].definition.name === "Cleric") {
+				spellAttack.textContent = "Spell Attack: +" + (calculateProf(characterData.classes[0].level) + Math.floor((stats.totalWisdom - 10) / 2));
+            } else if (characterData.classes[0].definition.name === "Druid") {
+				spellAttack.textContent = "Spell Attack: +" + (calculateProf(characterData.classes[0].level) + Math.floor((stats.totalWisdom - 10) / 2));
+            } else if (characterData.classes[0].definition.name === "Paladin") {
+				spellAttack.textContent = "Spell Attack: +" + (calculateProf(characterData.classes[0].level) + Math.floor((stats.totalCharisma - 10) / 2));
+            } else if (characterData.classes[0].definition.name === "Ranger") {
+				spellAttack.textContent = "Spell Attack:+" + (characterProf + Math.floor((stats.totalWisdom - 10) / 2));
+            } else if (characterData.classes[0].definition.name === "Bard") {
+				spellAttack.textContent = "Spell Attack: +" + (characterProf + Math.floor((stats.totalCharisma - 10) / 2));
+            } else if (characterData.classes[0].definition.name === "Warlock") {
+				spellAttack.textContent = "Spell Attack: +" + (characterProf + Math.floor((stats.totalCharisma - 10) / 2));
+            } else if (characterData.classes[0].definition.name === "Artificer") {
+                spellAttack.textContent = "Spell Attack: +" + (characterProf + Math.floor((stats.totalIntelligence - 10) / 2));
+            }
+
 			var spellSlotElement9 = document.querySelector('.spellSlots9');
 			var spellSlotElement8 = document.querySelector('.spellSlots8');
 			var spellSlotElement7 = document.querySelector('.spellSlots7');
@@ -3258,7 +3293,7 @@ function showSpells(adventureData, buttonPressed, characterData, stats) {
 			var spellSlotElement2 = document.querySelector('.spellSlots2');
 			var spellSlotElement1 = document.querySelector('.spellSlots1');
 
-			const characterLevel = characterData.classes[0].level; //calculateLevel(characterData.currentXp, characterData);
+			const characterLevel = characterData.classes[0].level;
 
 			// Get the spell slot values based on the character's level
 			const spellSlotValues = characterData.classes[0].definition.spellRules.levelSpellSlots[characterLevel];
