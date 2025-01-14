@@ -1,0 +1,86 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>D&D Beyond Character Info</title>
+    <style>
+        body {
+            width: 300px;
+            padding: 15px;
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            box-sizing: border-box;
+        }
+
+        h1 {
+            font-size: 20px;
+            color: #333;
+            margin-top: 0;
+        }
+
+        label {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        input {
+            width: 100%;
+            padding: 5px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        button {
+            background-image: linear-gradient(to bottom, #337ab7 0%, #265a88 100%);
+            border-color: #245580;
+            color: #fff;
+            border: 1px solid transparent;
+            padding: 6px 12px;
+            font-size: 14px;
+            line-height: 1.42857143;
+            border-radius: 4px;
+            text-shadow: 0 -1px 0 rgba(0, 0, 0, .2);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, .15), 0 1px 1px rgba(0, 0, 0, .075);
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+            button:hover {
+                background-image: linear-gradient(to bottom, #2a5d85 0%, #234a6e 100%);
+                background-color: #234a6e;
+                border-color: #1b4162;
+            }
+
+        #characterInfo {
+            margin-top: 15px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background-color: #fff;
+        }
+
+        #errorMessage {
+            margin-top: 10px;
+            color: #ff0000;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>D&D Beyond Character Info</h1>
+    <label for="characterIdInput">Enter Character ID:</label>
+    <input type="text" id="characterIdInput" placeholder="Character ID">
+    <button id="fetchButton">Fetch Character Info</button>
+    <div id="characterInfo"></div>
+    <div id="errorMessage"></div>
+    <div id="spinner" style="display: none;">Loading...</div>
+    <button id="editButton">Edit Character Data</button>
+    <script src="../js/popup.js"></script>
+</body>
+</html>
