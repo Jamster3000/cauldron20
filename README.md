@@ -52,6 +52,6 @@ spells<br>
 Spell Details<br>
 ![image](https://github.com/Jamster3000/cauldron20/assets/148760154/7733d18c-1870-4cf7-b886-737eb87ff009)
 <br><br>
-![GitHub issues](https://img.shields.io/github/issues/jamster3000/Joan-smart-assistant)
-![Last Commit](https://img.shields.io/github/last-commit/jamster3000/Joan-smart-assistant)
-![GitHub Stars](https://img.shields.io/github/stars/jamster3000/Joan-smart-assistant?style=social)![Code Size](https://img.shields.io/github/languages/code-size/jamster3000/Joan-smart-assistant)
+![GitHub issues](https://img.shields.io/github/issues/jamster3000/cauldron20)
+![Last Commit](https://img.shields.io/github/last-commit/jamster3000/cauldron20)
+![GitHub Stars](https://img.shields.io/github/stars/jamster3000/cauldron20?style=social)![Code Size](https://img.shields.io/github/languages/code-size/jamster3000/cauldron20)
