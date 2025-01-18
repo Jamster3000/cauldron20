@@ -1,5 +1,4 @@
 //chromium based adventure.js
-
 chrome.storage.local.get('characterData', function (result) {
 	console.log(result.characterData);
 });
