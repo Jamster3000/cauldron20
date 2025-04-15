@@ -1,0 +1,318 @@
+﻿body {
+    width: 300px;
+    padding: 15px;
+    font-family: Arial, sans-serif;
+    background-color: #f0f0f0;
+    box-sizing: border-box;
+    position: relative;
+}
+
+h1 {
+    font-size: 20px;
+    color: #333;
+    margin-top: 0;
+}
+
+label {
+    font-weight: bold;
+    display: block;
+    margin-bottom: 5px;
+}
+
+input {
+    width: 100%;
+    padding: 5px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+button {
+    background-image: linear-gradient(to bottom, #337ab7 0%, #265a88 100%);
+    border-color: #245580;
+    color: #fff;
+    border: 1px solid transparent;
+    padding: 6px 12px;
+    font-size: 14px;
+    line-height: 1.42857143;
+    border-radius: 4px;
+    text-shadow: 0 -1px 0 rgba(0, 0, 0, .2);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .15), 0 1px 1px rgba(0, 0, 0, .075);
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+    button:hover {
+        background-image: linear-gradient(to bottom, #2a5d85 0%, #234a6e 100%);
+        background-color: #234a6e;
+        border-color: #1b4162;
+    }
+
+#characterInfo {
+    margin-top: 15px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: #fff;
+    min-height: 30px;
+}
+
+#errorMessage {
+    margin-top: 10px;
+    font-weight: bold;
+}
+
+.error {
+    color: #d9534f; /* Bootstrap's danger red, but slightly softer */
+}
+
+.success {
+    color: #5cb85c; /* Bootstrap's success green */
+}
+
+#spinner-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: rgba(240, 240, 240, 0.7);
+    z-index: 1000;
+    display: none;
+}
+
+/* From Uiverse.io by mobinkakei */
+.loader {
+    width: 40px;
+    height: 40px;
+    position: relative;
+    border-radius: 4px;
+    background-color: #fff;
+    background-image: radial-gradient(circle 3px, #337ab7 100%, transparent 0), radial-gradient(circle 3px, #337ab7 100%, transparent 0), radial-gradient(circle 3px, #337ab7 100%, transparent 0), radial-gradient(circle 3px, #337ab7 100%, transparent 0), radial-gradient(circle 3px, #337ab7 100%, transparent 0), radial-gradient(circle 3px, #337ab7 100%, transparent 0);
+    background-repeat: no-repeat;
+    animation: move 4s linear infinite, rotate 0.8s linear infinite;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+@keyframes rotate {
+    0%, 20% {
+        transform: rotate(0deg);
+    }
+
+    30%, 40% {
+        transform: rotate(90deg);
+    }
+
+    50%, 60% {
+        transform: rotate(180deg);
+    }
+
+    70%, 80% {
+        transform: rotate(270deg);
+    }
+
+    90%, 100% {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes move {
+    0%, 9% {
+        background-position: -10px -12px, -10px 0px, -10px 12px, 10px -12px, 10px 0px, 10px 12px;
+    }
+
+    10%, 25% {
+        background-position: 0px -12px, -10px 0px, -10px 12px, 28px -12px, 10px 0px, 10px 12px;
+    }
+
+    30%, 45% {
+        background-position: 0px -28px, -10px -8px, -10px 10px, 28px -12px, 10px -8px, 10px 10px;
+    }
+
+    50%, 65% {
+        background-position: 0px -28px, -10px -28px, -10px 10px, 28px -10px, 0px -8px, 10px 10px;
+    }
+
+    70%, 85% {
+        background-position: 0px -28px, -10px -28px, 0px 10px, 28px -10px, 0px -8px, 28px 10px;
+    }
+
+    90%, 100% {
+        background-position: 0px -28px, -10px -28px, 0px 0px, 28px -10px, 0px 0px, 28px 10px;
+    }
+}
+
+/* Management buttons (Edit, Import, Export) */
+.button-container {
+    display: flex;
+    margin-top: 15px;
+    gap: 8px;
+}
+
+.action-button {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-image: linear-gradient(to bottom, #337ab7 0%, #265a88 100%);
+    border-color: #245580;
+    color: #fff;
+    border: 1px solid transparent;
+    padding: 6px 12px;
+    font-size: 14px;
+    border-radius: 4px;
+    text-shadow: 0 -1px 0 rgba(0, 0, 0, .2);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, .15), 0 1px 1px rgba(0, 0, 0, .075);
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    text-align: center;
+}
+
+    .action-button:hover {
+        background-image: linear-gradient(to bottom, #2a5d85 0%, #234a6e 100%);
+        background-color: #234a6e;
+        border-color: #1b4162;
+    }
+
+    .action-button:disabled {
+        background-color: #cccccc;
+        background-image: none;
+        border-color: #bbbbbb;
+        cursor: not-allowed;
+        opacity: 0.65;
+    }
+
+    .action-button i {
+        margin-right: 5px;
+    }
+
+#importButton {
+    position: relative;
+    overflow: hidden; 
+}
+
+#importFile {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: pointer;
+}
+
+/* Font awesome style icons (simplified versions) */
+.fa {
+    display: inline-block;
+    font: normal normal normal 14px/1 Arial;
+    font-size: inherit;
+    text-rendering: auto;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    width: 16px;
+    text-align: center;
+    margin-right: 5px;
+}
+
+.fa-edit:before {
+    content: "✎";
+}
+
+.fa-download:before {
+    content: "↓";
+}
+
+.fa-upload:before {
+    content: "↑";
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#character-selection {
+    display: block;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.select-container {
+    display: flex;
+    align-items: center;
+    margin-top: 5px; 
+}
+
+#characterSelect {
+    flex-grow: 1;
+    padding: 5px;
+    margin-right: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.danger-button {
+    width: 32px;
+    height: 32px;
+    background-image: linear-gradient(to bottom, #d9534f 0%, #c9302c 100%);
+    border-color: #c9302c;
+    color: #fff;
+    font-size: 14px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0; 
+}
+
+    .danger-button:hover {
+        background-image: linear-gradient(to bottom, #c9302c 0%, #b52b27 100%);
+    }
+
+.fa-trash:before {
+    content: "🗑";
+    font-size: 24px;
+    line-height: 1;
+    margin: 2.5px;
+}
+
+#character-input {
+    margin-bottom: 15px;
+}
+
+/* Adding separator between character sections */
+#character-input {
+    border-top: 1px solid #ddd;
+    padding-top: 15px;
+}

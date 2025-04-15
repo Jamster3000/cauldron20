@@ -9,14 +9,50 @@ document.addEventListener('DOMContentLoaded', function () {
         chrome.tabs.create({ url: chrome.runtime.getURL('html/edit.html') });
     });
 
+    //export data
+    document.getElementById('exportButton').addEventListener('click', function () {
+        exportCharacterData();
+    });
+
+    //import data
+    document.getElementById('importFile').addEventListener('change', function (event) {
+        importCharacterData(event);
+    });
+
+    // Character selection dropdown
+    const characterSelect = document.getElementById('characterSelect');
+    characterSelect.addEventListener('change', function () {
+        const selectedId = characterSelect.value;
+        if (selectedId) {
+            loadSelectedCharacter(selectedId);
+        } else {
+            clearCharacterInfo();
+        }
+    });
+
+    // Delete character button
+    document.getElementById('deleteCharacterButton').addEventListener('click', function () {
+        deleteSelectedCharacter();
+    });
+
+    const characterInfoElement = document.getElementById('characterInfo');
+    characterInfoElement.style.display = 'none';
+
+    // Load characters and populate dropdown
+    loadCharacters();
+
     // Retrieve the stored character ID and populate the input field
     chrome.storage.local.get(['characterId', 'characterData'], function (result) {
-        const characterIdInput = document.getElementById('characterIdInput');
-
         if (result.characterData) {
+            console.log("result.characterData got");
             displayCharacterInfo(result.characterData);
+            document.getElementById('exportButton').disabled = false;
         } else if (result.characterId) {
+            console.log("characterId got");
             fetchCharacterInfo();
+        } else {
+            console.log("never mind");
+            document.getElementById('exportButton').disabled = true;
         }
     });
 
@@ -28,6 +64,200 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 });
+
+//populate the character dropdown
+function loadCharacters() {
+    chrome.storage.local.get(['characters', 'activeCharacterId'], function (result) {
+        const characterSelect = document.getElementById('characterSelect');
+
+        while (characterSelect.options.length > 1) {
+            characterSelect.remove(1);
+        }
+
+        //If characters exist in storage
+        if (result.characters) {
+            Object.keys(result.characters).forEach(id => {
+                const character = result.characters[id];
+                const option = document.createElement('option');
+                option.value = id;
+                option.textContent = character.Name || `Character ${id}`;
+                characterSelect.appendChild(option);
+            });
+
+            //Select active character if exists
+            if (result.activeCharacterId && result.characters[result.activeCharacterId]) {
+                characterSelect.value = result.activeCharacterId;
+                loadSelectedCharacter(result.activeCharacterId);
+            } else if (characterSelect.options.length > 1) {
+                characterSelect.selectedIndex = 1;
+                loadSelectedCharacter(characterSelect.value);
+            } else {
+                document.getElementById('exportButton').disabled = true;
+            }
+        } else {
+            document.getElementById('exportButton').disabled = true;
+        }
+    });
+}
+
+function loadSelectedCharacter(characterId) {
+    chrome.storage.local.get('characters', function (result) {
+        if (result.characters && result.characters[characterId]) {
+            const characterData = result.characters[characterId];
+            displayCharacterInfo(characterData);
+            document.getElementById('exportButton').disabled = false;
+
+            chrome.storage.local.set({ 'activeCharacterId': characterId });
+
+            chrome.storage.local.set({
+                'characterId': characterId,
+                'characterData': characterData
+            });
+        }
+    });
+}
+
+function deleteSelectedCharacter() {
+    const characterSelect = document.getElementById('characterSelect');
+    const selectedId = characterSelect.value;
+
+    if (!selectedId) {
+        displayMessage("No character selected to delete", "error");
+        return;
+    }
+
+    if (confirm(`Are you sure you want to delete "${characterSelect.options[characterSelect.selectedIndex].text}"?`)) {
+        chrome.storage.local.get('characters', function (result) {
+            if (result.characters) {
+                const characters = result.characters;
+                delete characters[selectedId];
+
+                chrome.storage.local.set({ 'characters': characters }, function () {
+                    chrome.storage.local.get('activeCharacterId', function (result) {
+                        if (result.activeCharacterId === selectedId) {
+                            chrome.storage.local.remove('activeCharacterId');
+                            chrome.storage.local.remove('characterId');
+                            chrome.storage.local.remove('characterData');
+                        }
+
+                        loadCharacters();
+                        clearCharacterInfo();
+                        displayMessage(`Character deleted successfully`, "success");
+                    });
+                });
+            }
+        });
+    }
+}
+
+function clearCharacterInfo() {
+    const characterInfoElement = document.getElementById('characterInfo');
+    characterInfoElement.innerHTML = '';
+    characterInfoElement.style.display = 'none';
+    document.getElementById('exportButton').disabled = true;
+    displayError("");
+}
+
+
+//export character data
+function exportCharacterData() {
+    const characterSelect = document.getElementById('characterSelect');
+    const selectedId = characterSelect.value;
+
+    if (!selectedId) {
+        displayMessage("No character selected to export", "error");
+        return;
+    }
+
+    chrome.storage.local.get('characters', function (result) {
+        if (!result.characters || !result.characters[selectedId]) {
+            displayMessage("No character data available to export", "error");
+            return;
+        }
+
+        // Create file data
+        const characterData = result.characters[selectedId];
+        const fileName = `${characterData.Name || 'character'}_data.json`;
+        const jsonData = JSON.stringify(characterData, null, 2); // Pretty print with 2 spaces
+        const blob = new Blob([jsonData], { type: 'application/json' });
+
+        // Create download link and trigger download
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+
+        // Clean up
+        setTimeout(() => {
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+        }, 0);
+
+        displayMessage(`Character data exported successfully! File saved as ${fileName} in your downloads folder.`, "success");
+    });
+}
+
+//import character Data
+function importCharacterData(event) {
+    const file = event.target.files[0];
+    if (!file) {
+        return;
+    }
+
+    showSpinner();
+
+    const reader = new FileReader();
+    reader.onload = function (e) {
+        try {
+            const characterData = JSON.parse(e.target.result);
+
+            // Basic validation - check for a few expected properties
+            if (!characterData || !characterData.Name || !characterData.AbilityScores) {
+                displayMessage("Invalid character data format", "error");
+                hideSpinner();
+                return;
+            }
+
+            // Generate a unique ID if the import doesn't have one
+            const characterId = characterData.Id || Date.now().toString();
+
+            // Save to chrome storage - both old format and new format
+            chrome.storage.local.get('characters', function (result) {
+                const characters = result.characters || {};
+                characters[characterId] = characterData;
+
+                chrome.storage.local.set({
+                    'characterData': characterData,
+                    'characterId': characterId,
+                    'characters': characters,
+                    'activeCharacterId': characterId
+                }, function () {
+                    loadCharacters();
+                    displayCharacterInfo(characterData);
+                    displayMessage("Character successfully imported: " + characterData.Name, "success");
+                    document.getElementById('exportButton').disabled = false;
+                    hideSpinner();
+                });
+            });
+
+        } catch (error) {
+            displayMessage("Error importing character data: " + error.message, "error");
+            hideSpinner();
+        }
+    };
+
+    reader.onerror = function () {
+        displayMessage("Error reading file", "error");
+        hideSpinner();
+    };
+
+    reader.readAsText(file);
+
+    // Reset the file input so the same file can be selected again
+    event.target.value = '';
+}
 
 function fetchCharacterInfo() {
     // Get the character ID from the input field
@@ -58,39 +288,55 @@ function fetchCharacterInfo() {
             }
         })
         .then(data => {
+            if (!data) return;
+
             calculateCharacterData(data.data);
 
-            chrome.storage.local.get('characterData', function (result) {
-                displayCharacterInfo(result.characterData);
+            chrome.storage.local.get(['characterData', 'characters'], function (result) {
+                const characterData = result.characterData;
+
+                if (characterData) {
+                    // Store in multi-character format
+                    const characters = result.characters || {};
+                    characters[characterId] = characterData;
+
+                    chrome.storage.local.set({
+                        'characters': characters,
+                        'activeCharacterId': characterId
+                    }, function () {
+                        loadCharacters();
+                        displayCharacterInfo(characterData);
+                        document.getElementById('exportButton').disabled = false;
+                    });
+                }
             });
 
-            hideSpinner();
-        })
-        .catch(error => {
-            console.log(error.message);
-            if (error.message.includes("Cannot read")) {
-                displayError("403: Your character might be in campaign only or private. Character must be in public in order for the extension to have permission to read the character.");
-            } else {
-                displayError(`Error: ${error.message}`);
-            }
             hideSpinner();
         });
 }
 
 function displayCharacterInfo(characterData) {
-    console.log("test");
     const characterInfoElement = document.getElementById('characterInfo');
-    console.log("test data", characterData);
-    characterInfoElement.innerHTML = `
+
+    if (characterData && characterData.Name) {
+        console.log("characterData", characterData);
+        console.log("characterData.Name", characterData.Name);
+        characterInfoElement.innerHTML = `
             <h3>${characterData.Name}</h3>
+            <p>Level ${characterData.Level} ${characterData.Classes?.[0]?.Definition?.Name || ""}</p>
+            <p>Last modified: ${new Date(characterData.LastModified).toLocaleDateString()}</p>
         `;
+        characterInfoElement.style.display = 'block';
+    } else {
+        characterInfoElement.innerHTML = '';
+        characterInfoElement.style.display = 'none';
+    }
 
     displayError("");
 }
 
 function calculateCharacterData(data) {
     let characterData = {};
-    console.log("Original Data", data);
 
     //function calculations
     const characterStats = getCharacterStats(data);
@@ -167,6 +413,9 @@ function calculateCharacterData(data) {
         IsStabilized: data.deathSaves.isStabilized
     };
 
+    console.log("data", data);
+    console.log("name", data.name);
+
     characterData.Id = data.id;
     characterData.Name = data.name;
     characterData.XP = data.currentXp;
@@ -184,11 +433,13 @@ function calculateCharacterData(data) {
     characterData.Inventory = gatherInventory(data, characterData);
     characterData.Classes = gatherClasses(data, characterData);
     characterData.Feats = gatherFeats(data);
-    characterData.Actions = gatherActions(data);
+
+    // Gather actions first without processing templates
+    characterData.Actions = gatherActionsRaw(data);
     characterData.LastModified = data.dateModified;
 
     //avoid calling more than once
-    const {spellSlots, spellInfo, spells } = gatherSpells(data, characterData);
+    const { spellSlots, spellInfo, spells } = gatherSpells(data, characterData);
     characterData.SpellSlots = spellSlots;
     characterData.SpellInfo = spellInfo;
     characterData.Spells = spells;
@@ -198,18 +449,76 @@ function calculateCharacterData(data) {
     characterData = checkModifiers(data, characterData);
     characterData = gatherCustom(data, characterData);
     characterData.Creatures = gatherCreatures(data);
+    characterData.Extras = gatherExtras(data);
 
+    // Process template strings in action descriptions after all data is gathered
+    processActionTemplates(characterData);
 
     // Sort the dictionary alphabetically
     const sortedDictionary = Object.fromEntries(
         Object.entries(characterData).sort(([keyA], [keyB]) => keyA.localeCompare(keyB))
     );
 
-    console.log(sortedDictionary);
-
+    //DO NOT remove this no matter what
     chrome.storage.local.set({ 'characterData': characterData }, function () {
-        console.log('Character Data stored:', characterData);
     });
+}
+
+// Gather actions without processing templates
+function gatherActionsRaw(data) {
+    const areas = ["race", "class", "background", "feat", "item"];
+    let actions = {};
+
+    for (let k = 0; k < areas.length; k++) {
+        const area = areas[k];
+        if (!data.actions[area] || !Array.isArray(data.actions[area])) {
+            continue;
+        }
+
+        for (let i = 0; i < data.actions[area].length; i++) {
+            const actionData = data.actions[area][i];
+            const descriptionText = actionData.snippet || actionData.description || "";
+
+            actions[Object.keys(actions).length] = {
+                LimitedUse: {
+                    MaxUse: actionData.limitedUse ? actionData.limitedUse.maxUses : 0,
+                    CurrentUse: actionData.limitedUse ? actionData.limitedUse.currentUses : 0
+                },
+                Name: actionData.name,
+                Description: descriptionText ? removeHtmlTags(descriptionText) : "",
+                OnMissDescription: actionData.onMissDescription ? removeHtmlTags(actionData.onMissDescription) : "",
+                SaveFailDescription: actionData.saveFailDescription ? removeHtmlTags(actionData.saveFailDescription) : "",
+                SaveSuccessDescription: actionData.saveSuccessDescription ? removeHtmlTags(actionData.saveSuccessDescription) : "",
+                FixedSaveDc: actionData.fixedSaveDc,
+                AttackTypeRange: actionData.attackType,
+                Dice: actionData.dice,
+                Value: actionData.value,
+                IsMartialArts: actionData.isMartialArts,
+                isProficient: actionData.isProficient,
+                SpellRangeType: actionData.spellRangeType,
+                DisplayAsAttack: actionData.displayAsAttack
+            };
+        }
+    }
+    return actions;
+}
+
+// Process template strings in actions after character data is complete
+function processActionTemplates(characterData) {
+    for (const key in characterData.Actions) {
+        if (characterData.Actions[key].Description) {
+            characterData.Actions[key].Description = processTemplateString(characterData.Actions[key].Description, characterData);
+        }
+        if (characterData.Actions[key].OnMissDescription) {
+            characterData.Actions[key].OnMissDescription = processTemplateString(characterData.Actions[key].OnMissDescription, characterData);
+        }
+        if (characterData.Actions[key].SaveFailDescription) {
+            characterData.Actions[key].SaveFailDescription = processTemplateString(characterData.Actions[key].SaveFailDescription, characterData);
+        }
+        if (characterData.Actions[key].SaveSuccessDescription) {
+            characterData.Actions[key].SaveSuccessDescription = processTemplateString(characterData.Actions[key].SaveSuccessDescription, characterData);
+        }
+    }
 }
 
 function displayError(message) {
@@ -395,7 +704,6 @@ function checkModifiers(data, characterData) {
 
     for (let k = 0; k < areas.length; k++) {
         const area = areas[k];
-        // Skips this iteration if the current iteration of spellArea has no length
         if (!data.modifiers[area] || !Array.isArray(data.modifiers[area])) {
             continue;
         }
@@ -415,6 +723,40 @@ function checkModifiers(data, characterData) {
     return characterData;
 }
 
+// Add this function to parse the template strings in action descriptions
+function processTemplateString(templateString, characterData) {
+    // Check if the string contains a template pattern
+    if (!templateString || !templateString.includes('{{')) return templateString;
+
+    return templateString.replace(/{{(.*?)}}/g, (match, expression) => {
+        // Handle the specific pattern we know: (modifier:cha+classlevel)@min:1#unsigned
+        if (expression.includes('modifier:cha+classlevel')) {
+            // Get charisma modifier from character data
+            const charismaMod = characterData.AbilityScores.Modifier.Charisma;
+            // Get character level
+            const classLevel = characterData.Level;
+            // Calculate the value (cha modifier + class level)
+            let value = charismaMod + classLevel;
+
+            // Check for @min:1 - don't let the value go below 1
+            if (expression.includes('@min:1')) {
+                value = Math.max(1, value);
+            }
+
+            // Check for #unsigned - ensure value is not displayed with a sign
+            if (expression.includes('#unsigned')) {
+                return Math.abs(value).toString();
+            }
+
+            return value.toString();
+        }
+
+        // Return the original match if we don't know how to process it
+        return match;
+    });
+}
+
+// Update the gatherActions function to process descriptions
 function gatherActions(data) {
     const areas = ["race", "class", "background", "feat", "item"];
     let actions = {};
@@ -427,91 +769,189 @@ function gatherActions(data) {
         }
 
         for (let i = 0; i < data.actions[area].length; i++) {
-            actions[i] = {
+            const actionData = data.actions[area][i];
+            const descriptionText = actionData.snippet || actionData.description || "";
+
+            actions[Object.keys(actions).length] = {
                 LimitedUse: {
-                    MaxUse: data.actions[area][i].limitedUse ? data.actions[area][i].limitedUse.maxUses : 0,
-                    CurrentUse: data.actions[area][i].limitedUse ? data.actions[area][i].limitedUse.currentUses : 0
+                    MaxUse: actionData.limitedUse ? actionData.limitedUse.maxUses : 0,
+                    CurrentUse: actionData.limitedUse ? actionData.limitedUse.currentUses : 0
                 },
-                Name: data.actions[area][i].name,
-                Description: data.actions[area][i].description ? removeHtmlTags(data.actions[area][i].description) : removeHtmlTags(data.actions[area][i].snippet),
-                OnMissDescription: removeHtmlTags(data.actions[area][i].onMissDescription),
-                SaveFailDescription: removeHtmlTags(data.actions[area][i].saveFailDescription),
-                SaveSuccessDescription: removeHtmlTags(data.actions[area][i].saveSuccessDescription),
-                FixedSaveDc: data.actions[area][i].fixedSaveDc,
-                AttackTypeRange: data.actions[area][i].attackType,
-                Dice: data.actions[area][i].dice,
-                Value: data.actions[area][i].value,
-                IsMartialArts: data.actions[area][i].isMartialArts,
-                isProficient: data.actions[area][i].isProficient,
-                SpellRangeType: data.actions[area][i].spellRangeType,
-                DisplayAsAttack: data.actions[area][i].displayAsAttack                
-            }            
+                Name: actionData.name,
+                Description: descriptionText ? processTemplateString(removeHtmlTags(descriptionText), data) : "",
+                OnMissDescription: actionData.onMissDescription ? removeHtmlTags(actionData.onMissDescription) : "",
+                SaveFailDescription: actionData.saveFailDescription ? removeHtmlTags(actionData.saveFailDescription) : "",
+                SaveSuccessDescription: actionData.saveSuccessDescription ? removeHtmlTags(actionData.saveSuccessDescription) : "",
+                FixedSaveDc: actionData.fixedSaveDc,
+                AttackTypeRange: actionData.attackType,
+                Dice: actionData.dice,
+                Value: actionData.value,
+                IsMartialArts: actionData.isMartialArts,
+                isProficient: actionData.isProficient,
+                SpellRangeType: actionData.spellRangeType,
+                DisplayAsAttack: actionData.displayAsAttack
+            };
         }
     }
     return actions;
 }
 
 function gatherSpells(data, characterData) {
-    spellSlots = {};
-    spellInfo = {};
-    spells = {};
-    const characterSpellSlots = data.classes[0].definition.spellRules.levelSpellSlots[characterData.Level]
+    let spellSlots = {};
+    let spellInfo = {};
+    let spells = {};
 
     //====
-    //Spell Slots
+    // SPELL SLOTS
     //====
-    for (let i = 0; i < data.spellSlots.length; i++) {
+    // Standard wizard/full caster spell slots by character level
+    const standardSpellSlots = {
+        1: [2, 0, 0, 0, 0, 0, 0, 0, 0],
+        2: [3, 0, 0, 0, 0, 0, 0, 0, 0],
+        3: [4, 2, 0, 0, 0, 0, 0, 0, 0],
+        4: [4, 3, 0, 0, 0, 0, 0, 0, 0],
+        5: [4, 3, 2, 0, 0, 0, 0, 0, 0],
+        6: [4, 3, 3, 0, 0, 0, 0, 0, 0],
+        7: [4, 3, 3, 1, 0, 0, 0, 0, 0],
+        8: [4, 3, 3, 2, 0, 0, 0, 0, 0],
+        9: [4, 3, 3, 3, 1, 0, 0, 0, 0],
+        10: [4, 3, 3, 3, 2, 0, 0, 0, 0],
+        11: [4, 3, 3, 3, 2, 1, 0, 0, 0],
+        12: [4, 3, 3, 3, 2, 1, 0, 0, 0],
+        13: [4, 3, 3, 3, 2, 1, 1, 0, 0],
+        14: [4, 3, 3, 3, 2, 1, 1, 0, 0],
+        15: [4, 3, 3, 3, 2, 1, 1, 1, 0],
+        16: [4, 3, 3, 3, 2, 1, 1, 1, 0],
+        17: [4, 3, 3, 3, 2, 1, 1, 1, 1],
+        18: [4, 3, 3, 3, 3, 1, 1, 1, 1],
+        19: [4, 3, 3, 3, 3, 2, 1, 1, 1],
+        20: [4, 3, 3, 3, 3, 2, 2, 1, 1]
+    };
+
+    // Determine the character level and class
+    const classLevel = data.classes[0].level;
+    const className = data.classes[0].definition.name.toLowerCase();
+
+    // Get the appropriate spell slots based on class and level
+    let availableSpellSlots;
+
+    // For a level 9 Wizard, this should be [4, 3, 3, 3, 1, 0, 0, 0, 0]
+    if (className === "wizard" || className === "bard" || className === "cleric" ||
+        className === "druid" || className === "sorcerer") {
+        // Full casters use the standard table
+        availableSpellSlots = standardSpellSlots[classLevel];
+    } else if (className === "paladin" || className === "ranger") {
+        // Half casters have their own progression (level/2 rounded down)
+        const halfCasterLevel = Math.floor(classLevel / 2);
+        if (halfCasterLevel > 0) {
+            availableSpellSlots = standardSpellSlots[halfCasterLevel];
+        } else {
+            availableSpellSlots = [0, 0, 0, 0, 0, 0, 0, 0, 0];
+        }
+    } else if (className === "artificer") {
+        // Artificers round up instead of down
+        const artificerLevel = Math.ceil(classLevel / 2);
+        if (artificerLevel > 0) {
+            availableSpellSlots = standardSpellSlots[artificerLevel];
+        } else {
+            availableSpellSlots = [0, 0, 0, 0, 0, 0, 0, 0, 0];
+        }
+    } else if (className === "warlock") {
+        // Warlocks have their own unique progression
+        const warlockSlots = {
+            1: [1, 0, 0, 0, 0, 0, 0, 0, 0], // 1 1st-level slot
+            2: [2, 0, 0, 0, 0, 0, 0, 0, 0], // 2 1st-level slots
+            3: [0, 2, 0, 0, 0, 0, 0, 0, 0], // 2 2nd-level slots
+            4: [0, 2, 0, 0, 0, 0, 0, 0, 0], // 2 2nd-level slots
+            5: [0, 0, 2, 0, 0, 0, 0, 0, 0], // 2 3rd-level slots
+            6: [0, 0, 2, 0, 0, 0, 0, 0, 0], // 2 3rd-level slots
+            7: [0, 0, 0, 2, 0, 0, 0, 0, 0], // 2 4th-level slots
+            8: [0, 0, 0, 2, 0, 0, 0, 0, 0], // 2 4th-level slots
+            9: [0, 0, 0, 0, 2, 0, 0, 0, 0], // 2 5th-level slots
+            10: [0, 0, 0, 0, 2, 0, 0, 0, 0], // 2 5th-level slots
+            11: [0, 0, 0, 0, 3, 0, 0, 0, 0], // 3 5th-level slots
+            12: [0, 0, 0, 0, 3, 0, 0, 0, 0], // 3 5th-level slots
+            13: [0, 0, 0, 0, 3, 0, 0, 0, 0], // 3 5th-level slots
+            14: [0, 0, 0, 0, 3, 0, 0, 0, 0], // 3 5th-level slots
+            15: [0, 0, 0, 0, 3, 0, 0, 0, 0], // 3 5th-level slots
+            16: [0, 0, 0, 0, 3, 0, 0, 0, 0], // 3 5th-level slots
+            17: [0, 0, 0, 0, 4, 0, 0, 0, 0], // 4 5th-level slots
+            18: [0, 0, 0, 0, 4, 0, 0, 0, 0], // 4 5th-level slots
+            19: [0, 0, 0, 0, 4, 0, 0, 0, 0], // 4 5th-level slots
+            20: [0, 0, 0, 0, 4, 0, 0, 0, 0]  // 4 5th-level slots
+        };
+        availableSpellSlots = warlockSlots[classLevel] || [0, 0, 0, 0, 0, 0, 0, 0, 0];
+    } else {
+        // Default for non-spellcasters or unknown classes
+        availableSpellSlots = [0, 0, 0, 0, 0, 0, 0, 0, 0];
+    }
+
+    // Use the standard table as a fallback if needed
+    if (!availableSpellSlots) {
+        availableSpellSlots = [0, 0, 0, 0, 0, 0, 0, 0, 0];
+    }
+
+    // Create spell slots for all 9 levels
+    for (let i = 0; i < 9; i++) {
+        // Get the number of used slots from the data if available
+        let usedSlots = 0;
+        if (data.spellSlots && data.spellSlots[i]) {
+            usedSlots = data.spellSlots[i].used || 0;
+        }
+
         spellSlots[i] = {
-            SpellSlotLevel: data.spellSlots[i].level,
-            Used: data.spellSlots[i].used,
-            Availale: data.spellSlots[i].available,
-        }
-
-        for (let j = 0; j < data.classes.length; j++) {
-            spellSlots[i].Availale = characterSpellSlots[i];
-        }
+            SpellSlotLevel: i + 1,
+            Used: usedSlots,
+            Available: availableSpellSlots[i] || 0 // Use the calculated available slots
+        };
     }
 
     //====
-    //Spell Info
+    // SPELL INFO
     //====
-    //spell save
+    // Determine spellcasting ability based on class
     let abilityModifier;
-    switch (characterData.Classes[0].Definition.Name) {
-        case "Sorcerer":
-        case "Paladin":
-        case "Bard":
-        case "Warlock":
-            abilityModifier = characterData.AbilityScores.Modifier.Charisma;
-            break;
-        case "Wizard":
-        case "Artificer":
-            abilityModifier = characterData.AbilityScores.Modifier.Intelligence;
-            break;
-        case "Cleric":
-        case "Druid":
-        case "Ranger":
-            abilityModifier = characterData.AbilityScores.Modifier.Wisdom;
-            break;
-        default:
-            throw new Error("Unknown class: " + characterData.Classes[0].Definition.Name);
+    try {
+        switch (className) {
+            case "sorcerer":
+            case "paladin":
+            case "bard":
+            case "warlock":
+                abilityModifier = characterData.AbilityScores.Modifier.Charisma;
+                break;
+            case "wizard":
+            case "artificer":
+                abilityModifier = characterData.AbilityScores.Modifier.Intelligence;
+                break;
+            case "cleric":
+            case "druid":
+            case "ranger":
+                abilityModifier = characterData.AbilityScores.Modifier.Wisdom;
+                break;
+            default:
+                abilityModifier = 0; // Safe default
+        }
+    } catch (error) {
+        console.error("Error setting spellcasting ability:", error);
+        abilityModifier = 0; // Fallback to 0
     }
 
     spellInfo.SpellSave = 8 + abilityModifier + characterData.ProficiencyBonus;
     spellInfo.SpellAttack = characterData.ProficiencyBonus + abilityModifier;
 
     //====
-    //spells
+    // SPELLS
     //====
-    const spellAreas = ["race", "class", "background", "feat"];
-    //make code cleaner
-    //make it look through classSpells > loop through each class > loop through each spell > apply same logic from spells to these classSpells
+    // Initialize spell counter
+    let spellCounter = 0;
 
+    // Process spells from standard areas
+    const spellAreas = ["race", "class", "background", "feat"];
     for (let k = 0; k < spellAreas.length; k++) {
         const area = spellAreas[k];
         //skips this iteration if the current iteration of spellArea has no length
         if (!data.spells[area] || !Array.isArray(data.spells[area])) {
-            continue; 
+            continue;
         }
         for (let i = 0; i < data.spells[area].length; i++) {
             const spell = data.spells[area][i];
@@ -519,7 +959,7 @@ function gatherSpells(data, characterData) {
             const activation = definition.activation;
             const duration = definition.duration;
 
-            spells[i] = {
+            spells[spellCounter] = {
                 OverrideDC: spell.overrideSaveDc,
                 LimitedUse: spell.limitedUse,
                 Prepared: spell.prepared,
@@ -561,9 +1001,11 @@ function gatherSpells(data, characterData) {
                     }
                 }
             };
+            spellCounter++;
         }
     }
 
+    // Process spells from classSpells
     for (let l = 0; l < data.classSpells.length; l++) {
         for (let i = 0; i < data.classSpells[l].spells.length; i++) {
             const spell = data.classSpells[l].spells[i];
@@ -571,7 +1013,7 @@ function gatherSpells(data, characterData) {
             const activation = definition.activation;
             const duration = definition.duration;
 
-            spells[i] = {
+            spells[spellCounter] = {
                 OverrideDC: spell.overrideSaveDc,
                 LimitedUse: spell.limitedUse,
                 Prepared: spell.prepared,
@@ -613,9 +1055,147 @@ function gatherSpells(data, characterData) {
                     }
                 }
             };
+            spellCounter++;
         }
     }
 
+    // Process Warlock's Mystic Arcanum spells (if character is a Warlock)
+    if (className === "warlock") {
+        // Check for Mystic Arcanum in options
+        if (data.options && data.options.class) {
+            for (let i = 0; i < data.options.class.length; i++) {
+                const option = data.options.class[i];
+
+                // Check if this is a Mystic Arcanum option
+                if (option.definition && option.definition.name &&
+                    option.definition.name.includes("Mystic Arcanum")) {
+
+                    // If there's a spell associated with this Mystic Arcanum
+                    if (option.definition.spellListIds && option.definition.spellListIds.length > 0) {
+                        const spell = option.entityTypeId && data.spells.warlock_mystic_arcanum ?
+                            data.spells.warlock_mystic_arcanum.find(s => s.entityId === option.entityId) : null;
+
+                        if (!spell && data.spells.class) {
+                            // Try to find the spell in class spells
+                            const classSpell = data.spells.class.find(s => s.entityId === option.entityId);
+                            if (classSpell) {
+                                const definition = classSpell.definition;
+                                const activation = definition.activation;
+                                const duration = definition.duration;
+
+                                spells[spellCounter] = {
+                                    OverrideDC: classSpell.overrideSaveDc,
+                                    LimitedUse: {
+                                        maxUses: 1,
+                                        numberUsed: 0,
+                                        resetType: "long"
+                                    },
+                                    Prepared: true,
+                                    CountAsKnownSpell: true,
+                                    UsesSpellSlot: false, // Mystic Arcanum doesn't use spell slots
+                                    alwaysPrepared: true,
+                                    CastAsRitual: false,
+                                    IsMysticArcanum: true, // Mark as Mystic Arcanum
+                                    Definition: {
+                                        Name: definition.name,
+                                        Level: definition.level,
+                                        School: definition.school,
+                                        Duration: duration,
+                                        Range: definition.range.rangeValue,
+                                        AsPartOfWeaponAttack: definition.asPartOfWeaponAttack,
+                                        Description: removeHtmlTags(definition.description),
+                                        Concentration: definition.concentration,
+                                        Ritual: definition.ritual,
+                                        RangeArea: definition.rangeArea,
+                                        DamageEffect: definition.damageEffect,
+                                        ComponentsDescription: removeHtmlTags(definition.componentsDescription),
+                                        Healing: definition.healing,
+                                        HealingDice: definition.healingDice,
+                                        TempHpDice: definition.tempHpDice,
+                                        AttackType: definition.attackType,
+                                        canCastAtHigherLevel: false, // Can't cast Mystic Arcanum at higher levels
+                                        IsHomebrew: definition.isHomebrew,
+                                        RequiresSavingThrow: definition.requiresSavingThrow,
+                                        RequiresAttackRoll: definition.requiresAttackRoll,
+                                        AtHigherLevel: definition.atHigherLevels,
+                                        Conditions: definition.conditions,
+                                        Tags: definition.tags,
+                                        CastingTimeDescription: definition.castingTimeDescription,
+                                        FormatSpell: {
+                                            Time: `Casting Time: ${activation.activationTime} ${getActivationType(activation.activationType)}`,
+                                            Range: `Range: ${definition.range.rangeValue} feet`,
+                                            Duration: getDurationText(duration),
+                                            Components: `Components: ${getComponentsText(definition.components, definition.componentsDescription)}`,
+                                            SchoolLevel: `${definition.school} Level ${definition.level} (Mystic Arcanum)`
+                                        }
+                                    }
+                                };
+                                spellCounter++;
+                            }
+                        }
+
+                        // If we found the spell in warlock_mystic_arcanum
+                        if (spell) {
+                            const definition = spell.definition;
+                            const activation = definition.activation;
+                            const duration = definition.duration;
+
+                            spells[spellCounter] = {
+                                OverrideDC: spell.overrideSaveDc,
+                                LimitedUse: {
+                                    maxUses: 1,
+                                    numberUsed: 0,
+                                    resetType: "long"
+                                },
+                                Prepared: true,
+                                CountAsKnownSpell: true,
+                                UsesSpellSlot: false, // Mystic Arcanum doesn't use spell slots
+                                alwaysPrepared: true,
+                                CastAsRitual: false,
+                                IsMysticArcanum: true, // Mark as Mystic Arcanum
+                                Definition: {
+                                    Name: definition.name,
+                                    Level: definition.level,
+                                    School: definition.school,
+                                    Duration: duration,
+                                    Range: definition.range.rangeValue,
+                                    AsPartOfWeaponAttack: definition.asPartOfWeaponAttack,
+                                    Description: removeHtmlTags(definition.description),
+                                    Concentration: definition.concentration,
+                                    Ritual: definition.ritual,
+                                    RangeArea: definition.rangeArea,
+                                    DamageEffect: definition.damageEffect,
+                                    ComponentsDescription: removeHtmlTags(definition.componentsDescription),
+                                    Healing: definition.healing,
+                                    HealingDice: definition.healingDice,
+                                    TempHpDice: definition.tempHpDice,
+                                    AttackType: definition.attackType,
+                                    canCastAtHigherLevel: false, // Can't cast Mystic Arcanum at higher levels
+                                    IsHomebrew: definition.isHomebrew,
+                                    RequiresSavingThrow: definition.requiresSavingThrow,
+                                    RequiresAttackRoll: definition.requiresAttackRoll,
+                                    AtHigherLevel: definition.atHigherLevels,
+                                    Conditions: definition.conditions,
+                                    Tags: definition.tags,
+                                    CastingTimeDescription: definition.castingTimeDescription,
+                                    FormatSpell: {
+                                        Time: `Casting Time: ${activation.activationTime} ${getActivationType(activation.activationType)}`,
+                                        Range: `Range: ${definition.range.rangeValue} feet`,
+                                        Duration: getDurationText(duration),
+                                        Components: `Components: ${getComponentsText(definition.components, definition.componentsDescription)}`,
+                                        SchoolLevel: `${definition.school} Level ${definition.level} (Mystic Arcanum)`
+                                    }
+                                }
+                            };
+                            spellCounter++;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    console.log("Generated spell slots:", spellSlots);
     return { spellSlots, spellInfo, spells };
 }
 
@@ -680,6 +1260,7 @@ function gatherFeats(data) {
 function gatherClasses(data, characterData) {
     let classes = {};
     for (let i = 0; i < data.classes.length; i++) {
+        console.log(i);
         classes[i] = {
             Level: data.classes[i].level,
             IsStartingClass: data.classes[i].isStartingClass,
@@ -705,7 +1286,22 @@ function gatherClasses(data, characterData) {
                     NumberPreparedSpells: data.classes[i]?.definition?.spellRules?.levelPreparedSpellMaxes?.[characterData.Level] ?? 0 // Default to 0 if undefined
                 }
             },
-            SubClassDefinition: {
+            SubClassDefinition: null // Initialize as null by default
+        };
+
+        // Add class features first
+        for (let j = 0; j < data.classes[i].definition.classFeatures.length; j++) {
+            classes[i].Definition.ClassFeatures[j] = {
+                Name: data.classes[i].definition.classFeatures[j].name,
+                Description: removeHtmlTags(data.classes[i].definition.classFeatures[j].description),
+                RequiredLevel: data.classes[i].definition.classFeatures[j].requiredLevel,
+            };
+        }
+
+        // Check if subclass data exists before trying to access it
+        if (data.classes[i].subclassDefinition) {
+            // If subclass exists, populate the SubClassDefinition
+            classes[i].SubClassDefinition = {
                 Name: data.classes[i].subclassDefinition.name,
                 Description: removeHtmlTags(data.classes[i].subclassDefinition.description),
                 AvatarUrl: data.classes[i].subclassDefinition.avatarUrl,
@@ -713,22 +1309,15 @@ function gatherClasses(data, characterData) {
                 PortraitAvatarUrl: data.classes[i].subclassDefinition.portraitAvatarUrl,
                 SubClassDetails: data.classes[i].subclassDefinition.moreDetailsUrl,
                 ClassFeatures: {}
-            }
-        }
+            };
 
-        for (let j = 0; j < data.classes[i].definition.classFeatures.length; j++) {
-            classes[i].Definition.ClassFeatures[j] = {
-                Name: data.classes[i].definition.classFeatures[j].name,
-                Description: removeHtmlTags(data.classes[i].definition.classFeatures[j].description),
-                RequiredLevel: data.classes[i].definition.classFeatures[j].requiredLevel,
-            }
-        }
-
-        for (let j = 0; j < data.classes[i].subclassDefinition.classFeatures.length; j++) {
-            classes[i].Definition.ClassFeatures[j] = {
-                Name: data.classes[i].subclassDefinition.classFeatures[j].name,
-                Description: removeHtmlTags(data.classes[i].subclassDefinition.classFeatures[j].description),
-                RequiredLevel: data.classes[i].subclassDefinition.classFeatures[j].requiredLevel,
+            // Add subclass features if available
+            for (let j = 0; j < data.classes[i].subclassDefinition.classFeatures.length; j++) {
+                classes[i].SubClassDefinition.ClassFeatures[j] = {
+                    Name: data.classes[i].subclassDefinition.classFeatures[j].name,
+                    Description: removeHtmlTags(data.classes[i].subclassDefinition.classFeatures[j].description),
+                    RequiredLevel: data.classes[i].subclassDefinition.classFeatures[j].requiredLevel,
+                };
             }
         }
     }
@@ -739,7 +1328,6 @@ function gatherClasses(data, characterData) {
 function gatherInventory(data, characterData) {
     let inventory = {};
 
-    // Function to process inventory items
     function processInventoryItems(items, characterData) {
         const Finesse = ["Dagger", "Dart", "Rapier", "Scimitar", "Shortsword", "Whip"];
         const simpleWeapons = ["Club", "Dagger", "Greatclub", "Handaxe", "Javelin", "Light Hammer", "Mace", "Quarterstaff", "Staff", "Sickle", "Spear", "Crossbow, light", "Dart", "Shortbow", "Sling"];
@@ -748,7 +1336,7 @@ function gatherInventory(data, characterData) {
 
         for (let i = 0; i < items.length; i++) {
             if (!items[i] || !items[i].definition) {
-                continue; // Skip if the item or its definition is undefined
+                continue;
             }
 
             inventory[i] = {
@@ -815,49 +1403,73 @@ function gatherInventory(data, characterData) {
                 };
             }
 
-            let modifier = 0;
-            const itemName = items[i].definition.name;
-            const isFinesse = Finesse.includes(itemName);
-            const isSimpleWeapon = simpleWeapons.includes(itemName);
-            const isMartialWeapon = martialWeapons.includes(itemName);
-            const isRangedWeapon = rangedWeapons.includes(itemName);
-            const isMonk = data.classes[0].definition.name === "Monk";
+            // Check if item is a weapon and calculate attack and damage rolls
+            if (items[i].definition.filterType === "Weapon" ||
+                items[i].definition.filterType === "Rod" ||
+                items[i].definition.filterType === "Staff") {
 
-            if (isFinesse) {
-                modifier += Math.max(characterData.AbilityScores.Modifier.Dexterity, characterData.AbilityScores.Modifier.Strength);
-            } else if (isRangedWeapon) {
-                modifier += characterData.AbilityScores.Modifier.Dexterity;
-            } else if (isMonk) {
-                modifier += characterData.AbilityScores.Modifier.Dexterity;
-            } else {
-                modifier += characterData.AbilityScores.Modifier.Strength;
-            }
+                let modifier = 0;
+                const itemName = items[i].definition.name;
+                const isFinesse = Finesse.includes(itemName);
+                const isSimpleWeapon = simpleWeapons.includes(itemName);
+                const isMartialWeapon = martialWeapons.includes(itemName);
+                const isRangedWeapon = rangedWeapons.includes(itemName);
+                const isMonk = data.classes[0].definition.name === "Monk";
 
-            if (characterData.Proficiencys.Weapons.includes(itemName) || isSimpleWeapon || isMartialWeapon || simpleWeapons.includes(items[i].definition.filterType)) {
-                modifier += characterData.ProficiencyBonus;
-            }
-
-            inventory[i].Definition.AttackRoll = "1d20+" + modifier;
-
-            // Calculate damage roll
-            let damageRolls = [];
-            for (let j = 0; j < items[i].definition.weaponBehaviors.length; j++) {
-                let damageRoll = items[i].definition.weaponBehaviors[j].damage.diceString;
-                if (items[i].definition.properties && Object.keys(items[i].definition.properties).some(prop => prop.name === "Versatile")) {
-                    const versatileDamage = items[i].definition.properties.find(prop => prop.name === "Versatile").notes;
-                    damageRoll = versatileDamage;
+                // Calculate attack modifier
+                if (isFinesse) {
+                    modifier = Math.max(characterData.AbilityScores.Modifier.Dexterity, characterData.AbilityScores.Modifier.Strength);
+                } else if (isRangedWeapon) {
+                    modifier = characterData.AbilityScores.Modifier.Dexterity;
+                } else if (isMonk) {
+                    modifier = characterData.AbilityScores.Modifier.Dexterity;
+                } else {
+                    modifier = characterData.AbilityScores.Modifier.Strength;
                 }
-                damageRolls.push(damageRoll + "+" + modifier);
-            }
 
-            inventory[i].Definition.DamageRoll = damageRolls.join(" / ");
+                if (characterData.Proficiencys.Weapons.includes(itemName) ||
+                    isSimpleWeapon || isMartialWeapon ||
+                    simpleWeapons.includes(items[i].definition.filterType)) {
+                    modifier += characterData.ProficiencyBonus;
+                }
+
+                inventory[i].Definition.AttackRoll = "1d20+" + modifier;
+
+                //Calculate damage roll
+                let damageRoll = "";
+
+                // Check for weapon behaviors to get damage dice
+                if (items[i].definition.weaponBehaviors && items[i].definition.weaponBehaviors.length > 0) {
+                    for (let j = 0; j < items[i].definition.weaponBehaviors.length; j++) {
+                        const behavior = items[i].definition.weaponBehaviors[j];
+                        if (behavior.damage && behavior.damage.diceString) {
+                            damageRoll = behavior.damage.diceString;
+                            break;
+                        }
+                    }
+                }
+
+                // Fallback to damage property if weaponBehaviors doesn't have damage info
+                if (!damageRoll && items[i].definition.damage && items[i].definition.damage.diceString) {
+                    damageRoll = items[i].definition.damage.diceString;
+                }
+
+                // Add the modifier to the damage roll
+                if (damageRoll) {
+                    inventory[i].Definition.DamageRoll = damageRoll + "+" + modifier;
+                } else {
+                    // Fallback if no damage dice are found
+                    inventory[i].Definition.DamageRoll = "1d4+" + modifier;
+                }
+            }
         }
     }
 
+    //Process custom inventory items
     function processCustomItems(items) {
         const inventoryLength = Object.keys(inventory).length;
         for (let i = 0; i < items.length; i++) {
-            inventory[inventoryLength + 1] = {
+            inventory[inventoryLength + i] = {
                 CustomInventoryItem: true,
                 Cost: items[i].cost,
                 Description: removeHtmlTags(items[i].description),
@@ -869,19 +1481,16 @@ function gatherInventory(data, characterData) {
         }
     }
 
-    // Process standard inventory items
+    //Process standard inventory items
     processInventoryItems(data.inventory, characterData);
 
-    // Process custom inventory items
+    //Process custom inventory items
     if (data.customItems) {
         processCustomItems(data.customItems);
     }
 
     return inventory;
 }
-
-
-
 
 function background(data) {
     const characterBackground = {}
@@ -897,6 +1506,142 @@ function background(data) {
     }
 
     return characterBackground;
+}
+
+function gatherExtras(data) {
+    let extras = {};
+
+    //gather any familiars or companion creatures from the Creatures section
+    if (data.creatures && data.creatures.length > 0) {
+        for (let i = 0; i < data.creatures.length; i++) {
+            const creature = data.creatures[i];
+            extras[Object.keys(extras).length] = {
+                Name: creature.definition.name,
+                Type: "Creature",
+                Subtype: creature.definition.tags && creature.definition.tags.length > 0 ? creature.definition.tags.join(", ") : "",
+                Description: removeHtmlTags(creature.definition.specialTraitsDescription || ""),
+                Stats: {
+                    Strength: creature.definition.stats[0].value,
+                    Dexterity: creature.definition.stats[1].value,
+                    Constitution: creature.definition.stats[2].value,
+                    Intelligence: creature.definition.stats[3].value,
+                    Wisdom: creature.definition.stats[4].value,
+                    Charisma: creature.definition.stats[5].value
+                },
+                Actions: parseCreatureActions(creature.definition.actionsDescription),
+                AvatarUrl: creature.definition.avatarUrl,
+                HitPoints: creature.definition.averageHitPoints,
+                ArmourClass: creature.definition.armorClass,
+                PassivePerception: creature.definition.passivePerception,
+                Senses: formatCreatureSenses(creature.definition.senses),
+                IsCompanion: true
+            };
+        }
+    }
+
+    //additional pets, vehicles, or summoned creatures
+    if (data.extras) {
+        for (let i = 0; i < data.extras.length; i++) {
+            const extra = data.extras[i];
+            extras[Object.keys(extras).length] = {
+                Name: extra.name || "Unnamed",
+                Type: extra.type || "Extra",
+                Subtype: extra.subType || "",
+                Description: extra.description ? removeHtmlTags(extra.description) : "",
+                Notes: extra.notes ? removeHtmlTags(extra.notes) : "",
+                Stats: extra.stats ? {
+                    Strength: extra.stats[0]?.value || 10,
+                    Dexterity: extra.stats[1]?.value || 10,
+                    Constitution: extra.stats[2]?.value || 10,
+                    Intelligence: extra.stats[3]?.value || 10,
+                    Wisdom: extra.stats[4]?.value || 10,
+                    Charisma: extra.stats[5]?.value || 10
+                } : null,
+                AvatarUrl: extra.avatarUrl,
+                HitPoints: extra.hitPoints,
+                ArmourClass: extra.armorClass,
+                Speed: extra.speed,
+                IsCompanion: extra.isCompanion || false
+            };
+        }
+    }
+
+    const classFeatures = data.classes && data.classes[0]?.subclassDefinition?.classFeatures;
+    if (classFeatures) {
+        for (let i = 0; i < classFeatures.length; i++) {
+            const feature = classFeatures[i];
+            if (feature.name === "Dragon Companion" || feature.name === "Dragon Wings") {
+                extras[Object.keys(extras).length] = {
+                    Name: feature.name,
+                    Type: "Class Feature",
+                    Description: removeHtmlTags(feature.description),
+                    IsCompanion: feature.name === "Dragon Companion",
+                    IsTemporary: true,
+                    RequiresActivation: true
+                };
+            }
+        }
+    }
+
+    return extras;
+}
+
+function parseCreatureActions(actionsText) {
+    if (!actionsText) return [];
+
+    const actions = [];
+    const actionLines = actionsText.split('.');
+
+    let currentAction = null;
+
+    for (const line of actionLines) {
+        const trimmedLine = line.trim();
+        if (!trimmedLine) continue;
+
+        if (trimmedLine.includes("Attack:") || trimmedLine.includes("Melee Weapon Attack:")) {
+            //attack action
+            const actionName = trimmedLine.split(':')[0].trim();
+            currentAction = {
+                Name: actionName,
+                Description: trimmedLine
+            };
+            actions.push(currentAction);
+        } else if (trimmedLine.endsWith("action") || trimmedLine.includes("Multiattack")) {
+            //an action
+            currentAction = {
+                Name: trimmedLine,
+                Description: trimmedLine
+            };
+            actions.push(currentAction);
+        } else if (currentAction) {
+            //Continuation of the previous action
+            currentAction.Description += ". " + trimmedLine;
+        } else {
+            //description that isn't an action
+            actions.push({
+                Name: "Special",
+                Description: trimmedLine
+            });
+        }
+    }
+
+    return actions;
+}
+
+function formatCreatureSenses(senses) {
+    if (!senses || senses.length === 0) return "";
+
+    return senses.map(sense => {
+        const senseTypes = {
+            1: "Blindsight",
+            2: "Darkvision",
+            3: "Tremorsense",
+            4: "Truesight"
+        };
+
+        const senseType = senseTypes[sense.senseId] || "Special Sense";
+        return `${senseType} ${sense.notes}`;
+    }).join(", ");
 }
 
 function getProficiencies(characterData, data) {
@@ -998,7 +1743,6 @@ function savingThrows(characterData, data, stats) {
 }
 
 function skills(characterData, data, stats) {
-    console.log(stats);
     const listSkills = [
         { name: "Acrobatics", ability: "Dexterity" },
         { name: "Animal Handling", ability: "Wisdom" },
@@ -1066,9 +1810,6 @@ function skills(characterData, data, stats) {
         } else {
             totalModifier = baseModifier;
         }
-
-        // Debugging logs
-        console.log(`Skill: ${skillName}, Proficient: ${isProficient}, Base Modifier: ${baseModifier}, Total Modifier: ${totalModifier}`);
 
         // Save data into dictionary
         skillDictionary[skillName] = {
@@ -1164,6 +1905,49 @@ function armourClass(characterData, stats) {
     }
 
     return totalArmourClass;
+}
+
+function checkArmour(armourName, stats, item, characterData) {
+    let ac = 0;
+
+    //armour class directly defined on the item
+    if (item.definition.armorClass) {
+        ac = item.definition.armorClass;
+    }
+
+    // If it's light armor, add DEX modifier (no cap)
+    if (item.definition.type === "Light Armor") {
+        ac += Math.floor((stats.totalDexterity - 10) / 2);
+    }
+
+    // If it's medium armor, add DEX modifier capped at +2
+    else if (item.definition.type === "Medium Armor") {
+        const dexMod = Math.floor((stats.totalDexterity - 10) / 2);
+        ac += Math.min(dexMod, 2);
+    }
+
+    // Heavy armor has a fixed AC value, no DEX bonus
+    else if (item.definition.type === "Heavy Armor") {
+        // AC is already set from the item's armorClass
+    }
+
+    // For shield, we handle it separately in armourClass function
+    else if (armourName === "Shield") {
+        ac = 2;
+    }
+
+    else {
+        if (item.definition.grantedModifiers) {
+            for (let i = 0; i < item.definition.grantedModifiers.length; i++) {
+                const modifier = item.definition.grantedModifiers[i];
+                if (modifier.type === "bonus" && modifier.subType === "armor-class") {
+                    ac += modifier.value;
+                }
+            }
+        }
+    }
+
+    return ac;
 }
 
 function calculateLevel(xp) {
@@ -1418,26 +2202,136 @@ function getCharacterStats(characterData) {
 }
 
 function removeHtmlTags(htmlString) {
-    const doc = new DOMParser().parseFromString(htmlString, 'text/html');
-    const paragraphs = doc.body.getElementsByTagName('p');
-    let result = "";
-
-    for (const paragraph of paragraphs) {
-        result += (paragraph.textContent + '<br><br>');
+    if (!htmlString) {
+        return "";
     }
 
-    return result;
+    const inputString = String(htmlString);
+
+    try {
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = inputString;
+
+        //Find all paragraphs and create well-formatted text with proper line breaks
+        const paragraphs = tempDiv.querySelectorAll('p, h1, h2, h3, h4, h5, h6, li, br, div');
+
+        if (paragraphs.length > 0) {
+            let formattedText = '';
+            paragraphs.forEach(element => {
+                //If it's a paragraph or heading, add a double line break after it
+                if (element.tagName === 'P' ||
+                    element.tagName.match(/H[1-6]/)) {
+                    formattedText += element.textContent.trim() + '\n\n';
+                }
+                //If it's a list item, add a bullet point and a single line break
+                else if (element.tagName === 'LI') {
+                    formattedText += '• ' + element.textContent.trim() + '\n';
+                }
+                //If it's a BR, just add a line break
+                else if (element.tagName === 'BR') {
+                    formattedText += '\n';
+                }
+                //If it's a DIV, add a line break after its content
+                else if (element.tagName === 'DIV') {
+                    formattedText += element.textContent.trim() + '\n';
+                }
+            });
+
+            formattedText = formattedText
+                .replace(/\n{3,}/g, '\n\n')
+                .trim();
+
+            //Convert dice notation to clickable spans
+            return convertDiceNotation(formattedText);
+        } else {
+            //If no paragraphs found, just get the text content
+            let textContent = tempDiv.textContent || "";
+
+            if (textContent.length > 80) {
+                textContent = textContent.replace(/\.(\s+)/g, '.\n');
+                textContent = textContent.replace(/\n{3,}/g, '\n\n');
+            }
+
+            return convertDiceNotation(textContent.trim());
+        }
+    } catch (e) {
+        console.error('Error parsing HTML:', e);
+        const fallbackText = inputString
+            .replace(/<br\s*\/?>/gi, '\n')
+            .replace(/<\/p>/gi, '\n\n')
+            .replace(/<[^>]*>/g, '')
+            .replace(/\n{3,}/g, '\n\n')
+            .replace(/\s+/g, ' ')
+            .trim();
+
+        return convertDiceNotation(fallbackText);
+    }
+}
+
+//converts a dice notation (e.g., 2d10+3) to a clickable link
+function convertDiceNotation(text) {
+    const diceRegex = /\b(\d+)d(\d+)(?:([+-])(\d+))?\b/g;
+    return text.replace(diceRegex, function (match, count, sides, operator, modifier) {
+        return `<span class="dice-roll" data-dice="${match}" style="color: #f08000; text-decoration: underline; cursor: pointer; font-weight: bold;">${match}</span>`;
+    });
+}
+
+//This will handle and replace strings like "{{(modifier:cha+classlevel)@min:1#unsigned}"
+function processTemplateString(templateString, characterData) {
+    if (!templateString || !templateString.includes('{{')) return templateString;
+
+    return templateString.replace(/{{(.*?)}}/g, (match, expression) => {
+        if (expression.includes('modifier:cha+classlevel')) {
+            const charismaMod = characterData.AbilityScores.Modifier.Charisma;
+            const classLevel = characterData.Level;
+            let value = charismaMod + classLevel;
+
+            if (expression.includes('@min:1')) {
+                value = Math.max(1, value);
+            }
+
+            if (expression.includes('#unsigned')) {
+                return Math.abs(value).toString();
+            }
+
+            return value.toString();
+        }
+
+        return match;
+    });
 }
 
 function showSpinner() {
-    document.getElementById('spinner').style.display = 'block';
+    const spinnerContainer = document.getElementById('spinner-container');
+    if (spinnerContainer) {
+        spinnerContainer.style.display = 'flex';
+    } else {
+        console.error('Spinner container not found');
+    }
 }
 
 function hideSpinner() {
-    document.getElementById('spinner').style.display = 'none';
+    const spinnerContainer = document.getElementById('spinner-container');
+    if (spinnerContainer) {
+        spinnerContainer.style.display = 'none';
+    } else {
+        console.error('Spinner container not found');
+    }
 }
 
-/* ToDo in this file
-save the characterData to local storage
-allow for editing of the characterData
-*/
+function displayMessage(message, type) {
+    const errorMessageElement = document.getElementById('errorMessage');
+    errorMessageElement.textContent = message;
+
+    // Reset classes
+    errorMessageElement.classList.remove('error', 'success');
+
+    // Add appropriate class
+    if (type) {
+        errorMessageElement.classList.add(type);
+    }
+}
+
+function displayError(message) {
+    displayMessage(message, message ? "error" : "");
+}
