@@ -1,8 +1,603 @@
 //chromium based adventure.js
+<<<<<<< HEAD
+=======
+
+let characterData = null;
+let CommonActionMenuOpen = false;
+let commonActionClickListener = null; //a check to ensure mulitple listeners aren't added to the common action menu
+
+>>>>>>> 41156aa (Update)
 chrome.storage.local.get('characterData', function (result) {
-	console.log(result.characterData);
+	characterData = result.characterData;
+	console.log(characterData);
 });
 
+const currentURL = window.location.href;
+const excludeRegex = /^https:\/\/www\.cauldron-vtt\.net\/adventure\/?$/;
+
+if (!excludeRegex.test(currentURL)) {
+	setTimeout(function () {
+		const urlWithJsonOutput = window.location.href + "?output=json";
+		fetchJsonDataFromUrl(urlWithJsonOutput)
+			.then(adventureData => {
+				adventureData = adventureData.adventure;
+				const container = document.querySelector('.topbar .btn-group'); // contains each section of the page (playArea, chat, header, etc.)
+				const viewCharacter = document.createElement('button');
+				const viewCommonActions = document.createElement('button');
+
+				viewCharacter.classList.add('btn', 'btn-primary', 'btn-xs');
+				container.prepend(viewCharacter);
+				viewCommonActions.classList.add('btn', 'btn-primary', 'btn-xs');
+				container.prepend(viewCommonActions);
+
+				if (adventureData["@is_dm"] === "yes") {
+					viewCharacter.textContent = "Player Character Sheets";
+				} else {
+					viewCharacter.textContent = "Character Sheet";
+					viewCommonActions.textContent = "Common Actions";
+				}
+
+				viewCommonActions.addEventListener('click', function (event) {
+					event.preventDefault();
+
+					if (adventureData["@is_dm"] === "yes") {
+						// for the time being, do nothing as this isn't a feature for the DM as of yet
+					} else {
+						const urlWithJsonOutput = window.location.href + "?output=json";
+						fetchJsonDataFromUrl(urlWithJsonOutput)
+							.then(adventureData => {
+								adventureData = adventureData.adventure;
+
+								createCommonAction(adventureData);
+						});
+					}
+				});
+
+				viewCharacter.addEventListener('click', function (event) {
+					event.preventDefault();
+
+					if (adventureData["@is_dm"] === "yes") {
+						showDmView(false, adventureData);
+					} else {
+						const urlWithJsonOutput = window.location.href + "?output=json";
+						fetchJsonDataFromUrl(urlWithJsonOutput)
+							.then(adventureData => {
+								adventureData = adventureData.adventure;
+								createCharacterSheet(adventureData, true);
+							});
+					}
+				});
+			})
+			.catch(error => {
+				console.error('Error fetching JSON data:', error);
+			});
+	}, 0);
+}
+
+function createCommonAction(adventureData) {
+	if (CommonActionMenuOpen != false) {
+		return;
+	}
+
+	const topbar = document.querySelector('.topbar');
+	overlayContainer = document.createElement('div');
+	overlayContainer.id = 'customCommonActionMenu';
+	overlayContainer.classList.add('panel', 'panel-primary');
+	overlayContainer.style.display = 'block';
+	overlayContainer.style.position = 'fixed';
+	overlayContainer.style.right = '178px';
+	overlayContainer.style.backgroundColor = '#d0d0d0';
+	overlayContainer.style.zIndex = '1012';
+	overlayContainer.style.width = "254.2px";
+	overlayContainer.style.position = "absolute";
+	overlayContainer.style.border = "1px solid #808080";
+	overlayContainer.style.borderRadius = '4px';
+	overlayContainer.style.boxShadow = '10px 10px 10px';
+	overlayContainer.style.padding = '-5px';
+	overlayContainer.style.paddingBottom = '-150px';
+	overlayContainer.style.boxSizing = "border-box";
+
+	const style = document.createElement('style');
+	style.innerHTML = `
+        .check, .saving-throw, .actions, .spells, .usable-items{
+            width: 224.2px;
+            margin-bottom: 5px;
+        }
+
+        .menu-item {
+            position: relative;
+            width: 100%;
+            text-align: left;
+            margin-bottom: 5px;
+        }
+
+        .menu-item > button::after {
+            content: '◀';
+            float: left;
+            font-size: 0.8em;
+            margin-top: 3px;
+        }
+
+        .submenu {
+            display: none;
+            position: absolute;
+            right: 100%;
+            top: 0px;
+            background-color: #d0d0d0;
+            border: 1px solid #808080;
+            border-radius: 4px;
+            box-shadow: 5px 5px 5px rgba(0,0,0,0.2);
+            z-index: 1014;
+        }
+
+        .menu-item:hover .submenu {
+            display: block;
+        }
+
+        .submenu-item {
+            height: 20px;
+            width: 152.1px;
+            cursor: pointer;
+            white-space: normal;
+            word-wrap: normal;
+        }
+
+        .submenu-item:hover {
+            background-color: #0c0c0c0;
+        }
+
+        .submenu hr {
+            margin: 5px;
+            border-top: 1px solid #dee2e6;
+        }
+
+        .submenu-item-button {
+            display: flex;
+            align-items: flex-start;
+            padding-top:0;
+            padding-right: 0;
+        }
+    `;
+	document.head.appendChild(style);
+
+	//build structure of the menu
+	const overlayBody = document.createElement('div');
+	overlayBody.classList.add('panel-body');
+	overlayBody.innerHTML = `
+        <div class="menu-container">
+            <div class="menu-item">
+                <button class="btn btn-default btn-sm check">Checks</button>
+                <div class="submenu" id="checks">
+                    <button class="submenu-item submenu-item-button btn btn-default btn-sm" data-action="Strength Check"><b>Strength</b>&nbsp;Check</button>
+                    <button class="submenu-item submenu-item-button btn btn-default btn-sm" data-action="Dexterity Check"><b>Dexterity</b>&nbsp;Check</button>
+                    <button class="submenu-item submenu-item-button btn btn-default btn-sm" data-action="Constitution Check"><b>Constitution</b>&nbsp;Check</button>
+                    <button class="submenu-item submenu-item-button btn btn-default btn-sm" data-action="Intelligence Check"><b>Intelligence</b>&nbsp;Check</button>
+                    <button class="submenu-item submenu-item-button btn btn-default btn-sm" data-action="Wisdom Check"><b>Wisdom</b>&nbsp;Check</button>
+                    <button class="submenu-item submenu-item-button btn btn-default btn-sm" data-action="Charisma Check"><b>Charisma</b>&nbsp;Check</button>
+                    <hr>
+                    <button class="submenu-item submenu-item-button btn btn-default btn-sm"><b>Acrobatics</b> &nbsp;<small>(Dex)</small></button>
+                    <button class="submenu-item submenu-item-button btn btn-default btn-sm"><b>Animal Handling</b> &nbsp;<small>(Wis)</small></button>
+                    <button class="submenu-item submenu-item-button btn btn-default btn-sm"><b>Arcana</b>&nbsp; <small>(Int)</small></button>
+                    <button class="submenu-item submenu-item-button btn btn-default btn-sm"><b>Athletics</b> &nbsp;<small>(Str)</small></button>
+                    <button class="submenu-item submenu-item-button btn btn-default btn-sm"><b>Deception</b> &nbsp;<small>(Cha)</small></button>
+                    <button class="submenu-item submenu-item-button btn btn-default btn-sm"><b>History</b> &nbsp;<small>(Int)</small></button>
+                    <button class="submenu-item submenu-item-button btn btn-default btn-sm"><b>Insight</b> &nbsp;<small>(Wis)</small></button>
+                    <button class="submenu-item submenu-item-button btn btn-default btn-sm"><b>Intimidation</b> &nbsp;<small>(Cha)</small></button>
+                    <button class="submenu-item submenu-item-button btn btn-default btn-sm"><b>Investigation</b>&nbsp; <small>(Int)</small></button>
+                    <button class="submenu-item submenu-item-button btn btn-default btn-sm"><b>Medicine</b> &nbsp;<small>(Wis)</small></button>
+                    <button class="submenu-item submenu-item-button btn btn-default btn-sm"><b>Nature</b>&nbsp; <small>(Int)</small></button>
+                    <button class="submenu-item submenu-item-button btn btn-default btn-sm"><b>Perception</b> &nbsp;<small>(Wis)</small></button>
+                    <button class="submenu-item submenu-item-button btn btn-default btn-sm"><b>Performance</b> &nbsp;<small>(Cha)</small></button>
+                    <button class="submenu-item submenu-item-button btn btn-default btn-sm"><b>Persuasion</b> &nbsp;<small>(Cha)</small></button>
+                    <button class="submenu-item submenu-item-button btn btn-default btn-sm"><b>Religion</b> &nbsp;<small>(Int)</small></button>
+                    <button class="submenu-item submenu-item-button btn btn-default btn-sm"><b>Sleight of Hand</b>&nbsp; <small>(Dex)</small></button>
+                    <button class="submenu-item submenu-item-button btn btn-default btn-sm"><b>Stealth</b> &nbsp;<small>(Dex)</small></button>
+                    <button class="submenu-item submenu-item-button btn btn-default btn-sm"><b>Survival</b> &nbsp;<small>(Wis)</small></button>
+                </div>
+            </div>
+            <div class="menu-item">
+                <button class="btn btn-default btn-sm saving-throw">Saving Throw</button>
+                <div class="submenu" id="saving-throws">
+                    <button class="submenu-item submenu-item-button btn btn-default btn-sm"><b>Strength</b></button>
+                    <button class="submenu-item submenu-item-button btn btn-default btn-sm"><b>Dexterity</b></button>
+                    <button class="submenu-item submenu-item-button btn btn-default btn-sm"><b>Constitution</b></button>
+                    <button class="submenu-item submenu-item-button btn btn-default btn-sm"><b>Intelligence</b></button>
+                    <button class="submenu-item submenu-item-button btn btn-default btn-sm"><b>Wisdom</b></button>
+                    <button class="submenu-item submenu-item-button btn btn-default btn-sm"><b>Charisma</b></button>
+                </div>
+            </div>
+            <div class="menu-item">
+                <button class="btn btn-default btn-sm actions">Actions</button>
+                <div class="submenu" id="actions">
+                </div>
+            </div>
+        </div>
+    `;
+
+	overlayContainer.appendChild(overlayBody);
+	topbar.appendChild(overlayContainer);
+
+	CommonActionMenuOpen = true;
+
+	const actions = document.getElementById('actions');
+
+	for (let i = 0; i < Object.keys(characterData.Inventory).length; i++) {
+		if (characterData.Inventory[i].Definition.FilterType === "Weapon" || characterData.Inventory[i].Definition.FilterType === "Rod" || characterData.Inventory[i].Definition.FilterType === "Staff") {
+			const name = characterData.Inventory[i].Definition.Name;
+			const range = "Range: " + (characterData.Inventory[i].Definition.Range || 5) + "/" + (characterData.Inventory[i].Definition.LongRange || 5) + "ft.";
+			const attackRoll = characterData.Inventory[i].Definition.AttackRoll;
+			const damage = characterData.Inventory[i].Definition.DamageRoll;
+
+			const weaponButton = document.createElement('button');
+			weaponButton.textContent = name;
+			weaponButton.title = range + " - Attack Roll: " + attackRoll + " - Damage: " + damage + " - Double click for damage roll";
+			weaponButton.classList.add('submenu-item', 'submenu-item-button', 'btn', 'btn-default', 'btn-sm');
+
+			let clickTimeout;
+
+			weaponButton.addEventListener('click', () => {
+				if (clickTimeout) {
+					clearTimeout(clickTimeout);
+					clickTimeout = null;
+					document.body.prepend(document.querySelector('div#dice-box'));
+					document.querySelector('div#dice-box').style.zIndex = '';
+					// Handle double click
+					overlayContainer.remove();
+					CommonActionMenuOpen = false;
+					roll_dice(damage);
+				} else {
+					clickTimeout = setTimeout(() => {
+						clickTimeout = null;
+						document.body.prepend(document.querySelector('div#dice-box'));
+						document.querySelector('div#dice-box').style.zIndex = '';
+						overlayContainer.remove();
+						CommonActionMenuOpen = false;
+						roll_dice(attackRoll);
+					}, 200);
+				}
+			});
+
+			actions.appendChild(weaponButton);
+		}
+	}
+
+	document.addEventListener('click', commonActionClickListener);
+
+	document.querySelectorAll('.submenu-item-button').forEach(button => {
+		button.addEventListener('click', event => {
+			const target = event.target.closest('button');
+			if (!target) return;
+
+			const buttonText = target.cloneNode(true);
+			buttonText.querySelector('small')?.remove();
+			const action = buttonText.textContent.trim();
+
+			const actionData = target.getAttribute('data-action');
+
+			switch (actionData) {
+				//ability checks in the common action menu
+				case 'Strength Check':
+					document.body.prepend(document.querySelector('div#dice-box'));
+					document.querySelector('div#dice-box').style.zIndex = '';
+					overlayContainer.remove();
+					CommonActionMenuOpen = false;
+					roll_dice(`1d20+${characterData.AbilityScores.Modifier.Strength}`);
+					break;
+				case 'Dexterity Check':
+					document.body.prepend(document.querySelector('div#dice-box'));
+					document.querySelector('div#dice-box').style.zIndex = '';
+					overlayContainer.remove();
+					CommonActionMenuOpen = false;
+					roll_dice(`1d20+${characterData.AbilityScores.Modifier.Dexterity}`);
+					break;
+				case 'Constitution Check':
+					document.body.prepend(document.querySelector('div#dice-box'));
+					document.querySelector('div#dice-box').style.zIndex = '';
+					overlayContainer.remove();
+					CommonActionMenuOpen = false;
+					roll_dice(`1d20+${characterData.AbilityScores.Modifier.Constitution}`);
+					break;
+				case 'Intelligence Check':
+					document.body.prepend(document.querySelector('div#dice-box'));
+					document.querySelector('div#dice-box').style.zIndex = '';
+					overlayContainer.remove();
+					CommonActionMenuOpen = false;
+					roll_dice(`1d20+${characterData.AbilityScores.Modifier.Intelligence}`);
+					break;
+				case 'Wisdom Check':
+					document.body.prepend(document.querySelector('div#dice-box'));
+					document.querySelector('div#dice-box').style.zIndex = '';
+					overlayContainer.remove();
+					CommonActionMenuOpen = false;
+					roll_dice(`1d20+${characterData.AbilityScores.Modifier.Wisdom}`);
+					break;
+				case 'Charisma Check':
+					document.body.prepend(document.querySelector('div#dice-box'));
+					document.querySelector('div#dice-box').style.zIndex = '';
+					overlayContainer.remove();
+					CommonActionMenuOpen = false;
+					roll_dice(`1d20+${characterData.AbilityScores.Modifier.Charisma}`);
+					break;
+			}
+
+			switch (action) {
+				//saving throws in the common action menu
+				case 'Strength':
+					document.body.prepend(document.querySelector('div#dice-box'));
+					document.querySelector('div#dice-box').style.zIndex = '';
+					overlayContainer.remove();
+					CommonActionMenuOpen = false;
+                    roll_dice(`1d20+${characterData.SavingThrows.Strength.total}`);
+					break;
+				case 'Dexterity':
+					document.body.prepend(document.querySelector('div#dice-box'));
+					document.querySelector('div#dice-box').style.zIndex = '';
+					overlayContainer.remove();
+					CommonActionMenuOpen = false;
+					roll_dice(`1d20+${characterData.SavingThrows.Dexterity.total}`);
+					break;
+				case 'Constitution':
+					document.body.prepend(document.querySelector('div#dice-box'));
+					document.querySelector('div#dice-box').style.zIndex = '';
+					overlayContainer.remove();
+					CommonActionMenuOpen = false;
+					roll_dice(`1d20+${characterData.SavingThrows.Constitution.total}`);
+					break;
+				case 'Intelligence':
+					document.body.prepend(document.querySelector('div#dice-box'));
+					document.querySelector('div#dice-box').style.zIndex = '';
+					overlayContainer.remove();
+					CommonActionMenuOpen = false;
+					roll_dice(`1d20+${characterData.SavingThrows.Intelligence.total}`);
+					break;
+				case 'Wisdom':
+					document.body.prepend(document.querySelector('div#dice-box'));
+					document.querySelector('div#dice-box').style.zIndex = '';
+					overlayContainer.remove();
+					CommonActionMenuOpen = false;
+					roll_dice(`1d20+${characterData.SavingThrows.Wisdom.total}`);
+					break;
+				case 'Charisma':
+					document.body.prepend(document.querySelector('div#dice-box'));
+					document.querySelector('div#dice-box').style.zIndex = '';
+					overlayContainer.remove();
+					CommonActionMenuOpen = false;
+					roll_dice(`1d20+${characterData.SavingThrows.Charisma.total}`);
+					break;
+
+				//checks
+				case 'Acrobatics':
+					document.body.prepend(document.querySelector('div#dice-box'));
+					document.querySelector('div#dice-box').style.zIndex = '';
+					overlayContainer.remove();
+					CommonActionMenuOpen = false;
+					roll_dice(`1d20+${characterData.Skills.Acrobatics.totalModifier}`);
+					break;
+				case 'Animal Handling':
+					document.body.prepend(document.querySelector('div#dice-box'));
+					document.querySelector('div#dice-box').style.zIndex = '';
+					overlayContainer.remove();
+					CommonActionMenuOpen = false;
+					roll_dice(`1d20+${characterData.Skills['Animal Handling'].totalModifier}`);
+					break;
+				case 'Arcana':
+					document.body.prepend(document.querySelector('div#dice-box'));
+					document.querySelector('div#dice-box').style.zIndex = '';
+					overlayContainer.remove();
+					CommonActionMenuOpen = false;
+					roll_dice(`1d20+${characterData.Skills.Arcana.totalModifier}`);
+					break;
+				case 'Athletics':
+					document.body.prepend(document.querySelector('div#dice-box'));
+					document.querySelector('div#dice-box').style.zIndex = '';
+					overlayContainer.remove();
+					CommonActionMenuOpen = false;
+					roll_dice(`1d20+${characterData.Skills.Athletics.totalModifier}`);
+					break;
+				case 'Deception':
+					document.body.prepend(document.querySelector('div#dice-box'));
+					document.querySelector('div#dice-box').style.zIndex = '';
+					overlayContainer.remove();
+					CommonActionMenuOpen = false;
+					roll_dice(`1d20+${characterData.Skills.Deception.totalModifier}`);
+					break;
+				case 'History':
+					document.body.prepend(document.querySelector('div#dice-box'));
+					document.querySelector('div#dice-box').style.zIndex = '';
+					overlayContainer.remove();
+					CommonActionMenuOpen = false;
+					roll_dice(`1d20+${characterData.Skills.History.totalModifier}`);
+					break;
+				case 'Insight':
+					document.body.prepend(document.querySelector('div#dice-box'));
+					document.querySelector('div#dice-box').style.zIndex = '';
+					overlayContainer.remove();
+					CommonActionMenuOpen = false;
+					roll_dice(`1d20+${characterData.Skills.Insight.totalModifier}`);
+					break;
+				case 'Intimidation':
+					document.body.prepend(document.querySelector('div#dice-box'));
+					document.querySelector('div#dice-box').style.zIndex = '';
+					overlayContainer.remove();
+					CommonActionMenuOpen = false;
+					roll_dice(`1d20+${characterData.Skills.Intimidation.totalModifier}`);
+					break;
+				case 'Investigation':
+					document.body.prepend(document.querySelector('div#dice-box'));
+					document.querySelector('div#dice-box').style.zIndex = '';
+					overlayContainer.remove();
+					CommonActionMenuOpen = false;
+					roll_dice(`1d20+${characterData.Skills.Investigation.totalModifier}`);
+					break;
+				case 'Medicine':
+					document.body.prepend(document.querySelector('div#dice-box'));
+					document.querySelector('div#dice-box').style.zIndex = '';
+					overlayContainer.remove();
+					CommonActionMenuOpen = false;
+					roll_dice(`1d20+${characterData.Skills.Medicine.totalModifier}`);
+					break;
+				case 'Nature':
+					document.body.prepend(document.querySelector('div#dice-box'));
+					document.querySelector('div#dice-box').style.zIndex = '';
+					overlayContainer.remove();
+					CommonActionMenuOpen = false;
+					roll_dice(`1d20+${characterData.Skills.Nature.totalModifier}`);
+					break;
+				case 'Perception':
+					document.body.prepend(document.querySelector('div#dice-box'));
+					document.querySelector('div#dice-box').style.zIndex = '';
+					overlayContainer.remove();
+					CommonActionMenuOpen = false;
+					roll_dice(`1d20+${characterData.Skills.Perception.totalModifier}`);
+					break;
+				case 'Performance':
+					document.body.prepend(document.querySelector('div#dice-box'));
+					document.querySelector('div#dice-box').style.zIndex = '';
+					overlayContainer.remove();
+					CommonActionMenuOpen = false;
+					roll_dice(`1d20+${characterData.Skills.Performance.totalModifier}`);
+					break;
+				case 'Persuasion':
+					document.body.prepend(document.querySelector('div#dice-box'));
+					document.querySelector('div#dice-box').style.zIndex = '';
+					overlayContainer.remove();
+					CommonActionMenuOpen = false;
+					roll_dice(`1d20+${characterData.Skills.Persuasion.totalModifier}`);
+					break;
+				case 'Religion':
+					document.body.prepend(document.querySelector('div#dice-box'));
+					document.querySelector('div#dice-box').style.zIndex = '';
+					overlayContainer.remove();
+					CommonActionMenuOpen = false;
+					roll_dice(`1d20+${characterData.Skills.Religion.totalModifier}`);
+					break;
+				case 'Sleight of Hand':
+					document.body.prepend(document.querySelector('div#dice-box'));
+					document.querySelector('div#dice-box').style.zIndex = '';
+					overlayContainer.remove();
+					CommonActionMenuOpen = false;
+					roll_dice(`1d20+${characterData.Skills['Sleight of Hand'].totalModifier}`);
+					break;
+				case 'Stealth ':
+					document.body.prepend(document.querySelector('div#dice-box'));
+					document.querySelector('div#dice-box').style.zIndex = '';
+					overlayContainer.remove();
+					CommonActionMenuOpen = false;
+					roll_dice(`1d20+${characterData.Skills.Stealth.totalModifier}`);
+					break;
+				case 'Survival':
+					document.body.prepend(document.querySelector('div#dice-box'));
+					document.querySelector('div#dice-box').style.zIndex = '';
+					overlayContainer.remove();
+					CommonActionMenuOpen = false;
+					roll_dice(`1d20+${characterData.Skills.Survival.totalModifier}`);
+					break;
+				default:
+					//console.log('Unknown button clicked:', action);
+					break;
+			}
+			
+		});
+	});
+
+	var spellAttackButton = document.createElement('button');
+	spellAttackButton.id = "test";
+	spellAttackButton.textContent = "Spell Attack";
+	spellAttackButton.classList.add('submenu-item', 'submenu-item-button', 'btn', 'btn-default', 'btn-sm');
+
+	let spellAttack;
+
+	if (characterData.Classes[0].Definition.Name === "Sorcerer") {
+        spellAttack = characterData.ProficiencyBonus + characterData.AbilityScores.Modifier.Charisma;
+	} else if (characterData.Classes[0].Definition.Name === "Wizard") {
+		spellAttack = characterData.ProficiencyBonus + characterData.AbilityScores.Modifier.Intelligence;
+	} else if (characterData.Classes[0].Definition.Name === "Cleric") {
+		spellAttack = characterData.ProficiencyBonus + characterData.AbilityScores.Modifier.Wisdom;
+	} else if (characterData.Classes[0].Definition.Name === "Druid") {
+		spellAttack = characterData.ProficiencyBonus + characterData.AbilityScores.Modifier.Wisdom;
+	} else if (characterData.Classes[0].Definition.Name === "Paladin") {
+		spellAttack = characterData.ProficiencyBonus + characterData.AbilityScores.Modifier.Charisma;
+	} else if (characterData.Classes[0].Definition.Name === "Ranger") {
+		spellAttack = characterData.ProficiencyBonus + characterData.AbilityScores.Modifier.Wisdom;
+	} else if (characterData.Classes[0].Definition.Name === "Bard") {
+		spellAttack = characterData.ProficiencyBonus + characterData.AbilityScores.Modifier.Charisma;
+	} else if (characterData.Classes[0].Definition.Name === "Warlock") {
+		spellAttack = characterData.ProficiencyBonus + characterData.AbilityScores.Modifier.Charisma;
+	} else if (characterData.Classes[0].Definition.Name === "Artificer") {
+		spellAttack = characterData.ProficiencyBonus + characterData.AbilityScores.Modifier.Intelligence;
+	}
+
+	spellAttackButton.title = "+" + spellAttack;
+	actions.appendChild(spellAttackButton);
+
+	spellAttackButton.addEventListener('click', function () {
+		document.body.prepend(document.querySelector('div#dice-box'));
+		document.querySelector('div#dice-box').style.zIndex = '';
+		overlayContainer.remove();
+		CommonActionMenuOpen = false;
+		roll_dice(`1d20+${spellAttack}`);
+	});
+}
+
+function fetchJsonDataFromUrl(url) {
+	return new Promise((resolve, reject) => {
+		fetch(url)
+			.then(response => {
+				if (!response.ok) {
+					throw new Error('Network response was not ok');
+				}
+				return response.json();
+			})
+			.then(jsonData => {
+				resolve(jsonData);
+			})
+			.catch(error => {
+				reject(error);
+			});
+	});
+}
+
+function sendDataToSidebar(information) {
+	chrome.runtime.sendMessage({
+		type: 'SEND_DATA_TO_SIDEBAR',
+		information: information,
+		characterName: characterData.Name
+	}, (response) => {
+		//console.log('Content Script: Received response:', response);
+		if (chrome.runtime.lastError) {
+			//console.error('Message sending error:', chrome.runtime.lastError);
+		}
+	});
+}
+
+function roll_dice(dice) {
+	//console.log('Content script roll_dice called with:', dice);
+	//console.log('Current window keys:', Object.keys(window));
+
+	//Tries teo find the funtion roll_dice
+	const potentialRollFunctions = Object.entries(window)
+		.filter(([key, value]) =>
+			typeof value === 'function' &&
+			value.toString().includes('roll_dice')
+		);
+
+	//console.log('Potential roll_dice functions:', potentialRollFunctions);
+
+	//due to manifest version 3, the background script now has to 
+	//execute the website's roll_dice function
+	chrome.runtime.sendMessage({
+		type: 'ROLL_DICE',
+		dice: dice
+	}, (response) => {
+		//if (chrome.runtime.lastError) {
+		//	console.error('Message sending error:', chrome.runtime.lastError);
+		//} else {
+		//	console.log('Message sent successfully', response);
+		//}
+	});
+}
+
+/*
 let characterSheetOverlayOpen = false;
 let commonActionOpen = false;
 let overlayContainerOpen = false; //this is for the commonActions fucntion
@@ -131,6 +726,7 @@ if (!excludeRegex.test(currentURL)) {
 			});
 	}, 0);
 }
+* /
 
 function toggleCommonActionOverlay() {
 	if (!overlayContainerDiv) {
@@ -947,11 +1543,11 @@ function createCharacterSheet(adventureData, buttonPressed, recreateOverlay) {
 		//html for the main page of the character sheet
 		overlayBody.innerHTML = `
 				<style>
-        				.character-menu {
-            				display: grid;
-            				grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); /* Adjust minmax values as needed */
-            				gap: 10px; /* Adjust gap as needed */
-        				}
+        			.character-menu {
+            			display: grid;
+            			grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); 
+            			gap: 10px;
+        			}
     				</style>
 				<div id="overlayContainer" style="display: flex;">
     					<div style="border: 2px solid #336699; padding: 10px; margin-right: 10px; height: 515px;">
@@ -1000,7 +1596,7 @@ function createCharacterSheet(adventureData, buttonPressed, recreateOverlay) {
 					<input type="text" id="armourClass" disabled="true" value="${currentArmourClass}" style="margin-left: -65px; margin-top: 55px; width: 40px; height: 30px;">
 					<label style="width: 30px; height: 30px; margin-left: -95px; margin-top: 55px; font-size: 16px;">AC</label>
 				</div>
-	`;
+			`;
 
 		//All the css that is in control of the format of character sheets
 		const link = document.createElement('link');
@@ -1386,8 +1982,8 @@ function showCharacterSheet(adventureData, buttonPressed) {
 				<style>
         				.character-menu {
             				display: grid;
-            				grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); /* Adjust minmax values as needed */
-            				gap: 10px; /* Adjust gap as needed */
+            				grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); 
+            				gap: 10px;
         				}
     				</style>
 				<div id="overlayContainer" style="display: flex;">
@@ -2429,8 +3025,8 @@ function showBio(adventureData, buttonPressed, characterData, stats) {
 	<style>
     		.character-menu {
         		display: grid;
-        		grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); /* Adjust minmax values as needed */
-        		gap: 10px; /* Adjust gap as needed */
+        		grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+        		gap: 10px;
     		}
 		</style>
 			<div id="overlayContainer">
@@ -2691,8 +3287,8 @@ function showFeatures(adventureData, buttonPressed, characterData, stats) {
 	<style>
     		.character-menu {
         		display: grid;
-        		grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); /* Adjust minmax values as needed */
-        		gap: 10px; /* Adjust gap as needed */
+        		grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+        		gap: 10px;
     		}
 		</style>
 			<div id="overlayContainer">
@@ -2909,8 +3505,8 @@ function showInventory(adventureData, buttonPressed, characterData, stats) {
 
     		.character-menu {
         		display: grid;
-        		grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); /* Adjust minmax values as needed */
-        		gap: 10px; /* Adjust gap as needed */
+        		grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+        		gap: 10px;
     		}
 			</style>
 			<div id="overlayContainer">
@@ -3095,8 +3691,8 @@ function showSpells(adventureData, buttonPressed, characterData, stats) {
 
     		.character-menu {
         		display: grid;
-        		grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); /* Adjust minmax values as needed */
-        		gap: 10px; /* Adjust gap as needed */
+        		grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+        		gap: 10px;
     		}
 
 			</style>
@@ -3898,18 +4494,6 @@ function spellInfo(buttonPressed, adventureData, spellInformation, spellLevel, c
 
 	const castSpell = overlayBody.querySelector('#castSpell');
 	castSpell.addEventListener('click', function () {
-		//uncomment this vvv to send the entire spell detail to the chat instead
-		/*var message = (
-			spellInformation.name + newline +
-			spellInformation["school level"] + newline +
-			spellInformation["casting time"] + newline +
-			spellInformation.range + newline +
-			spellInformation.components + newline +
-			spellInformation.duration + newline +
-			newline +
-			spellInformation.description.replace(/<br><br>/g, '\n\n')
-		);*/
-
 		var message = ("Casting: " + spellInformation.name);
 
 		if (characterData.classes[0].definition.name === "Warlock") {
@@ -4525,4 +5109,4 @@ function checkSavingThrow(savingThrow, stats, characterProf) {
 
 	console.log("total: ", total);
 	return total;
-}
+}*/

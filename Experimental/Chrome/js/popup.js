@@ -90,6 +90,7 @@ function displayCharacterInfo(characterData) {
 
 function calculateCharacterData(data) {
     let characterData = {};
+    console.log("Original Data", data);
 
     //function calculations
     const characterStats = getCharacterStats(data);
@@ -180,7 +181,7 @@ function calculateCharacterData(data) {
     characterData.Currencies = data.currencies;
     characterData.MaxCarryWeight = data.race.sizeId < 3 ? (characterData.AbilityScores.Score.Strength * 15) / 2 : (data.race.sizeId > 4 ? (characterData.AbilityScores.Score.Strength * 15) * 2 : (characterData.AbilityScores.Score.Strength * 15));
     characterData.DragPushLift = characterData.AbilityScores.Score.Strength * 30 * (data.race.sizeId > 4 ? 2 : (data.race.sizeId < 3 ? 0.5 : 1));
-    characterData.Inventory = gatherInventory(data);
+    characterData.Inventory = gatherInventory(data, characterData);
     characterData.Classes = gatherClasses(data, characterData);
     characterData.Feats = gatherFeats(data);
     characterData.Actions = gatherActions(data);
@@ -739,8 +740,17 @@ function gatherInventory(data, characterData) {
     let inventory = {};
 
     // Function to process inventory items
-    function processInventoryItems(items) {
+    function processInventoryItems(items, characterData) {
+        const Finesse = ["Dagger", "Dart", "Rapier", "Scimitar", "Shortsword", "Whip"];
+        const simpleWeapons = ["Club", "Dagger", "Greatclub", "Handaxe", "Javelin", "Light Hammer", "Mace", "Quarterstaff", "Staff", "Sickle", "Spear", "Crossbow, light", "Dart", "Shortbow", "Sling"];
+        const martialWeapons = ["Battleaxe", "Flail", "Glaive", "Greataxe", "Greatsword", "Halberd", "Lance", "Longsword", "Maul", "Morningstar", "Pike", "Rapier", "Scimitar", "Shortsword", "Trident", "War Pick", "Warhammer", "Whip"];
+        const rangedWeapons = ["Shortbow", "Longbow", "Crossbow, light", "Crossbow, hand", "Crossbow, heavy", "Sling", "Dart", "Javelin"];
+
         for (let i = 0; i < items.length; i++) {
+            if (!items[i] || !items[i].definition) {
+                continue; // Skip if the item or its definition is undefined
+            }
+
             inventory[i] = {
                 Equipped: items[i].equipped,
                 IsAttuned: items[i].isAttuned,
@@ -786,8 +796,10 @@ function gatherInventory(data, characterData) {
                     IsMonkWeapon: items[i].definition.isMonkWeapon,
                     IsContainer: items[i].definition.isContainer,
                     IsCustomItem: items[i].definition.isCustomItem,
+                    AttackRoll: "",
+                    DamageRoll: ""
                 }
-            }
+            };
 
             for (let j = 0; j < items[i].definition.grantedModifiers.length; j++) {
                 inventory[i].Definition.GrantedModifiers[j] = {
@@ -797,9 +809,48 @@ function gatherInventory(data, characterData) {
                     Restriction: removeHtmlTags(items[i].definition.grantedModifiers[j].restriction),
                     RequiresAttunement: items[i].definition.grantedModifiers[j].requiresAttunement,
                     Duration: items[i].definition.grantedModifiers[j].duration,
-                    Value: items[i].definition.grantedModifiers[j].value
-                }
+                    Value: items[i].definition.grantedModifiers[j].value,
+                    AttackRoll: "",
+                    DamageRoll: ""
+                };
             }
+
+            let modifier = 0;
+            const itemName = items[i].definition.name;
+            const isFinesse = Finesse.includes(itemName);
+            const isSimpleWeapon = simpleWeapons.includes(itemName);
+            const isMartialWeapon = martialWeapons.includes(itemName);
+            const isRangedWeapon = rangedWeapons.includes(itemName);
+            const isMonk = data.classes[0].definition.name === "Monk";
+
+            if (isFinesse) {
+                modifier += Math.max(characterData.AbilityScores.Modifier.Dexterity, characterData.AbilityScores.Modifier.Strength);
+            } else if (isRangedWeapon) {
+                modifier += characterData.AbilityScores.Modifier.Dexterity;
+            } else if (isMonk) {
+                modifier += characterData.AbilityScores.Modifier.Dexterity;
+            } else {
+                modifier += characterData.AbilityScores.Modifier.Strength;
+            }
+
+            if (characterData.Proficiencys.Weapons.includes(itemName) || isSimpleWeapon || isMartialWeapon || simpleWeapons.includes(items[i].definition.filterType)) {
+                modifier += characterData.ProficiencyBonus;
+            }
+
+            inventory[i].Definition.AttackRoll = "1d20+" + modifier;
+
+            // Calculate damage roll
+            let damageRolls = [];
+            for (let j = 0; j < items[i].definition.weaponBehaviors.length; j++) {
+                let damageRoll = items[i].definition.weaponBehaviors[j].damage.diceString;
+                if (items[i].definition.properties && Object.keys(items[i].definition.properties).some(prop => prop.name === "Versatile")) {
+                    const versatileDamage = items[i].definition.properties.find(prop => prop.name === "Versatile").notes;
+                    damageRoll = versatileDamage;
+                }
+                damageRolls.push(damageRoll + "+" + modifier);
+            }
+
+            inventory[i].Definition.DamageRoll = damageRolls.join(" / ");
         }
     }
 
@@ -819,7 +870,7 @@ function gatherInventory(data, characterData) {
     }
 
     // Process standard inventory items
-    processInventoryItems(data.inventory);
+    processInventoryItems(data.inventory, characterData);
 
     // Process custom inventory items
     if (data.customItems) {
@@ -828,6 +879,9 @@ function gatherInventory(data, characterData) {
 
     return inventory;
 }
+
+
+
 
 function background(data) {
     const characterBackground = {}
@@ -944,7 +998,27 @@ function savingThrows(characterData, data, stats) {
 }
 
 function skills(characterData, data, stats) {
-    const listSkills = [{ name: "Acrobatics", ability: "Dexterity" }, { name: "Animal Handling", ability: "Wisdom" }, { name: "Arcana", ability: "Intelligence" }, { name: "Athletics", ability: "Strength" }, { name: "Deception", ability: "Charisma" }, { name: "History", ability: "Intelligence" }, { name: "Insight", ability: "Wisdom" }, { name: "Intimidation", ability: "Charisma" }, { name: "Investigation", ability: "Intelligence" }, { name: "Medicine", ability: "Wisdom" }, { name: "Nature", ability: "Intelligence" }, { name: "Perception", ability: "Wisdom" }, { name: "Performance", ability: "Charisma" }, { name: "Persuasion", ability: "Charisma" }, { name: "Religion", ability: "Intelligence" }, { name: "Sleight of Hand", ability: "Dexterity" }, { name: "Stealth", ability: "Dexterity" }, { name: "Survival", ability: "Wisdom" }];
+    console.log(stats);
+    const listSkills = [
+        { name: "Acrobatics", ability: "Dexterity" },
+        { name: "Animal Handling", ability: "Wisdom" },
+        { name: "Arcana", ability: "Intellegence" },
+        { name: "Athletics", ability: "Strength" },
+        { name: "Deception", ability: "Charisma" },
+        { name: "History", ability: "Intellegence" },
+        { name: "Insight", ability: "Wisdom" },
+        { name: "Intimidation", ability: "Charisma" },
+        { name: "Investigation", ability: "Intellegence" },
+        { name: "Medicine", ability: "Wisdom" },
+        { name: "Nature", ability: "Intellegence" },
+        { name: "Perception", ability: "Wisdom" },
+        { name: "Performance", ability: "Charisma" },
+        { name: "Persuasion", ability: "Charisma" },
+        { name: "Religion", ability: "Intellegence" },
+        { name: "Sleight of Hand", ability: "Dexterity" },
+        { name: "Stealth", ability: "Dexterity" },
+        { name: "Survival", ability: "Wisdom" }
+    ];
     const skillDictionary = {};
 
     for (let i = 0; i < listSkills.length; i++) {
@@ -992,6 +1066,9 @@ function skills(characterData, data, stats) {
         } else {
             totalModifier = baseModifier;
         }
+
+        // Debugging logs
+        console.log(`Skill: ${skillName}, Proficient: ${isProficient}, Base Modifier: ${baseModifier}, Total Modifier: ${totalModifier}`);
 
         // Save data into dictionary
         skillDictionary[skillName] = {
