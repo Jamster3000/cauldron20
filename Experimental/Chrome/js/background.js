@@ -44,10 +44,53 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
             args: [message.dice],
             world: 'MAIN'  // Important: ensures script runs in page context
         }).then(results => {
-            //console.log('Execution results:', results);
             sendResponse(results[0]?.result);
         }).catch(error => {
             //console.error('Script execution failed:', error);
+            sendResponse({
+                success: false,
+                error: error.toString()
+            });
+        });
+        return true;
+    }
+
+    if (message.type === 'ROLL_D20') {
+        chrome.scripting.executeScript({
+            target: { tabId: sender.tab.id },
+            func: (modifier, rollType) => {
+                try {
+                    if (typeof window.roll_d20 === 'function') {
+                        console.log(`Rolling d20 with modifier ${modifier} and rollType ${rollType}`);
+                        window.roll_d20(modifier, rollType);
+                        return { success: true, message: 'roll_d20 called successfully' };
+                    } else {
+                        console.error('window.roll_d20 is not a function');
+                        if (typeof window.roll_dice === 'function') {
+                            const rollCommand = rollType === 1 ? "2d20kh1" + modifier :
+                                rollType === 2 ? "2d20kl1" + modifier :
+                                    "1d20" + modifier;
+                            window.roll_dice(rollCommand);
+                            return { success: true, message: 'Fallback to roll_dice' };
+                        }
+                        return {
+                            success: false,
+                            error: 'Neither roll_d20 nor roll_dice are available functions'
+                        };
+                    }
+                } catch (error) {
+                    return {
+                        success: false,
+                        error: error.toString(),
+                        stack: error.stack
+                    };
+                }
+            },
+            args: [message.modifier, message.rollType],
+            world: 'MAIN'
+        }).then(results => {
+            sendResponse(results[0]?.result);
+        }).catch(error => {
             sendResponse({
                 success: false,
                 error: error.toString()
@@ -102,6 +145,49 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         });
 
         return true;  // For async response
+    }
+    if (message.type === 'APPLY_HEALING') {
+        chrome.scripting.executeScript({
+            target: { tabId: sender.tab.id },
+            func: (healAmount) => {
+                try {
+                    // Use the my_character variable from Cauldron VTT's global scope
+                    if (typeof window.object_damage_command === 'function' && window.my_character) {
+                        console.log(`Applying healing: ${healAmount} to character: ${window.my_character}`);
+                        window.object_damage_command(window.my_character, -parseInt(healAmount));
+                        return { success: true, message: 'Healing applied successfully' };
+                    } else {
+                        console.error('Required functions or variables not available:',
+                            'object_damage_command exists:', typeof window.object_damage_command === 'function',
+                            'my_character exists:', !!window.my_character);
+                        return {
+                            success: false,
+                            error: 'Required Cauldron VTT functions or variables not available',
+                            object_damage_command_exists: typeof window.object_damage_command === 'function',
+                            my_character_exists: !!window.my_character,
+                            my_character_value: window.my_character
+                        };
+                    }
+                } catch (error) {
+                    console.error("Error applying healing:", error);
+                    return {
+                        success: false,
+                        error: error.toString(),
+                        stack: error.stack
+                    };
+                }
+            },
+            args: [message.healAmount],
+            world: 'MAIN'  // Important: ensures script runs in the Cauldron VTT page context
+        }).then(results => {
+            sendResponse(results[0]?.result);
+        }).catch(error => {
+            sendResponse({
+                success: false,
+                error: error.toString()
+            });
+        });
+        return true;
     }
 });
 

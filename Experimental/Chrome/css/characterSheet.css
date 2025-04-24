@@ -8,21 +8,56 @@
     border: 2px solid #336699;
     padding: 10px;
     margin-right: 10px;
+    margin-top: 45px;
+    border-radius: 4px;
 }
+
+
 
 .ability-panel {
-    height: 515px;
+    height: 365px; 
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    padding: 5px; 
+    margin-top: 170px;
 }
 
+    .ability-panel h5 {
+        margin-top: 0;
+        margin-bottom: 2px;
+        text-align: center;
+        width: 100%;
+        font-size: 14px;
+    }
+
+    .ability-panel .button-modification {
+        margin-bottom: 8px;
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+        padding: 6px;
+        height: 32px;
+    }
+
+    .ability-panel h5:first-of-type {
+        margin-top: 5px;
+    }
+
 .skills-panel {
-    height: 515px;
+    height: 490px;
     width: 155px;
+}
+
+#skillList {
+    margin-top: -7.5px !important;
 }
 
 .saving-throws-panel {
     height: 195px;
     width: 120px;
-    margin-top: 320px;
+    margin-top: 340px;
     padding: 5px;
 }
 
@@ -33,6 +68,7 @@
     width: 120px;
     margin-left: -130px;
     margin-top: -23px;
+    border-radius: 4px;
 }
 
 .ability-btn {
@@ -48,44 +84,249 @@
     height: 28px;
 }
 
+/* Hit Dice */
+.hit-dice-container {
+    border: 2px solid #336699;
+    padding: 8px;
+    border-radius: 4px;
+    width: 83.2px;
+    height: 110px;
+    position: absolute;
+    margin-top: 45px;
+    margin-left: 0px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.hit-dice-label {
+    font-size: 14px;
+    font-weight: bold;
+    margin-bottom: 5px;
+    text-align: center;
+}
+
+.hit-dice-type {
+    font-size: 13px;
+    margin: 2px 0;
+    font-weight: bold;
+    color: #336699;
+}
+
+.hit-dice-display {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+}
+
+.hit-dice-fraction {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 5px 0;
+}
+
+.hit-dice-count {
+    font-weight: bold;
+    font-size: 16px;
+    margin: 0 3px;
+}
+
+.hit-dice-button {
+    font-size: 14px;
+    width: 100%;
+    height: 25px;
+    padding: 0;
+    border: 1px solid #cccccc;
+    border-radius: 3px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #fafafa;
+    margin-top: 10px;
+}
+
+    .hit-dice-button:hover {
+        background-color: #f0f0f0;
+    }
+
+    .hit-dice-button:active {
+        transform: scale(0.97);
+    }
+
+.roll-dice {
+    border: 1px solid black;
+    font-size: 15px;
+    width: fit-content;
+    min-width: 70px;
+    height: 22px;
+    padding: 1px;
+    border-radius: 5px;
+    box-shadow: 0px 0px 20px -20px;
+    cursor: pointer;
+    background-color: white;
+    transition: all 0.1s ease-in-out 0ms;
+    user-select: none;
+    font-family: 'Poppins', sans-serif;
+    margin-top: -5px;
+}
+
+    .roll-dice:hover {
+        background-color: #F2F2F2;
+        box-shadow: 0px 0px 20px -18px;
+    }
+
+    .roll-dice:active {
+        transform: scale(0.95);
+    }
+
+/* Armour class */
 .stats-display {
-    margin-left: -22px;
+    margin-left: 55px;
+    margin-top: 0;
     width: 40px;
     height: 30px;
+    font-weight: bold;
 }
 
 .stats-label {
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    margin-left: 5px;
+    margin-top: -30px;
+    font-size: 13px;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.armourSection {
+    border: 2px solid #336699;
+    padding: 10px;
+    margin-left: -130px;
+    margin-top: 45px;
+    height: 50px;
+    width: 120px;
+    border-radius: 4px;
+}
+
+/* Hit Points */
+.hp-container {
+    border: 2px solid #336699;
+    padding: 10px;
+    border-radius: 4px;
+    align-items: center;
+    margin-left: -377.5px;
+    margin-top: -5px;
+    width: 125px;
+    height: 45px;
+    display: flex;
+    flex-direction: column;
+}
+
+.max-hp-input {
+    width: 35px;
+    height: 32px;
+    font-size: 12px;
+    margin-left: 17.5px; 
+    margin-top: -5px;
+    display: inline-block;
+}
+
+.current-hp-input {
+    width: 35px;
+    height: 32px;
+    font-size: 12px;
+    margin-left: -28px; 
+    margin-top: -5px;
+    display: inline-block;
+}
+
+.hp-slash {
+    font-size: 25px;
+    margin-left: -57.5px;
+    margin-top: -7.5px;
+    margin-right: 5px; 
+    display: inline-block;
+    font-weight: normal;
+}
+
+.hp-label {
+    font-size: 16px;
+    position: absolute;
     width: 30px;
     height: 30px;
     margin-left: -95px;
-    margin-top: 40px;
-    font-size: 16px;
+    margin-top: 0px;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
+
+.hp-inputs-container {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    margin-left: 25px;
+    font-weight: bold;
+}
+
+/* Temp Hit points */
+.temp-hp-container {
+    border: 2px solid #336699;
+    padding: 10px;
+    border-radius: 4px;
+    align-items: center;
+    margin-left: 12.5px;
+    margin-top: -5px;
+    width: 110px;
+    height: 45px;
+    display: flex;
+    flex-direction: column;
+}
+
+.temp-hp-label {
+    font-size: 16px;
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    margin-left: -60px;
+    margin-top: -2.5px;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.temp-hp-input {
+    width: 50px;
+    height: 32px;
+    font-size: 12px;
+    margin-left: 35px;
+    margin-top: -2.5px;
+    display: inline-block;
+    font-weight: bold;
+}
+
+
+
+
+
+
+
 
 .section-title {
     margin-top: 50px;
     font-size: 20px;
     text-align: center;
-}
-
-.hp-container {
-    align-items: center;
-    margin-left: -40px;
-}
-
-.hp-input {
-    width: 30px;
-    height: 30px;
-}
-
-.hp-slash {
-    margin-left: -6px;
-    font-size: 20px;
-}
-
-.hp-label {
-    margin-left: -65px;
-    font-size: 16px;
 }
 
 .button-modification {

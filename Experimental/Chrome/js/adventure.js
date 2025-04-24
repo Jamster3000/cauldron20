@@ -3,6 +3,9 @@
 //Constants
 const SUBMENU_APPEAR_TRANSITION = 0.3;
 const SUBMENU_REMAIN_TRANSITION = 400; //how long the Common Action sub menu stays visible before whilst cursor isn't hovered
+const DICE_ROLL_NORMAL = 0;
+const DICE_ROLL_ADVANTAGE = 1;
+const DICE_ROLL_DISADVANTAGE = 2;
 
 let characterData = null;
 
@@ -12,6 +15,7 @@ let commonActionClickListener = null; //check to ensure mulitple listeners aren'
 
 //Character sheet
 let characterSheetOpen = false;
+let searchInputFocused = false;
 
 //DEBUG
 chrome.storage.local.get('characterData', function (result) {
@@ -28,55 +32,140 @@ if (!excludeRegex.test(currentURL)) {
 		fetchJsonDataFromUrl(urlWithJsonOutput)
 			.then(adventureData => {
 				adventureData = adventureData.adventure;
-				const container = document.querySelector('.topbar .btn-group'); // contains each section of the page (playArea, chat, header, etc.)
-				const viewCharacter = document.createElement('button');
 
-				viewCharacter.classList.add('btn', 'btn-primary', 'btn-xs');
-				container.prepend(viewCharacter);
+				// Get the player's character name from the adventure data
+				let playerCharacterName = null;
 
-				if (adventureData["@is_dm"] === "yes") {
-					viewCharacter.textContent = "Player Character Sheets";
-				} else {
-					viewCharacter.textContent = "Character Sheet";
+				if (adventureData["@is_dm"] !== "yes") {
+					console.log(adventureData);
+					// Not DM - find the player's character
+					if (adventureData.characters && adventureData.characters["@mine"]) {
+						// The @mine attribute indicates which character belongs to the current player
+						const characterInstanceId = adventureData.characters["@mine"];
 
-					// Only create and add the Common Actions button if the user is not a DM
-					const viewCommonActions = document.createElement('button');
-					viewCommonActions.classList.add('btn', 'btn-primary', 'btn-xs');
-					viewCommonActions.textContent = "Common Actions";
-					container.prepend(viewCommonActions);
+						// If there's a single character
+						if (!Array.isArray(adventureData.characters.character)) {
+							if (adventureData.characters.character.instance_id === characterInstanceId) {
+								playerCharacterName = adventureData.characters.character.name;
+							}
+						}
+						// If there are multiple characters
+						else {
+							for (const character of adventureData.characters.character) {
+								if (character.instance_id === characterInstanceId) {
+									playerCharacterName = character.name;
+									break;
+								}
+							}
+						}
+					}
 
-					viewCommonActions.addEventListener('click', function (event) {
-						event.preventDefault();
-						if (CommonActionMenuOpen) return;
-
-						const urlWithJsonOutput = window.location.href + "?output=json";
-						fetchJsonDataFromUrl(urlWithJsonOutput)
-							.then(adventureData => {
-								adventureData = adventureData.adventure;
-								createCommonAction(adventureData);
-							});
-					});
+					// If character name wasn't found by instance_id but the @name attribute exists
+					if (!playerCharacterName && adventureData.characters["@name"]) {
+						playerCharacterName = adventureData.characters["@name"];
+					}
 				}
 
-				viewCharacter.addEventListener('click', function (event) {
-					event.preventDefault();
+				// If we found the player's character name, load its data from storage
+				if (playerCharacterName) {
+					chrome.storage.local.get('characters', function (result) {
+						if (result.characters) {
+							// Find the matching character by name
+							for (const [characterId, charData] of Object.entries(result.characters)) {
+								if (charData.Name === playerCharacterName) {
+									characterData = charData;
 
-					if (adventureData["@is_dm"] === "yes") {
-						showDmView(false, adventureData);
-					} else {
-						const urlWithJsonOutput = window.location.href + "?output=json";
-						fetchJsonDataFromUrl(urlWithJsonOutput)
-							.then(adventureData => {
-								adventureData = adventureData.adventure;
-								createCharacterSheet(adventureData);
+									// Set this as the active character for consistency
+									chrome.storage.local.set({
+										'activeCharacterId': characterId,
+										'characterData': charData
+									});
+
+									break;
+								}
+							}
+						}
+
+						// If we couldn't find the character data, try the legacy method
+						if (!characterData) {
+							chrome.storage.local.get('characterData', function (result) {
+								characterData = result.characterData;
+								console.log("Using legacy characterData");
 							});
-					}
-				});
+						} else {
+							console.log("Using character data for current player:", playerCharacterName);
+						}
+
+						// Set up the UI now that we have the character data
+						setupAdventureUI(adventureData);
+					});
+				} else {
+					// Fallback to legacy method if we couldn't determine the current player's character
+					chrome.storage.local.get('characterData', function (result) {
+						characterData = result.characterData;
+						console.log("No player character found in adventure data, using default characterData");
+
+						// Set up the UI with whatever character data we have
+						setupAdventureUI(adventureData);
+					});
+				}
 			})
 			.catch(error => {
 				console.error('Error fetching JSON data:', error);
 			});
 	}, 0);
+}
+
+function setupAdventureUI(adventureData) {
+	const container = document.querySelector('.topbar .btn-group');
+	const viewCharacter = document.createElement('button');
+
+	viewCharacter.classList.add('btn', 'btn-primary', 'btn-xs');
+	container.prepend(viewCharacter);
+
+	if (adventureData["@is_dm"] === "yes") {
+		viewCharacter.textContent = "Player Character Sheets";
+	} else {
+		viewCharacter.textContent = "Character Sheet";
+
+		// Only create and add the Common Actions button if the user is not a DM
+		const viewCommonActions = document.createElement('button');
+		viewCommonActions.classList.add('btn', 'btn-primary', 'btn-xs');
+		viewCommonActions.textContent = "Common Actions";
+		viewCommonActions.id = "commonActionsButton";
+		container.prepend(viewCommonActions);
+
+		viewCommonActions.addEventListener('click', function (event) {
+			console.log("Common Actions button clicked");
+			event.preventDefault();
+			if (CommonActionMenuOpen) return;
+
+			// Fetch fresh data from the server like in the original code
+			const urlWithJsonOutput = window.location.href + "?output=json";
+			fetchJsonDataFromUrl(urlWithJsonOutput)
+				.then(freshData => {
+					freshData = freshData.adventure;
+					console.log("Calling createCommonAction with fresh data");
+					createCommonAction(freshData);
+				})
+				.catch(error => {
+					console.error("Error fetching fresh data:", error);
+					// Fallback to existing adventureData if fetch fails
+					console.log("Falling back to cached data");
+					createCommonAction(adventureData);
+				});
+		});
+	}
+
+	viewCharacter.addEventListener('click', function (event) {
+		event.preventDefault();
+
+		if (adventureData["@is_dm"] === "yes") {
+			showDmView(false, adventureData);
+		} else {
+			createCharacterSheet(adventureData);
+		}
+	});
 }
 
 function createCommonAction(adventureData) {
@@ -85,7 +174,7 @@ function createCommonAction(adventureData) {
 	}
 
 	const topbar = document.querySelector('.topbar');
-	overlayContainer = document.createElement('div');
+	let overlayContainer = document.createElement('div');
 	overlayContainer.id = 'customCommonActionMenu';
 	overlayContainer.classList.add('panel', 'panel-primary');
 	overlayContainer.style.display = 'block';
@@ -309,7 +398,7 @@ function createCommonAction(adventureData) {
 
 			let clickTimeout;
 
-			weaponButton.addEventListener('click', () => {
+			weaponButton.addEventListener('click', function(event) {
 				if (clickTimeout) {
 					clearTimeout(clickTimeout);
 					clickTimeout = null;
@@ -326,7 +415,7 @@ function createCommonAction(adventureData) {
 						document.querySelector('div#dice-box').style.zIndex = '';
 						overlayContainer.remove();
 						CommonActionMenuOpen = false;
-						roll_dice(attackRoll);
+						roll_dice(attackRoll, event);
 					}, 200);
 				}
 			});
@@ -338,7 +427,7 @@ function createCommonAction(adventureData) {
 	document.addEventListener('click', commonActionClickListener);
 
 	document.querySelectorAll('.submenu-item-button').forEach(button => {
-		button.addEventListener('click', event => {
+		button.addEventListener('click', function(event) {
 			const target = event.target.closest('button');
 			if (!target) return;
 
@@ -355,42 +444,42 @@ function createCommonAction(adventureData) {
 					document.querySelector('div#dice-box').style.zIndex = '';
 					overlayContainer.remove();
 					CommonActionMenuOpen = false;
-					roll_dice(`1d20+${characterData.AbilityScores.Modifier.Strength}`);
+					roll_dice(`1d20+${characterData.AbilityScores.Modifier.Strength}`, event);
 					break;
 				case 'Dexterity Check':
 					document.body.prepend(document.querySelector('div#dice-box'));
 					document.querySelector('div#dice-box').style.zIndex = '';
 					overlayContainer.remove();
 					CommonActionMenuOpen = false;
-					roll_dice(`1d20+${characterData.AbilityScores.Modifier.Dexterity}`);
+					roll_dice(`1d20+${characterData.AbilityScores.Modifier.Dexterity}`, event);
 					break;
 				case 'Constitution Check':
 					document.body.prepend(document.querySelector('div#dice-box'));
 					document.querySelector('div#dice-box').style.zIndex = '';
 					overlayContainer.remove();
 					CommonActionMenuOpen = false;
-					roll_dice(`1d20+${characterData.AbilityScores.Modifier.Constitution}`);
+					roll_dice(`1d20+${characterData.AbilityScores.Modifier.Constitution}`, event);
 					break;
 				case 'Intelligence Check':
 					document.body.prepend(document.querySelector('div#dice-box'));
 					document.querySelector('div#dice-box').style.zIndex = '';
 					overlayContainer.remove();
 					CommonActionMenuOpen = false;
-					roll_dice(`1d20+${characterData.AbilityScores.Modifier.Intelligence}`);
+					roll_dice(`1d20+${characterData.AbilityScores.Modifier.Intelligence}`, event);
 					break;
 				case 'Wisdom Check':
 					document.body.prepend(document.querySelector('div#dice-box'));
 					document.querySelector('div#dice-box').style.zIndex = '';
 					overlayContainer.remove();
 					CommonActionMenuOpen = false;
-					roll_dice(`1d20+${characterData.AbilityScores.Modifier.Wisdom}`);
+					roll_dice(`1d20+${characterData.AbilityScores.Modifier.Wisdom}`, event);
 					break;
 				case 'Charisma Check':
 					document.body.prepend(document.querySelector('div#dice-box'));
 					document.querySelector('div#dice-box').style.zIndex = '';
 					overlayContainer.remove();
 					CommonActionMenuOpen = false;
-					roll_dice(`1d20+${characterData.AbilityScores.Modifier.Charisma}`);
+					roll_dice(`1d20+${characterData.AbilityScores.Modifier.Charisma}`, event);
 					break;
 			}
 
@@ -401,42 +490,42 @@ function createCommonAction(adventureData) {
 					document.querySelector('div#dice-box').style.zIndex = '';
 					overlayContainer.remove();
 					CommonActionMenuOpen = false;
-					roll_dice(`1d20+${characterData.SavingThrows.Strength.total}`);
+					roll_dice(`1d20+${characterData.SavingThrows.Strength.total}`, event);
 					break;
 				case 'Dexterity':
 					document.body.prepend(document.querySelector('div#dice-box'));
 					document.querySelector('div#dice-box').style.zIndex = '';
 					overlayContainer.remove();
 					CommonActionMenuOpen = false;
-					roll_dice(`1d20+${characterData.SavingThrows.Dexterity.total}`);
+					roll_dice(`1d20+${characterData.SavingThrows.Dexterity.total}`, event);
 					break;
 				case 'Constitution':
 					document.body.prepend(document.querySelector('div#dice-box'));
 					document.querySelector('div#dice-box').style.zIndex = '';
 					overlayContainer.remove();
 					CommonActionMenuOpen = false;
-					roll_dice(`1d20+${characterData.SavingThrows.Constitution.total}`);
+					roll_dice(`1d20+${characterData.SavingThrows.Constitution.total}`, event);
 					break;
 				case 'Intelligence':
 					document.body.prepend(document.querySelector('div#dice-box'));
 					document.querySelector('div#dice-box').style.zIndex = '';
 					overlayContainer.remove();
 					CommonActionMenuOpen = false;
-					roll_dice(`1d20+${characterData.SavingThrows.Intelligence.total}`);
+					roll_dice(`1d20+${characterData.SavingThrows.Intelligence.total}`, event);
 					break;
 				case 'Wisdom':
 					document.body.prepend(document.querySelector('div#dice-box'));
 					document.querySelector('div#dice-box').style.zIndex = '';
 					overlayContainer.remove();
 					CommonActionMenuOpen = false;
-					roll_dice(`1d20+${characterData.SavingThrows.Wisdom.total}`);
+					roll_dice(`1d20+${characterData.SavingThrows.Wisdom.total}`, event);
 					break;
 				case 'Charisma':
 					document.body.prepend(document.querySelector('div#dice-box'));
 					document.querySelector('div#dice-box').style.zIndex = '';
 					overlayContainer.remove();
 					CommonActionMenuOpen = false;
-					roll_dice(`1d20+${characterData.SavingThrows.Charisma.total}`);
+					roll_dice(`1d20+${characterData.SavingThrows.Charisma.total}, event`);
 					break;
 
 				//checks
@@ -445,126 +534,126 @@ function createCommonAction(adventureData) {
 					document.querySelector('div#dice-box').style.zIndex = '';
 					overlayContainer.remove();
 					CommonActionMenuOpen = false;
-					roll_dice(`1d20+${characterData.Skills.Acrobatics.totalModifier}`);
+					roll_dice(`1d20+${characterData.Skills.Acrobatics.totalModifier}`, event);
 					break;
 				case 'Animal Handling':
 					document.body.prepend(document.querySelector('div#dice-box'));
 					document.querySelector('div#dice-box').style.zIndex = '';
 					overlayContainer.remove();
 					CommonActionMenuOpen = false;
-					roll_dice(`1d20+${characterData.Skills['Animal Handling'].totalModifier}`);
+					roll_dice(`1d20+${characterData.Skills['Animal Handling'].totalModifier}`, event);
 					break;
 				case 'Arcana':
 					document.body.prepend(document.querySelector('div#dice-box'));
 					document.querySelector('div#dice-box').style.zIndex = '';
 					overlayContainer.remove();
 					CommonActionMenuOpen = false;
-					roll_dice(`1d20+${characterData.Skills.Arcana.totalModifier}`);
+					roll_dice(`1d20+${characterData.Skills.Arcana.totalModifier}`, event);
 					break;
 				case 'Athletics':
 					document.body.prepend(document.querySelector('div#dice-box'));
 					document.querySelector('div#dice-box').style.zIndex = '';
 					overlayContainer.remove();
 					CommonActionMenuOpen = false;
-					roll_dice(`1d20+${characterData.Skills.Athletics.totalModifier}`);
+					roll_dice(`1d20+${characterData.Skills.Athletics.totalModifier}`, event);
 					break;
 				case 'Deception':
 					document.body.prepend(document.querySelector('div#dice-box'));
 					document.querySelector('div#dice-box').style.zIndex = '';
 					overlayContainer.remove();
 					CommonActionMenuOpen = false;
-					roll_dice(`1d20+${characterData.Skills.Deception.totalModifier}`);
+					roll_dice(`1d20+${characterData.Skills.Deception.totalModifier}`, event);
 					break;
 				case 'History':
 					document.body.prepend(document.querySelector('div#dice-box'));
 					document.querySelector('div#dice-box').style.zIndex = '';
 					overlayContainer.remove();
 					CommonActionMenuOpen = false;
-					roll_dice(`1d20+${characterData.Skills.History.totalModifier}`);
+					roll_dice(`1d20+${characterData.Skills.History.totalModifier}`, event);
 					break;
 				case 'Insight':
 					document.body.prepend(document.querySelector('div#dice-box'));
 					document.querySelector('div#dice-box').style.zIndex = '';
 					overlayContainer.remove();
 					CommonActionMenuOpen = false;
-					roll_dice(`1d20+${characterData.Skills.Insight.totalModifier}`);
+					roll_dice(`1d20+${characterData.Skills.Insight.totalModifier}`, event);
 					break;
 				case 'Intimidation':
 					document.body.prepend(document.querySelector('div#dice-box'));
 					document.querySelector('div#dice-box').style.zIndex = '';
 					overlayContainer.remove();
 					CommonActionMenuOpen = false;
-					roll_dice(`1d20+${characterData.Skills.Intimidation.totalModifier}`);
+					roll_dice(`1d20+${characterData.Skills.Intimidation.totalModifier}`, event);
 					break;
 				case 'Investigation':
 					document.body.prepend(document.querySelector('div#dice-box'));
 					document.querySelector('div#dice-box').style.zIndex = '';
 					overlayContainer.remove();
 					CommonActionMenuOpen = false;
-					roll_dice(`1d20+${characterData.Skills.Investigation.totalModifier}`);
+					roll_dice(`1d20+${characterData.Skills.Investigation.totalModifier}`, event);
 					break;
 				case 'Medicine':
 					document.body.prepend(document.querySelector('div#dice-box'));
 					document.querySelector('div#dice-box').style.zIndex = '';
 					overlayContainer.remove();
 					CommonActionMenuOpen = false;
-					roll_dice(`1d20+${characterData.Skills.Medicine.totalModifier}`);
+					roll_dice(`1d20+${characterData.Skills.Medicine.totalModifier}`, event);
 					break;
 				case 'Nature':
 					document.body.prepend(document.querySelector('div#dice-box'));
 					document.querySelector('div#dice-box').style.zIndex = '';
 					overlayContainer.remove();
 					CommonActionMenuOpen = false;
-					roll_dice(`1d20+${characterData.Skills.Nature.totalModifier}`);
+					roll_dice(`1d20+${characterData.Skills.Nature.totalModifier}`, event);
 					break;
 				case 'Perception':
 					document.body.prepend(document.querySelector('div#dice-box'));
 					document.querySelector('div#dice-box').style.zIndex = '';
 					overlayContainer.remove();
 					CommonActionMenuOpen = false;
-					roll_dice(`1d20+${characterData.Skills.Perception.totalModifier}`);
+					roll_dice(`1d20+${characterData.Skills.Perception.totalModifier}`, event);
 					break;
 				case 'Performance':
 					document.body.prepend(document.querySelector('div#dice-box'));
 					document.querySelector('div#dice-box').style.zIndex = '';
 					overlayContainer.remove();
 					CommonActionMenuOpen = false;
-					roll_dice(`1d20+${characterData.Skills.Performance.totalModifier}`);
+					roll_dice(`1d20+${characterData.Skills.Performance.totalModifier}`, event);
 					break;
 				case 'Persuasion':
 					document.body.prepend(document.querySelector('div#dice-box'));
 					document.querySelector('div#dice-box').style.zIndex = '';
 					overlayContainer.remove();
 					CommonActionMenuOpen = false;
-					roll_dice(`1d20+${characterData.Skills.Persuasion.totalModifier}`);
+					roll_dice(`1d20+${characterData.Skills.Persuasion.totalModifier}`, event);
 					break;
 				case 'Religion':
 					document.body.prepend(document.querySelector('div#dice-box'));
 					document.querySelector('div#dice-box').style.zIndex = '';
 					overlayContainer.remove();
 					CommonActionMenuOpen = false;
-					roll_dice(`1d20+${characterData.Skills.Religion.totalModifier}`);
+					roll_dice(`1d20+${characterData.Skills.Religion.totalModifier}`, event);
 					break;
 				case 'Sleight of Hand':
 					document.body.prepend(document.querySelector('div#dice-box'));
 					document.querySelector('div#dice-box').style.zIndex = '';
 					overlayContainer.remove();
 					CommonActionMenuOpen = false;
-					roll_dice(`1d20+${characterData.Skills['Sleight of Hand'].totalModifier}`);
+					roll_dice(`1d20+${characterData.Skills['Sleight of Hand'].totalModifier}`, event);
 					break;
 				case 'Stealth':
 					document.body.prepend(document.querySelector('div#dice-box'));
 					document.querySelector('div#dice-box').style.zIndex = '';
 					overlayContainer.remove();
 					CommonActionMenuOpen = false;
-					roll_dice(`1d20+${characterData.Skills.Stealth.totalModifier}`);
+					roll_dice(`1d20+${characterData.Skills.Stealth.totalModifier}`, event);
 					break;
 				case 'Survival':
 					document.body.prepend(document.querySelector('div#dice-box'));
 					document.querySelector('div#dice-box').style.zIndex = '';
 					overlayContainer.remove();
 					CommonActionMenuOpen = false;
-					roll_dice(`1d20+${characterData.Skills.Survival.totalModifier}`);
+					roll_dice(`1d20+${characterData.Skills.Survival.totalModifier}`, event);
 					break;
 				default:
 					break;
@@ -604,12 +693,12 @@ function createCommonAction(adventureData) {
 	spellAttackButton.title = "+" + spellAttack;
 	actions.appendChild(spellAttackButton);
 
-	spellAttackButton.addEventListener('click', function () {
+	spellAttackButton.addEventListener('click', function (event) {
 		document.body.prepend(document.querySelector('div#dice-box'));
 		document.querySelector('div#dice-box').style.zIndex = '';
 		overlayContainer.remove();
 		CommonActionMenuOpen = false;
-		roll_dice(`1d20+${spellAttack}`);
+		roll_dice(`1d20+${spellAttack}`, event);
 	});
 }
 
@@ -704,29 +793,47 @@ function createCharacterSheet(adventureData) {
 	let currentCauldronHitPoints = 0;
 	let currentArmourClass = 0;
 	let totalHitPoints = 0;
+	let tempHitPoints = characterData.TempHitPoints;
+	let hitDiceTotal = characterData.Classes[0].Level;
+	let hitDiceType = "d" + characterData.Classes[0].Definition.HitDice;
+	let hitDiceUsed = characterData.Classes[0].HitDiceUsed || 0;
 
-	if (adventureData.characters.character.length != null) {
-		//If there are multiple players to an adventure
-		for (let i = 0; i < adventureData.characters.character.length; i++) {
-			if (adventureData.characters.character[i].name === characterData.Name) {
-				currentCauldronHitPoints = (Number(adventureData.characters.character[i].hitpoints) - Number(adventureData.characters.character[i].damage));
-				currentArmourClass = (Number(adventureData.characters.character[i].armor_class));
-				totalHitPoints = Number(adventureData.characters.character[i].hitpoints);
+	if (adventureData.characters && adventureData.characters.character) {
+		if (Array.isArray(adventureData.characters.character)) {
+			//If there are multiple players to an adventure
+			console.log("Multiple characters found");
+			for (let i = 0; i < adventureData.characters.character.length; i++) {
+				console.log("Checking character:", adventureData.characters.character[i]);
+				if (adventureData.characters.character[i].name === characterData.Name) {
+					currentCauldronHitPoints = (Number(adventureData.characters.character[i].hitpoints || 0) -
+						Number(adventureData.characters.character[i].damage || 0));
+					currentArmourClass = (Number(adventureData.characters.character[i].armor_class || 0));
+					totalHitPoints = Number(adventureData.characters.character[i].hitpoints || 0);
 
-				if (adventureData.characters.character[i].hidden === "yes") {
-					characterHidden = "[hidden]";
+					console.log("Found match, HP:", currentCauldronHitPoints);
+
+					if (adventureData.characters.character[i].hidden === "yes") {
+						characterHidden = "[hidden]";
+					}
+					break;
 				}
-				break;
 			}
-		}
-	} else {
-		//If there is only one player to an adventure
-		currentCauldronHitPoints = (Number(adventureData.characters.character.hitpoints) - Number(adventureData.characters.character.damage));
-		currentArmourClass = (Number(adventureData.characters.character.armor_class));
-		totalHitPoints = Number(adventureData.characters.character.hitpoints);
+		} else {
+			//If there is only one player to an adventure
+			console.log("Single character found");
+			currentCauldronHitPoints = (Number(adventureData.characters.character.hitpoints || 0) -
+				Number(adventureData.characters.character.damage || 0));
+			currentArmourClass = (Number(adventureData.characters.character.armor_class || 0));
+			totalHitPoints = Number(adventureData.characters.character.hitpoints || 0);
 
-		if (adventureData.characters.character.hidden === "yes") {
-			characterHidden = "[hidden]";
+			console.log("HP calculation:",
+				"hitpoints:", adventureData.characters.character.hitpoints,
+				"damage:", adventureData.characters.character.damage,
+				"result:", currentCauldronHitPoints);
+
+			if (adventureData.characters.character.hidden === "yes") {
+				characterHidden = "[hidden]";
+			}
 		}
 	}
 
@@ -752,7 +859,6 @@ function createCharacterSheet(adventureData) {
 	overlayBody.innerHTML = `
 		<div id="overlayContainer" style="display: flex;">
 			<div class="ability-panel">
-				<br>
 				<h5 style="font-weight: bold;">STR</h5>
 				<button id="strButton" class="button-modification">${characterData.AbilityScores.Score.Strength} (${characterData.AbilityScores.Modifier.Strength >= 0 ? '+' : ''}${characterData.AbilityScores.Modifier.Strength})</button>
 				<h5 style="font-weight: bold;">DEX</h5>
@@ -765,20 +871,30 @@ function createCharacterSheet(adventureData) {
 				<button id="wisButton" class="button-modification">${characterData.AbilityScores.Score.Wisdom} (${characterData.AbilityScores.Modifier.Wisdom >= 0 ? '+' : ''}${characterData.AbilityScores.Modifier.Wisdom})</button>
 				<h5 style="font-weight: bold;">CHA</h5>
 				<button id="chaButton" class="button-modification">${characterData.AbilityScores.Score.Charisma} (${characterData.AbilityScores.Modifier.Charisma >= 0 ? '+' : ''}${characterData.AbilityScores.Modifier.Charisma})</button>
-				<h3 class="section-title" style="margin-top: 30px;"><small>Ability Scores</small></h3>
+			</div>
+
+			<div class="hit-dice-container">
+				<div class="hit-dice-label">Hit Dice</div>
+				<div class="hit-dice-display">
+					<div class="hit-dice-type">${hitDiceType}</div>
+					<div class="hit-dice-fraction">
+						<div class="hit-dice-count">${hitDiceTotal - hitDiceUsed}</div>
+						<div>/</div>
+						<div class="hit-dice-count">${hitDiceTotal}</div>
+					</div>
+				</div>
+				<button class="roll-dice" id="rollHitDie" title="Roll a hit die to recover HP">Roll</button>
 			</div>
         
 			<div id="SkillListDiv" class="skills-panel">
 				<ul id="skillList"></ul>
-				<h3 class="section-title" style="margin-top: -12px;"><small>Skills</small></h3>
 			</div>
         
 			<div class="saving-throws-panel">
 				<ul id="savingThrowElement"></ul>
-				<h3 class="section-title" style="margin-left: 10px; margin-top: 0px;"><small>Saving Throws</small></h3>
 			</div>
         
-			<div class="Character-menu-container" style="margin-top: 95px; height: 40px; margin-left: 0px;">
+			<div class="Character-menu-container" style="margin-top: 125px; height: 40px; margin-left: 0px;">
 				<div class="character-menu menu-panel">
 					<button id="actions" class="btn btn-primary btn-xs menu-btn" style="margin-top: 10px;">Actions</button>
 					<button id="bio" class="btn btn-primary btn-xs menu-btn">Bio</button>
@@ -790,48 +906,147 @@ function createCharacterSheet(adventureData) {
 				</div>
 			</div>
         
+			<div class="armourSection">
+				<input type="text" id="armourClass" placeholder="0" title="Armour Class" class="stats-display input-button-modification" disabled="true" value="${currentArmourClass}">
+				<label class="stats-label">Armour Class</label>
+			</div>
+
 			<div class="hp-container">
-				<input type="text" id="maxHitPoints" class="hp-input input-button-modification" disabled="true" value="${totalHitPoints}">
-				<input type="text" id="CurrentHitPoints" class="hp-input input-button-modification" disabled="true" value="${String(currentCauldronHitPoints)}" style="margin-left: -78px;">
-				<label class="hp-slash">／</label>
+				<div class="hp-inputs-container">
+					<input disabled type="text" max="${totalHitPoints}" class="current-hp-input input-button-modification" value="${currentCauldronHitPoints}">
+					<input disabled type="text" class="max-hp-input input-button-modification" value="${totalHitPoints}">
+					<span class="hp-slash">／</span>
+				</div>
 				<label class="hp-label">HP</label>
 			</div>
-        
-			<div>
-				<input type="text" id="armourClass" placeholder="0" title="Armour Class" class="stats-display input-button-modification" disabled="true" value="${currentArmourClass}">
-				<label class="stats-label">AC</label>
+			<div class="temp-hp-container">
+				<label class="temp-hp-label">Temp</label>
+				<input type="number" id="tempHitPoints" min="0" max="990" class="temp-hp-input input-button-modification" value="${Number(tempHitPoints)}">
 			</div>
 		</div>
 	`;
 
+	//temp HP event listeners
+	const tempHitPointsInput = overlayBody.querySelector('#tempHitPoints');
+	tempHitPointsInput.addEventListener('change', function () {
+		const newTempHP = parseInt(this.value) || 0; 
+		characterData.TempHitPoints = newTempHP;    
+
+		chrome.storage.local.set({ 'characterData': characterData }, function () {
+			console.log('Temp HP saved to local storage:', newTempHP);
+		});
+	});
+
+	const rollHitDieButton = overlayBody.querySelector('#rollHitDie');
+	rollHitDieButton.addEventListener('click', function (event) {
+		if (hitDiceTotal - hitDiceUsed <= 0) {
+			return;
+		}
+
+		const hitDieSides = characterData.Classes[0].Definition.HitDice;
+		const constitutionModifier = characterData.AbilityScores.Modifier.Constitution;
+
+		// Update character data with used hit die
+		characterData.Classes[0].HitDiceUsed = (characterData.Classes[0].HitDiceUsed || 0) + 1;
+		hitDiceUsed = characterData.Classes[0].HitDiceUsed;
+
+		// Update hit dice display
+		const hitDiceFraction = overlayBody.querySelector('.hit-dice-fraction');
+		if (hitDiceFraction) {
+			hitDiceFraction.innerHTML = `
+            <div class="hit-dice-count">${hitDiceTotal - hitDiceUsed}</div>
+            <div>/</div>
+            <div class="hit-dice-count">${hitDiceTotal}</div>`;
+		}
+
+		const rollCommand = `1d${hitDieSides}+${constitutionModifier}`;
+		roll_dice(rollCommand);
+
+		// Save the updated hit dice usage immediately
+		chrome.storage.local.set({ 'characterData': characterData });
+
+		// Wait for the roll to finish and appear in the sidebar
+		setTimeout(() => {
+			const sidebarContent = document.querySelector('.sidebar');
+			const currentHitPointsInput = overlayBody.querySelector('.current-hp-input');
+			const maxHP = Number(overlayBody.querySelector('.max-hp-input').value);
+
+			if (sidebarContent) {
+				const latestRoll = findLatestRoll(sidebarContent);
+				if (latestRoll) {
+					console.log("Applying healing:", latestRoll);
+					chrome.runtime.sendMessage({
+						type: 'APPLY_HEALING',
+						healAmount: latestRoll
+					}, (response) => {
+						if (response && response.success) {
+							console.log('Healing applied successfully');
+
+							// Update HP display while ensuring it doesn't exceed max HP
+							let newCurrentHP = Number(currentHitPointsInput.value) + Number(latestRoll);
+							if (newCurrentHP > maxHP) {
+								newCurrentHP = maxHP;
+							}
+							currentHitPointsInput.value = newCurrentHP;
+						} else {
+							console.error('Failed to apply healing:', response?.error);
+							// Show error details if available
+							if (response && response.my_character_value) {
+								console.log('my_character value:', response.my_character_value);
+							}
+							// Fallback to manual healing
+							alert(`Automatic healing failed. Please manually heal ${latestRoll} hit points.`);
+						}
+					});
+				} else {
+					console.log("Couldn't find the dice roll result");
+					const healAmount = prompt("Enter the healing amount from your hit die roll:", "");
+					if (healAmount && !isNaN(healAmount)) {
+						chrome.runtime.sendMessage({
+							type: 'APPLY_HEALING',
+							healAmount: parseInt(healAmount)
+						});
+
+						// Update HP display while ensuring it doesn't exceed max HP
+						let newCurrentHP = Number(currentHitPointsInput.value) + Number(healAmount);
+						if (newCurrentHP > maxHP) {
+							newCurrentHP = maxHP;
+						}
+						currentHitPointsInput.value = newCurrentHP;
+					}
+				}
+			}
+		}, 2000);
+	});
+
 	const strButton = overlayBody.querySelector('#strButton');
-	strButton.addEventListener('click', function () {
-		roll_dice(`1d20+${characterData.AbilityScores.Modifier.Strength}`);
+	strButton.addEventListener('click', function (event) {
+		roll_dice(`1d20+${characterData.AbilityScores.Modifier.Strength}`, event);
 	});
 
 	const dexButton = overlayBody.querySelector('#dexButton');
-	dexButton.addEventListener('click', function () {
-		roll_dice(`1d20+${characterData.AbilityScores.Modifier.Dexterity}`);
+	dexButton.addEventListener('click', function (event) {
+		roll_dice(`1d20+${characterData.AbilityScores.Modifier.Dexterity}`, event);
 	});
 
 	const conButton = overlayBody.querySelector('#conButton');
-	conButton.addEventListener('click', function () {
-		roll_dice(`1d20+${characterData.AbilityScores.Modifier.Constitution}`);
+	conButton.addEventListener('click', function (event) {
+		roll_dice(`1d20+${characterData.AbilityScores.Modifier.Constitution}`, event);
 	});
 
 	const intButton = overlayBody.querySelector('#intButton');
-	intButton.addEventListener('click', function () {
-		roll_dice(`1d20+${characterData.AbilityScores.Modifier.Intellegence}`);
+	intButton.addEventListener('click', function (event) {
+		roll_dice(`1d20+${characterData.AbilityScores.Modifier.Intellegence}`, event);
 	});
 
 	const wisButton = overlayBody.querySelector('#wisButton');
-	wisButton.addEventListener('click', function () {
-		roll_dice(`1d20+${characterData.AbilityScores.Modifier.Wisdom}`);
+	wisButton.addEventListener('click', function (event) {
+		roll_dice(`1d20+${characterData.AbilityScores.Modifier.Wisdom}`, event);
 	});
 
 	const chaButton = overlayBody.querySelector('#chaButton');
-	chaButton.addEventListener('click', function () {
-		roll_dice(`1d20+${characterData.AbilityScores.Modifier.Charisma}`);
+	chaButton.addEventListener('click', function (event) {
+		roll_dice(`1d20+${characterData.AbilityScores.Modifier.Charisma}`, event);
 	});
 
 	//Menu Button
@@ -901,8 +1116,8 @@ function createCharacterSheet(adventureData) {
 		skillModifier.classList.add('skill-button-modification');
 		skillModifier.textContent = skill.totalModifier >= 0 ? `+${skill.totalModifier}` : skill.totalModifier;
 
-		skillModifier.addEventListener('click', function () {
-			roll_dice(`1d20+${skill.totalModifier}`);
+		skillModifier.addEventListener('click', function (event) {
+			roll_dice(`1d20+${skill.totalModifier}`, event);
 		});
 
 		const breakLine = document.createElement('br');
@@ -948,8 +1163,8 @@ function createCharacterSheet(adventureData) {
 			savingThrowModifier.textContent = savingThrow.total >= 0 ? `+${savingThrow.total}` : savingThrow.total;
 
 			// Add click event
-			savingThrowModifier.addEventListener('click', function () {
-				roll_dice(`1d20+${savingThrow.total}`);
+			savingThrowModifier.addEventListener('click', function (event) {
+				roll_dice(`1d20+${savingThrow.total}`, event);
 			});
 
 			// Create label element
@@ -1385,10 +1600,10 @@ function showActions(adventureData) {
 				sendDataToSidebar(message, characterData.Name);
 			});
 
-			weaponAttackButton.addEventListener('click', function () {
+			weaponAttackButton.addEventListener('click', function (event) {
 				//attack roll and reduces ammunition by 1 every attack roll made
 
-				roll_dice(attackRoll);
+				roll_dice(attackRoll, event);
 
 				const weaponAmmoMap = {
 					'crossbow': ['bolt', 'crossbow bolt'],
@@ -1490,8 +1705,8 @@ function showActions(adventureData) {
 		sendDataToSidebar(message, characterData.Name);
 	});
 
-	unarmedStrikeMod.addEventListener('click', function () {
-		roll_dice(`1d20+${characterData.ProficiencyBonus + Math.floor(characterData.AbilityScores.Modifier.Strength)}`);
+	unarmedStrikeMod.addEventListener('click', function (event) {
+		roll_dice(`1d20+${characterData.ProficiencyBonus + Math.floor(characterData.AbilityScores.Modifier.Strength)}`, event);
 	});
 
 	unarmedStrikeDamage.addEventListener('click', function () {
@@ -2351,7 +2566,6 @@ function showSpells(adventureData) {
 
 	let characterHidden = "";
 
-	// Get character's hidden status from adventure data
 	if (adventureData.characters.character.length != null) {
 		for (let i = 0; i < adventureData.characters.character.length; i++) {
 			if (adventureData.characters.character[i].name === characterData.Name) {
@@ -2367,7 +2581,6 @@ function showSpells(adventureData) {
 		}
 	}
 
-	// Update header with Spells section title
 	const header = document.getElementById('titleBar');
 	header.innerHTML = `${characterData.Name} - Spells ${characterHidden} <span class="glyphicon glyphicon-remove close" aria-hidden="true"></span>`;
 
@@ -2378,7 +2591,6 @@ function showSpells(adventureData) {
 		characterSheetOpen = false;
 	});
 
-	// Create main spell content with styling for spell slots
 	content.innerHTML = `
         <div id="overlayContainer" style="display: flex;">
             <div style="height: 495px; width: 350px; margin-left: 0px; margin-top: 0px; overflow: auto; border: 2px solid #336699; padding: 10px;">
@@ -2467,10 +2679,8 @@ function showSpells(adventureData) {
 	const cantripsContainer = content.querySelector('#cantrips');
 	const spellContainer = content.querySelector('#spellContainer');
 
-	// Group spells by level
 	const spellsByLevel = {};
 
-	// Add all spells from character data to appropriate level
 	for (const spellKey in characterData.Spells) {
 		const spell = characterData.Spells[spellKey];
 		const level = spell.Definition.Level;
@@ -2482,7 +2692,6 @@ function showSpells(adventureData) {
 		spellsByLevel[level].push(spell);
 	}
 
-	// Sort spells alphabetically within each level
 	for (const level in spellsByLevel) {
 		spellsByLevel[level].sort((a, b) => {
 			return a.Definition.Name.localeCompare(b.Definition.Name);
@@ -2498,42 +2707,34 @@ function showSpells(adventureData) {
 
 	// Add each level of spells to the spell container
 	for (let level = 1; level <= 9; level++) {
-		// Skip levels with no spells and no spell slots
 		const spellSlotData = characterData.SpellSlots[level - 1];
 		const hasSpells = spellsByLevel[level] && spellsByLevel[level].length > 0;
 		const hasSpellSlots = spellSlotData && spellSlotData.Available > 0;
 
-		// Skip levels without spells or spell slots
 		if (!hasSpells && !hasSpellSlots) {
 			continue;
 		}
 
-		// Create level container
 		const levelContainer = document.createElement('div');
 		levelContainer.classList.add('spell-level-container');
 
-		// Create level header
 		const levelHeader = document.createElement('h4');
 		levelHeader.textContent = `Level ${level}`;
 		levelContainer.appendChild(levelHeader);
 
-		// Add spell slots for this level (if available and not warlock)
 		if (hasSpellSlots && characterData.Classes[0].Definition.Name !== "Warlock") {
 			const slotsContainer = document.createElement('div');
 			slotsContainer.classList.add('spell-slots-container');
 
-			// Create label
 			const label = document.createElement('span');
 			label.textContent = 'Spell Slots: ';
 			label.style.fontWeight = 'bold';
 			slotsContainer.appendChild(label);
 
-			// Create individual slot indicators
 			for (let i = 0; i < spellSlotData.Available; i++) {
 				const slotElement = document.createElement('div');
 				slotElement.classList.add('spell-slot');
 
-				// Mark as used or available
 				if (i < spellSlotData.Used) {
 					slotElement.classList.add('used');
 					slotElement.title = 'Used spell slot (click to restore)';
@@ -2545,7 +2746,6 @@ function showSpells(adventureData) {
 				slotElement.setAttribute('data-level', level);
 				slotElement.setAttribute('data-index', i);
 
-				// Add click event to toggle between used and available
 				slotElement.addEventListener('click', function () {
 					const slotLevel = parseInt(this.getAttribute('data-level')) - 1;
 
@@ -2554,7 +2754,6 @@ function showSpells(adventureData) {
 						this.classList.add('used');
 						this.title = 'Used spell slot (click to restore)';
 
-						// Update character data
 						if (characterData.SpellSlots[slotLevel]) {
 							characterData.SpellSlots[slotLevel].Used += 1;
 							chrome.storage.local.set({ 'characterData': characterData });
@@ -2564,7 +2763,6 @@ function showSpells(adventureData) {
 						this.classList.add('available');
 						this.title = 'Available spell slot (click to use)';
 
-						// Update character data
 						if (characterData.SpellSlots[slotLevel]) {
 							characterData.SpellSlots[slotLevel].Used -= 1;
 							chrome.storage.local.set({ 'characterData': characterData });
@@ -2575,7 +2773,7 @@ function showSpells(adventureData) {
 				slotsContainer.appendChild(slotElement);
 			}
 
-			// Add counter display
+			//counter display
 			const counter = document.createElement('span');
 			counter.textContent = ` (${spellSlotData.Available - spellSlotData.Used}/${spellSlotData.Available})`;
 			counter.style.marginLeft = '5px';
@@ -2584,7 +2782,6 @@ function showSpells(adventureData) {
 			levelContainer.appendChild(slotsContainer);
 		}
 
-		// Add spells for this level
 		if (hasSpells) {
 			const spellsWrapper = document.createElement('div');
 			spellsByLevel[level].forEach(spell => {
@@ -2592,7 +2789,6 @@ function showSpells(adventureData) {
 			});
 			levelContainer.appendChild(spellsWrapper);
 		} else {
-			// If we have slots but no spells, add a message
 			const noSpellsMsg = document.createElement('p');
 			noSpellsMsg.textContent = "No known spells of this level.";
 			noSpellsMsg.style.fontStyle = 'italic';
@@ -2603,9 +2799,7 @@ function showSpells(adventureData) {
 		spellContainer.appendChild(levelContainer);
 	}
 
-	// Special handling for warlocks if needed
 	if (characterData.Classes[0].Definition.Name === "Warlock") {
-		// Add a special container for warlock spell slots
 		const warlockContainer = document.createElement('div');
 		warlockContainer.classList.add('spell-level-container');
 		warlockContainer.style.backgroundColor = '#f0f0f0';
@@ -2616,17 +2810,14 @@ function showSpells(adventureData) {
 		warlockHeader.textContent = 'Pact Magic Spell Slots';
 		warlockContainer.appendChild(warlockHeader);
 
-		// Find the warlock's highest spell level
 		let highestSpellLevel = findHighestWarlockSpellLevel(characterData);
 		const warlockLevel = characterData.Classes[0].Level;
 		const slotsCount = getPactSlotsCount(warlockLevel);
 
-		// Create pact magic description
 		const description = document.createElement('p');
 		description.innerHTML = `As a level ${warlockLevel} Warlock, you have <b>${slotsCount}</b> spell slots of level <b>${highestSpellLevel}</b> that regenerate on a short rest.`;
 		warlockContainer.appendChild(description);
 
-		// Add the warlock spell slots at the top of the spell container
 		spellContainer.insertBefore(warlockContainer, spellContainer.firstChild);
 	}
 
@@ -2655,10 +2846,8 @@ function showSpells(adventureData) {
 		showExtras(adventureData);
 	});
 
-	// Set up dice roll handlers
 	setupDiceRollHandlers();
 
-	// Helper functions for spell display
 	function calculateSpellSaveDC() {
 		let spellcastingAbilityModifier = 0;
 		const characterClass = characterData.Classes[0]?.Definition?.Name;
@@ -2720,17 +2909,13 @@ function showSpells(adventureData) {
 	}
 }
 
-
 function addSpellToContainer(spell, container) {
-	// Create spell container div
 	const spellContainer = document.createElement('div');
 	spellContainer.classList.add('spell-container');
 
-	// Create spell button container (similar to feature-button in showFeatures)
 	const spellButtonContainer = document.createElement('div');
 	spellButtonContainer.classList.add('feature-button');
 
-	// Create title button for spell name (like in showFeatures)
 	const spellTitleButton = document.createElement('button');
 	spellTitleButton.classList.add('styled-button');
 	spellTitleButton.style.color = "#6385C1";
@@ -2749,21 +2934,20 @@ function addSpellToContainer(spell, container) {
 		spellTitleButton.appendChild(preparedIcon);
 	}
 
-	// Create arrow icon for expanding
+	// arrow icon
 	const arrowIcon = document.createElement('span');
 	arrowIcon.classList.add('arrow-icon');
 	arrowIcon.innerHTML = '▶';
 
-	// Add elements to button container
 	spellButtonContainer.appendChild(spellTitleButton);
 	spellButtonContainer.appendChild(arrowIcon);
 
-	// Create spell info div
+	//spell info div
 	const spellInfo = document.createElement('div');
 	spellInfo.classList.add('spell-info');
 	spellInfo.style.display = 'none';
 
-	// Format spell information
+	//spell information
 	const components = spell.Definition.FormatSpell?.Components?.replace('Components: ', '') || '';
 	const range = spell.Definition.FormatSpell?.Range?.replace('Range: ', '') || '';
 	const castingTime = spell.Definition.FormatSpell?.Time?.replace('Casting Time: ', '') || '';
@@ -2777,25 +2961,22 @@ function addSpellToContainer(spell, container) {
         <div><strong>Duration:</strong> ${duration}</div>
     `;
 
-	// Create spell description
+	// spell description
 	const spellDescription = document.createElement('div');
 	spellDescription.classList.add('feature-description');
 	spellDescription.style.display = 'none';
 
-	// Process description to include dice roll links
+	//dice roll links
 	const processedDescription = createProcessedDescription(spell.Definition.Description.replaceAll("� ", "• "));
 	spellDescription.appendChild(processedDescription);
 
-	// Add click event to title button to send "Casting: {spell name}" to sidebar
 	spellTitleButton.addEventListener('click', function (event) {
 		event.stopPropagation();
 		const message = `Casting: ${spell.Definition.Name}`;
 		sendDataToSidebar(message, characterData.Name);
 	});
 
-	// Add click event to toggle description visibility (on the container, not the title)
 	spellButtonContainer.addEventListener('click', function (event) {
-		// Only toggle if click wasn't on the title button (that has its own handler)
 		if (event.target !== spellTitleButton) {
 			const isVisible = spellDescription.style.display === 'block';
 
@@ -2811,12 +2992,10 @@ function addSpellToContainer(spell, container) {
 		}
 	});
 
-	// Add all elements to the container
 	spellContainer.appendChild(spellButtonContainer);
 	spellContainer.appendChild(spellInfo);
 	spellContainer.appendChild(spellDescription);
 
-	// Add to the main container
 	container.appendChild(spellContainer);
 }
 
@@ -2849,17 +3028,14 @@ function showExtras(adventureData) {
 		characterHidden = "[hidden]";
 	}
 
-	// Update header with Extras section title
 	const header = document.getElementById('titleBar');
 	header.innerHTML = `${characterData.Name} - Extras ${characterHidden} <span class="glyphicon glyphicon-remove close" aria-hidden="true"></span>`;
 
-	// Add close button functionality
 	header.querySelector('.close').addEventListener('click', function () {
 		characterSheetOverlay.remove();
 		characterSheetOpen = false;
 	});
 
-	// Main content structure
 	content.innerHTML = `
         <div id="overlayContainer" style="display: flex;">
             <div style="height: 495px; width: 350px; margin-left: 0px; margin-top: 0px; overflow: auto; border: 2px solid #336699; padding: 10px;">
@@ -2886,21 +3062,21 @@ function showExtras(adventureData) {
         </div>
     `;
 
-	// Populate companion creatures with proper dropdowns
+	// companion creatures
 	const companionCreaturesDiv = content.querySelector('#companionCreatures');
 	if (characterData.Creatures && Object.keys(characterData.Creatures).length > 0) {
 		for (const creatureKey in characterData.Creatures) {
 			const creature = characterData.Creatures[creatureKey];
 
-			// Create container for this creature
+			// container for this creature
 			const creatureContainer = document.createElement('div');
 			creatureContainer.classList.add('feature-item');
 
-			// Create the dropdown button container
+			//dropdown button container
 			const featureButton = document.createElement('div');
 			featureButton.classList.add('feature-button');
 
-			// Create the title button
+			//title button
 			const titleButton = document.createElement('button');
 			titleButton.classList.add('styled-button');
 			titleButton.style.color = "#6385C1";
@@ -2910,7 +3086,7 @@ function showExtras(adventureData) {
 			titleButton.style.margin = "0";
 			titleButton.textContent = creature.Name;
 
-			// Create arrow icon
+			//arrow icon
 			const arrowSpan = document.createElement('span');
 			arrowSpan.classList.add('arrow-icon');
 			arrowSpan.innerHTML = '▶';
@@ -2919,7 +3095,6 @@ function showExtras(adventureData) {
 			featureButton.appendChild(titleButton);
 			featureButton.appendChild(arrowSpan);
 
-			// Create hidden description container
 			const creatureDesc = document.createElement('div');
 			creatureDesc.classList.add('feature-description');
 			creatureDesc.style.display = 'none';
@@ -2944,13 +3119,12 @@ function showExtras(adventureData) {
 				const perceptionCell = document.createElement('td');
 				perceptionCell.innerHTML = `<strong>Passive Perception:</strong> ${creature.PassivePerception}`;
 				statsRow2.appendChild(perceptionCell);
-				statsRow2.appendChild(document.createElement('td')); // Empty cell for alignment
+				statsRow2.appendChild(document.createElement('td'));
 				statsTable.appendChild(statsRow2);
 			}
 
 			creatureDesc.appendChild(statsTable);
 
-			// Add ability scores
 			const abilityScores = document.createElement('div');
 			abilityScores.style.display = 'grid';
 			abilityScores.style.gridTemplateColumns = 'repeat(6, 1fr)';
@@ -2975,7 +3149,7 @@ function showExtras(adventureData) {
 
 			creatureDesc.appendChild(abilityScores);
 
-			// Add special traits and actions if available
+			//special traits
 			if (creature.SpecialTraitsDescription) {
 				const traitsDiv = document.createElement('div');
 				traitsDiv.style.marginTop = '10px';
@@ -2990,10 +3164,8 @@ function showExtras(adventureData) {
 				creatureDesc.appendChild(actionsDiv);
 			}
 
-			// Set up click handlers
 			titleButton.addEventListener('click', function (event) {
 				event.stopPropagation();
-				// Format message for sidebar
 				let message = `${creature.Name}\n_______________\n`;
 				message += `AC: ${creature.ArmourClass}, HP: ${creature.AverageHitPoints || creature.HitPoints || "—"}\n`;
 				message += `STR: ${creature.Stats.Strength}, DEX: ${creature.Stats.Dexterity}, CON: ${creature.Stats.Constitution}, `;
@@ -3024,23 +3196,21 @@ function showExtras(adventureData) {
 				}
 			});
 
-			// Add everything to the container
 			creatureContainer.appendChild(featureButton);
 			creatureContainer.appendChild(creatureDesc);
 			creatureContainer.appendChild(document.createElement('hr'));
 
-			// Add to main container
 			companionCreaturesDiv.appendChild(creatureContainer);
 		}
 	} else {
 		companionCreaturesDiv.innerHTML = '<p style="font-style: italic; color: #666; margin: 5px 0;">No companion creatures available.</p>';
 	}
 
-	// Process special abilities with dropdown arrows
+	//special abilities
 	const specialAbilitiesDiv = content.querySelector('#specialAbilities');
 	const specialAbilities = [];
 
-	// Check for Dragon Wings from Draconic Sorcery and other special abilities
+	//Dragon Wings from Draconic Sorcery and other special abilities
 	if (characterData.Classes[0]?.SubClassDefinition?.Name === "Draconic Sorcery") {
 		specialAbilities.push({
 			name: "Dragon Wings",
@@ -3057,7 +3227,7 @@ function showExtras(adventureData) {
 		}
 	}
 
-	// Add any special abilities from Actions
+	// special abilities 
 	if (characterData.Actions) {
 		for (const actionKey in characterData.Actions) {
 			const action = characterData.Actions[actionKey];
@@ -3071,18 +3241,17 @@ function showExtras(adventureData) {
 		}
 	}
 
-	// Display special abilities with proper dropdowns
+	// special abilities
 	if (specialAbilities.length > 0) {
 		specialAbilities.forEach(ability => {
-			// Create container for this ability
 			const abilityContainer = document.createElement('div');
 			abilityContainer.classList.add('feature-item');
 
-			// Create the dropdown button container
+			// dropdown button container
 			const featureButton = document.createElement('div');
 			featureButton.classList.add('feature-button');
 
-			// Create the title button
+			// title button
 			const titleButton = document.createElement('button');
 			titleButton.classList.add('styled-button');
 			titleButton.style.color = "#6385C1";
@@ -3092,7 +3261,7 @@ function showExtras(adventureData) {
 			titleButton.style.margin = "0";
 			titleButton.textContent = ability.name;
 
-			// Create arrow icon
+			//arrow icon
 			const arrowSpan = document.createElement('span');
 			arrowSpan.classList.add('arrow-icon');
 			arrowSpan.innerHTML = '▶';
@@ -3102,18 +3271,17 @@ function showExtras(adventureData) {
 			featureButton.appendChild(titleButton);
 			featureButton.appendChild(arrowSpan);
 
-			// Create hidden description container
 			const abilityDesc = document.createElement('div');
 			abilityDesc.classList.add('feature-description');
 			abilityDesc.style.display = 'none';
 
-			// Add description
+			//description
 			const descDiv = document.createElement('div');
 			descDiv.style.marginTop = '5px';
 			descDiv.textContent = ability.description;
 			abilityDesc.appendChild(descDiv);
 
-			// Add limited use info if available
+			// Add limited use info
 			if (ability.limitedUse && ability.limitedUse.MaxUse) {
 				const usageDiv = document.createElement('div');
 				usageDiv.style.marginTop = '5px';
@@ -3121,7 +3289,7 @@ function showExtras(adventureData) {
 				abilityDesc.appendChild(usageDiv);
 			}
 
-			// Set up click handlers
+			//click handlers
 			titleButton.addEventListener('click', function (event) {
 				event.stopPropagation();
 				const message = `${ability.name}\n_______________\n${ability.description}`;
@@ -3142,23 +3310,21 @@ function showExtras(adventureData) {
 				}
 			});
 
-			// Add everything to the container
 			abilityContainer.appendChild(featureButton);
 			abilityContainer.appendChild(abilityDesc);
 			abilityContainer.appendChild(document.createElement('hr'));
 
-			// Add to main container
 			specialAbilitiesDiv.appendChild(abilityContainer);
 		});
 	} else {
 		specialAbilitiesDiv.innerHTML = '<p style="font-style: italic; color: #666; margin: 5px 0;">No special abilities available.</p>';
 	}
 
-	// Add temporary effects with dropdown arrows
+	// temporary effects
 	const tempEffectsDiv = content.querySelector('#tempEffects');
 	const tempEffects = [];
 
-	// Check for Epic Boons and other temporary effects
+	//Epic Boons
 	if (characterData.Feats) {
 		for (const featKey in characterData.Feats) {
 			const feat = characterData.Feats[featKey];
@@ -3171,18 +3337,17 @@ function showExtras(adventureData) {
 		}
 	}
 
-	// Display temporary effects with proper dropdowns
+	//temporary effects
 	if (tempEffects.length > 0) {
 		tempEffects.forEach(effect => {
-			// Create container for this effect
 			const effectContainer = document.createElement('div');
 			effectContainer.classList.add('feature-item');
 
-			// Create the dropdown button container
+			//dropdown button container
 			const featureButton = document.createElement('div');
 			featureButton.classList.add('feature-button');
 
-			// Create the title button
+			//title button
 			const titleButton = document.createElement('button');
 			titleButton.classList.add('styled-button');
 			titleButton.style.color = "#6385C1";
@@ -3192,7 +3357,7 @@ function showExtras(adventureData) {
 			titleButton.style.margin = "0";
 			titleButton.textContent = effect.name;
 
-			// Create arrow icon
+			//arrow icon
 			const arrowSpan = document.createElement('span');
 			arrowSpan.classList.add('arrow-icon');
 			arrowSpan.innerHTML = '▶';
@@ -3202,12 +3367,11 @@ function showExtras(adventureData) {
 			featureButton.appendChild(titleButton);
 			featureButton.appendChild(arrowSpan);
 
-			// Create hidden description container
 			const effectDesc = document.createElement('div');
 			effectDesc.classList.add('feature-description');
 			effectDesc.style.display = 'none';
 
-			// Add description - safely handle HTML
+			// Add description
 			const descText = typeof effect.description === 'string' ?
 				effect.description.replace(/<[^>]*>/g, '') : "No description available";
 
@@ -3216,7 +3380,7 @@ function showExtras(adventureData) {
 			descDiv.textContent = descText;
 			effectDesc.appendChild(descDiv);
 
-			// Set up click handlers
+			//click handlers
 			titleButton.addEventListener('click', function (event) {
 				event.stopPropagation();
 				const message = `${effect.name}\n_______________\n${descText}`;
@@ -3237,12 +3401,10 @@ function showExtras(adventureData) {
 				}
 			});
 
-			// Add everything to the container
 			effectContainer.appendChild(featureButton);
 			effectContainer.appendChild(effectDesc);
 			effectContainer.appendChild(document.createElement('hr'));
 
-			// Add to main container
 			tempEffectsDiv.appendChild(effectContainer);
 		});
 	} else {
@@ -3268,7 +3430,6 @@ function showExtras(adventureData) {
 		content.querySelector(`#${id}`).addEventListener('click', handler);
 	}
 
-	// Set up dice roll handlers
 	setupDiceRollHandlers();
 }
 
@@ -3276,20 +3437,32 @@ function addSearchBar(container, itemSelector, searchFunction) {
 	const searchContainer = document.createElement('div');
 	searchContainer.classList.add('search-container');
 	searchContainer.style.marginBottom = '10px';
-	searchContainer.style.position = 'sticky';
-	searchContainer.style.top = '0';
+	searchContainer.style.position = 'relative';
 	searchContainer.style.backgroundColor = 'white';
 	searchContainer.style.padding = '5px 0';
 	searchContainer.style.zIndex = '10';
+
+	const inputDiv = document.createElement('div');
+	inputDiv.classList.add('input');
+	inputDiv.style.position = 'relative';
+	inputDiv.style.display = 'block';
+	inputDiv.style.width = '100%';
 
 	const searchInput = document.createElement('input');
 	searchInput.type = 'text';
 	searchInput.placeholder = 'Search...';
 	searchInput.classList.add('search-input');
+
 	searchInput.style.width = '100%';
 	searchInput.style.padding = '5px';
 	searchInput.style.border = '1px solid #ccc';
 	searchInput.style.borderRadius = '4px';
+	searchInput.style.boxSizing = 'border-box';
+	searchInput.style.display = 'block';
+	searchInput.style.position = 'static';
+	searchInput.style.marginLeft = '10px';
+	searchInput.style.marginRight = '0';
+	searchInput.style.height = 'auto';
 
 	searchInput.addEventListener('input', function () {
 		const searchTerm = this.value.toLowerCase();
@@ -3309,10 +3482,13 @@ function addSearchBar(container, itemSelector, searchFunction) {
 		}
 	});
 
-	searchContainer.appendChild(searchInput);
+	// Put everything together
+	inputDiv.appendChild(searchInput);
+	searchContainer.appendChild(inputDiv);
 
 	return searchContainer;
 }
+
 
 /*====================
 = Helper functions  ==
@@ -3357,27 +3533,37 @@ function sendDataToSidebar(information, characterName) {
 	});
 }
 
-function roll_dice(dice) {
-	//Tries to find the funtion roll_dice
-	const potentialRollFunctions = Object.entries(window)
-		.filter(([key, value]) =>
-			typeof value === 'function' &&
-			value.toString().includes('roll_dice')
-		);
+function roll_dice(dice, event) {
+	// Check if it's a d20 roll that can use advantage/disadvantage
+	const isD20Roll = /^\s*1d20/i.test(dice);
+	let rollType = DICE_ROLL_NORMAL;
 
-	//due to manifest version 3, the background script now has to 
-	//execute the website's roll_dice function
-	chrome.runtime.sendMessage({
-		type: 'ROLL_DICE',
-		dice: dice
-	}, (response) => {
-		/*if (chrome.runtime.lastError) {
-			console.error('Message sending error:', chrome.runtime.lastError);
-		} else {
-			console.log('Message sent successfully', response);
-		}*/
-	});
+	if (event && isD20Roll) {
+		if (event.ctrlKey) {
+			rollType = DICE_ROLL_ADVANTAGE;
+		} else if (event.shiftKey) {
+			rollType = DICE_ROLL_DISADVANTAGE;
+		}
+	}
+
+	if (isD20Roll) {
+		const modifier = dice.replace(/^\s*1d20\s*/, '');
+
+		chrome.runtime.sendMessage({
+			type: 'ROLL_D20',
+			modifier: modifier,
+			rollType: rollType
+		}, (response) => {
+		});
+	} else {
+		chrome.runtime.sendMessage({
+			type: 'ROLL_DICE',
+			dice: dice
+		}, (response) => {
+		});
+	}
 }
+
 
 function convertSavingThrowText(text) {
 	const savingThrowRegex = /\b(Strength|Dexterity|Constitution|Intelligence|Wisdom|Charisma)\s+saving\s+throw\b/gi;
@@ -3464,8 +3650,7 @@ function setupDiceRollHandlers() {
 		element.addEventListener('click', function (event) {
 			event.stopPropagation();
 			const diceNotation = this.getAttribute('data-dice');
-			console.log(diceNotation);
-			roll_dice(diceNotation);
+			roll_dice(diceNotation, event);
 		});
 	});
 
@@ -3499,7 +3684,7 @@ function setupDiceRollHandlers() {
 				spellAttack = characterData.ProficiencyBonus + characterData.AbilityScores.Modifier.Wisdom;
 			}
 
-			roll_dice(`1d20+${spellAttack}`);
+			roll_dice(`1d20+${spellAttack}`, event);
 		});
 	});
 
@@ -3513,7 +3698,7 @@ function setupDiceRollHandlers() {
 				modifier = characterData.SavingThrows[ability.charAt(0).toUpperCase() + ability.slice(1)].total;
 			}
 
-			roll_dice(`1d20+${modifier}`);
+			roll_dice(`1d20+${modifier}`, event);
 		});
 	});
 }
@@ -3565,4 +3750,20 @@ function createProcessedDescription(descriptionText) {
 		descriptionElement.textContent = descriptionText;
 		return descriptionElement;
 	}
+}
+
+//Used to get dice roll result from sidebar
+function findLatestRoll(chatContainer) {
+	const messages = chatContainer.querySelectorAll('p');
+	for (let i = messages.length - 1; i >= 0; i--) {
+		const message = messages[i];
+		console.log(message.textContent);
+		const rollPattern = /Dice roll: 1d\d+\+\d+\s*\[\d+\] \+ \d+ = (\d+)/;
+		const match = message.textContent.match(rollPattern);
+		console.log("match", match);
+		if (match) {
+			return match[1];
+		}
+	}
+	return null;
 }

@@ -413,15 +413,13 @@ function calculateCharacterData(data) {
         IsStabilized: data.deathSaves.isStabilized
     };
 
-    console.log("data", data);
-    console.log("name", data.name);
-
     characterData.Id = data.id;
     characterData.Name = data.name;
     characterData.XP = data.currentXp;
     characterData.Level = calculateLevel(data.currentXp);
     characterData.ProficiencyBonus = Math.ceil(characterData.Level / 4) + 1;
     characterData.HitPoints = hitPoints(data, characterStats);
+    characterData.TempHitPoints = 0;
     characterData.ArmourClass = armourClass(data, characterStats);
     characterData.Skills = skills(data, characterData, characterStats);
     characterData.SavingThrows = savingThrows(data, characterData, characterStats);
