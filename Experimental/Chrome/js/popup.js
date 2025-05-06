@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', function () {
+﻿document.addEventListener('DOMContentLoaded', function () {
     // Fetch character info when the button is clicked
     document.getElementById('fetchButton').addEventListener('click', function () {
         showSpinner();
@@ -260,7 +260,6 @@ function importCharacterData(event) {
 }
 
 function fetchCharacterInfo() {
-    // Get the character ID from the input field
     const characterIdInput = document.getElementById('characterIdInput');
     const characterId = parseInt(characterIdInput.value, 10);
 
@@ -270,7 +269,6 @@ function fetchCharacterInfo() {
         return;
     }
 
-    // Clear input field
     characterIdInput.value = '';
 
     fetch(`https://character-service.dndbeyond.com/character/v5/character/${characterId}`)
@@ -289,15 +287,15 @@ function fetchCharacterInfo() {
         })
         .then(data => {
             if (!data) return;
-
+            console.log("Data ", data.data);
             calculateCharacterData(data.data);
-
             chrome.storage.local.get(['characterData', 'characters'], function (result) {
                 const characterData = result.characterData;
-
                 if (characterData) {
-                    // Store in multi-character format
+                    //Get existing characters or create a new object if it doesn't exist
                     const characters = result.characters || {};
+
+                    //Add the new character to the collection
                     characters[characterId] = characterData;
 
                     chrome.storage.local.set({
@@ -307,6 +305,7 @@ function fetchCharacterInfo() {
                         loadCharacters();
                         displayCharacterInfo(characterData);
                         document.getElementById('exportButton').disabled = false;
+                        displayMessage(`Character "${characterData.Name}" added successfully!`, "success");
                     });
                 }
             });
@@ -315,15 +314,20 @@ function fetchCharacterInfo() {
         });
 }
 
+
 function displayCharacterInfo(characterData) {
     const characterInfoElement = document.getElementById('characterInfo');
 
     if (characterData && characterData.Name) {
         console.log("characterData", characterData);
         console.log("characterData.Name", characterData.Name);
+
+        // Format progression type indicator
+        const progressionType = characterData.UseMilestones ? "Milestone" : `XP: ${characterData.XP}`;
+        console.log("Progression", progressionType);
         characterInfoElement.innerHTML = `
             <h3>${characterData.Name}</h3>
-            <p>Level ${characterData.Level} ${characterData.Classes?.[0]?.Definition?.Name || ""}</p>
+            <p>Level ${characterData.Level} ${characterData.Classes?.[0]?.Definition?.Name || ""} (${progressionType})</p>
             <p>Last modified: ${new Date(characterData.LastModified).toLocaleDateString()}</p>
         `;
         characterInfoElement.style.display = 'block';
@@ -340,6 +344,8 @@ function calculateCharacterData(data) {
 
     //function calculations
     const characterStats = getCharacterStats(data);
+
+    const movementSpeeds = calculateMovementSpeeds(data, characterData);
 
     characterData.AbilityScores = {
         Score: {
@@ -387,11 +393,11 @@ function calculateCharacterData(data) {
         Description: removeHtmlTags(data.race.description),
         HomebrewRace: data.race.isHomebrew,
         SubraceName: data.race.subRaceShortName,
-        Speed: data.race.weightSpeeds.normal.walk,
-        FlySpeed: data.race.weightSpeeds.normal.fly,
-        SwimSpeed: data.race.weightSpeeds.normal.swim,
-        BurrowSpeed: data.race.weightSpeeds.normal.burrow,
-        ClimbingSpeed: data.race.weightSpeeds.normal.climb,
+        Speed: movementSpeeds.walk,
+        FlySpeed: movementSpeeds.fly,
+        SwimSpeed: movementSpeeds.swim,
+        BurrowSpeed: movementSpeeds.burrow,
+        ClimbingSpeed: movementSpeeds.climb,
         Encumbered: data.race.weightSpeeds.encumbered,
         HeavilyEncumbered: data.race.weightSpeeds.heavilyEncumbered,
         Size: data.race.sizeId = 4 ? "Medium" : 3 ? "Small" : 2 ? "Tiny" : 5 ? "Large" : 6 ? "Huge" : 7 ? "Gargantuan" : "Size Unknown",
@@ -413,10 +419,21 @@ function calculateCharacterData(data) {
         IsStabilized: data.deathSaves.isStabilized
     };
 
+    const usesMilestones = data.preferences && data.preferences.progressionType === 1;
+    console.log("Progression type:", data.preferences?.progressionType, "Uses milestones:", usesMilestones);
+
+    let totalCharacterLevel = 0;
+    if (data.classes && Array.isArray(data.classes)) {
+        data.classes.forEach(classData => {
+            totalCharacterLevel += classData.level || 0;
+        });
+    }
+
     characterData.Id = data.id;
     characterData.Name = data.name;
     characterData.XP = data.currentXp;
-    characterData.Level = calculateLevel(data.currentXp);
+    characterData.UseMilestones = usesMilestones;
+    characterData.Level = usesMilestones ? totalCharacterLevel : calculateLevel(data.currentXp);
     characterData.ProficiencyBonus = Math.ceil(characterData.Level / 4) + 1;
     characterData.HitPoints = hitPoints(data, characterStats);
     characterData.TempHitPoints = 0;
@@ -436,20 +453,17 @@ function calculateCharacterData(data) {
     characterData.Actions = gatherActionsRaw(data);
     characterData.LastModified = data.dateModified;
 
-    //avoid calling more than once
     const { spellSlots, spellInfo, spells } = gatherSpells(data, characterData);
     characterData.SpellSlots = spellSlots;
     characterData.SpellInfo = spellInfo;
     characterData.Spells = spells;
 
-    //To check for different things that
-    //add to the character's stats
+    //To check for different things that add to the character's stats
     characterData = checkModifiers(data, characterData);
     characterData = gatherCustom(data, characterData);
     characterData.Creatures = gatherCreatures(data);
     characterData.Extras = gatherExtras(data);
 
-    // Process template strings in action descriptions after all data is gathered
     processActionTemplates(characterData);
 
     // Sort the dictionary alphabetically
@@ -527,6 +541,165 @@ function displayError(message) {
 /*=======================================
 functions to calculate character Data
 =========================================*/
+
+function calculateMovementSpeeds(data) {
+    // Initialize speeds from race data
+    let speeds = {
+        walk: data.race.weightSpeeds.normal.walk || 30,
+        fly: data.race.weightSpeeds.normal.fly || 0,
+        swim: data.race.weightSpeeds.normal.swim || 0,
+        burrow: data.race.weightSpeeds.normal.burrow || 0,
+        climb: data.race.weightSpeeds.normal.climb || 0
+    };
+
+    // Store the base walking speed before any class modifications
+    const baseWalkSpeed = speeds.walk;
+
+    // Apply class-specific speed bonuses FIRST
+    if (data.classes && data.classes.length > 0) {
+        const characterClass = data.classes[0].definition.name.toLowerCase();
+        const classLevel = data.classes[0].level;
+
+        if (characterClass === "monk" && classLevel >= 2) {
+            // Check if wearing armor (which would negate Unarmored Movement)
+            const wearingArmor = data.inventory.some(item =>
+                item.equipped &&
+                item.definition.filterType === "Armor" &&
+                item.definition.type !== "Shield"
+            );
+
+            if (!wearingArmor) {
+                // Apply Monk's Unarmored Movement bonus based on level
+                if (classLevel >= 18) speeds.walk += 30;
+                else if (classLevel >= 14) speeds.walk += 25;
+                else if (classLevel >= 10) speeds.walk += 20;
+                else if (classLevel >= 6) speeds.walk += 15;
+                else if (classLevel >= 2) speeds.walk += 10;
+
+                console.log(`Applied monk speed bonus: +${speeds.walk - baseWalkSpeed}ft (${baseWalkSpeed} → ${speeds.walk})`);
+            }
+        }
+
+        // Barbarian Fast Movement (level 5+)
+        if (characterClass === "barbarian" && classLevel >= 5) {
+            const wearingHeavyArmor = data.inventory.some(item =>
+                item.equipped &&
+                item.definition.filterType === "Armor" &&
+                item.definition.type === "Heavy Armor"
+            );
+
+            if (!wearingHeavyArmor) {
+                speeds.walk += 10; // Fast Movement
+                console.log(`Applied barbarian Fast Movement: +10ft (${speeds.walk - 10} → ${speeds.walk})`);
+            }
+        }
+    }
+
+    // Custom speeds should ONLY override if they're meant to be ABSOLUTE values
+    // Otherwise, they should adjust the already calculated speed
+    if (data.customSpeeds && Array.isArray(data.customSpeeds)) {
+        console.log("Found customSpeeds:", data.customSpeeds);
+
+        for (let customSpeed of data.customSpeeds) {
+            // Check if this is an absolute override or a relative adjustment
+            const isRelativeAdjustment = customSpeed.isAdjustment === true;
+
+            switch (customSpeed.movementId) {
+                case 1: // Walking
+                    if (isRelativeAdjustment) {
+                        // Add to the current walking speed
+                        speeds.walk += customSpeed.distance;
+                        console.log(`Adjusted walking speed by ${customSpeed.distance}ft: ${speeds.walk}`);
+                    } else {
+                        // Override completely (only if higher than calculated speed to prevent loss of bonuses)
+                        if (customSpeed.distance > speeds.walk) {
+                            console.log(`Custom walking speed ${customSpeed.distance}ft is higher than calculated ${speeds.walk}ft, using custom speed`);
+                            speeds.walk = customSpeed.distance;
+                        } else {
+                            console.log(`Keeping higher calculated walking speed ${speeds.walk}ft instead of custom ${customSpeed.distance}ft`);
+                        }
+                    }
+                    break;
+                case 2: // Burrowing - these special movement types can be fully overridden
+                    speeds.burrow = customSpeed.distance;
+                    break;
+                case 3: // Climbing
+                    speeds.climb = customSpeed.distance;
+                    break;
+                case 4: // Flying
+                    speeds.fly = customSpeed.distance;
+                    break;
+                case 5: // Swimming
+                    speeds.swim = customSpeed.distance;
+                    break;
+            }
+        }
+    }
+
+    // Wood Elf Fleet of Foot trait (only apply if not already overridden)
+    if (data.race.baseRaceId === 3 && data.race.subRaceShortName === "Wood" && speeds.walk < 35) {
+        speeds.walk = 35; // Fleet of Foot trait sets base speed to 35 ft
+    }
+
+    // Process other modifiers from various sources
+    const areas = ["race", "class", "background", "feat", "item"];
+
+    for (let area of areas) {
+        if (!data.modifiers[area] || !Array.isArray(data.modifiers[area])) {
+            continue;
+        }
+
+        for (let modifier of data.modifiers[area]) {
+            if (modifier.type === "bonus" || modifier.type === "set") {
+                if (modifier.subType === "speed-walk" || modifier.subType === "speed") {
+                    if (modifier.type === "set") {
+                        // Only set if the new value is higher than current
+                        if (modifier.value > speeds.walk) {
+                            speeds.walk = modifier.value;
+                        }
+                    } else {
+                        speeds.walk += modifier.value;
+                    }
+                } else if (modifier.subType === "speed-fly") {
+                    if (modifier.type === "set") {
+                        speeds.fly = modifier.value;
+                    } else {
+                        speeds.fly += modifier.value;
+                    }
+                } else if (modifier.subType === "speed-swim") {
+                    if (modifier.type === "set") {
+                        speeds.swim = modifier.value;
+                    } else {
+                        speeds.swim += modifier.value;
+                    }
+                } else if (modifier.subType === "speed-burrow") {
+                    if (modifier.type === "set") {
+                        speeds.burrow = modifier.value;
+                    } else {
+                        speeds.burrow += modifier.value;
+                    }
+                } else if (modifier.subType === "speed-climb") {
+                    if (modifier.type === "set") {
+                        speeds.climb = modifier.value;
+                    } else {
+                        speeds.climb += modifier.value;
+                    }
+                }
+            }
+        }
+    }
+
+    // Mobile feat bonus
+    const hasMobileFeat = data.feats && data.feats.some(feat => feat.definition.name === "Mobile");
+    if (hasMobileFeat) {
+        speeds.walk += 10;
+        console.log("Applied Mobile feat bonus: +10ft");
+    }
+
+    console.log("Final calculated speeds:", speeds);
+    return speeds;
+}
+
 
 function gatherCreatures(data) {
     let creatures = {};
@@ -2223,7 +2396,7 @@ function removeHtmlTags(htmlString) {
                 }
                 //If it's a list item, add a bullet point and a single line break
                 else if (element.tagName === 'LI') {
-                    formattedText += '� ' + element.textContent.trim() + '\n';
+                    formattedText += '• ' + element.textContent.trim() + '\n';
                 }
                 //If it's a BR, just add a line break
                 else if (element.tagName === 'BR') {

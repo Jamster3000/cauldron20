@@ -12,16 +12,14 @@
     border-radius: 4px;
 }
 
-
-
 .ability-panel {
-    height: 365px; 
+    height: 380px; 
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
     align-items: center;
     padding: 5px; 
-    margin-top: 170px;
+    margin-top: 160px;
 }
 
     .ability-panel h5 {
@@ -46,8 +44,9 @@
     }
 
 .skills-panel {
-    height: 490px;
+    height: 495px;
     width: 155px;
+    padding-top: 0;
 }
 
 #skillList {
@@ -55,7 +54,7 @@
 }
 
 .saving-throws-panel {
-    height: 195px;
+    height: 200px;
     width: 120px;
     margin-top: 340px;
     padding: 5px;
@@ -89,7 +88,7 @@
     border: 2px solid #336699;
     padding: 8px;
     border-radius: 4px;
-    width: 83.2px;
+    width: 88px;
     height: 110px;
     position: absolute;
     margin-top: 45px;
@@ -105,6 +104,7 @@
     font-weight: bold;
     margin-bottom: 5px;
     text-align: center;
+    margin-top: -50px;
 }
 
 .hit-dice-type {
@@ -112,6 +112,7 @@
     margin: 2px 0;
     font-weight: bold;
     color: #336699;
+    margin-top: 45px;
 }
 
 .hit-dice-display {
@@ -119,6 +120,7 @@
     flex-direction: column;
     align-items: center;
     width: 100%;
+    margin-top: -50px;
 }
 
 .hit-dice-fraction {
@@ -126,6 +128,7 @@
     align-items: center;
     justify-content: center;
     margin: 5px 0;
+    margin-top: 0px;
 }
 
 .hit-dice-count {
@@ -198,7 +201,7 @@
     height: 30px;
     margin-left: 5px;
     margin-top: -30px;
-    font-size: 13px;
+    font-size: 15px;
     text-align: center;
     display: flex;
     align-items: center;
@@ -221,7 +224,7 @@
     padding: 10px;
     border-radius: 4px;
     align-items: center;
-    margin-left: -377.5px;
+    margin-left: -382.5px;
     margin-top: -5px;
     width: 125px;
     height: 45px;
@@ -257,7 +260,7 @@
 }
 
 .hp-label {
-    font-size: 16px;
+    font-size: 14px;
     position: absolute;
     width: 30px;
     height: 30px;
@@ -294,7 +297,7 @@
 }
 
 .temp-hp-label {
-    font-size: 16px;
+    font-size: 14px;
     position: absolute;
     width: 30px;
     height: 30px;
@@ -316,6 +319,76 @@
     font-weight: bold;
 }
 
+/*proficiencies*/
+.proficiencies-section {
+    position: absolute;
+    left: 150px;
+    top: 165px;
+    border: 2px solid #336699;
+    padding: 2px;
+    border-radius: 4px;
+    width: 55px;
+    height: 65px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: help;
+    margin-left: 255px;
+}
+
+#proficiencies {
+    width: 100%;
+    font-size: 15px;
+    text-align: center;
+    word-wrap: break-word;
+    line-height: 1.2;
+    font-weight: bold;
+    color: #336699;
+    user-select: none; 
+}
+
+
+.proficiency-indicator {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: 8px;
+    height: 8px;
+    background-color: #336699;
+    border-radius: 50%;
+    opacity: 0.8;
+}
+
+.proficiency-tooltip {
+    position: absolute;
+    display: none;
+    background-color: white;
+    border: 1px solid #336699;
+    border-radius: 4px;
+    padding: 5px;
+    width: max-content;
+    top: 100%;
+    right: 0;
+    margin-bottom: 5px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    z-index: 100;
+    font-size: 11px;
+}
+
+.proficiencies-section:hover .proficiency-tooltip {
+    display: block;
+}
+
+.proficiency-type {
+    display: flex;
+    justify-content: space-between;
+    padding: 2px 0;
+}
+
+.proficiency-type-name {
+    font-weight: bold;
+    margin-right: 10px;
+}
 
 
 
@@ -655,3 +728,132 @@
         color: #c06000 !important;
         background-color: #f8f8f8;
     }
+
+input:disabled {
+    cursor: default !important;
+    opacity: 0.8;
+}
+
+.input-button-modification:disabled {
+    cursor: default !important;
+    background-color: #f9f9f9;
+    color: #333;
+}
+
+.current-hp-input:disabled, .max-hp-input:disabled {
+    cursor: default !important;
+    color: #333;
+    font-weight: bold;
+}
+
+/*
+===================
+======= Rest ======
+===================
+*/
+.rest-buttons {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+    margin: 5px 0;
+    margin-top: -59px;
+}
+
+    .rest-buttons #shortRest,
+    .rest-buttons #longRest {
+        width: 50px;
+        height: 50px;
+        padding: 2px;
+        text-align: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        word-wrap: break-word;
+        word-break: break-word;
+        overflow-wrap: break-word;
+        white-space: normal;
+        margin-left: 745px;
+    }
+
+
+/*
+===================
+====== Speed ======
+===================
+*/
+.speed-section {
+    border: 2px solid #336699;
+    padding: 10px;
+    margin-left: 264px;
+    position: absolute;
+    margin-top: -5px;
+    height: 45px;
+    width: 119.5px;
+    border-radius: 4px;
+}
+
+.speed-display {
+    margin-left: 55px;
+    margin-top: -5px;
+    width: 40px;
+    height: 30px;
+    font-weight: bold;
+}
+
+.speed-label {
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    margin-left: 5px;
+    margin-top: -30px;
+    font-size: 15px;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.speed-indicator {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: 8px;
+    height: 8px;
+    background-color: #336699;
+    border-radius: 50%;
+    opacity: 0.8;
+    cursor: help;
+}
+
+.speed-tooltip {
+    position: absolute;
+    display: none;
+    background-color: white;
+    border: 1px solid #336699;
+    border-radius: 4px;
+    padding: 5px;
+    width: max-content;
+    top: 100%;
+    right: 0;
+    margin-bottom: 5px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    z-index: 100;
+    font-size: 11px;
+}
+
+.speed-section:hover .speed-tooltip {
+    display: block;
+}
+
+.speed-section .speed-type {
+    display: flex;
+    justify-content: space-between;
+    padding: 2px 0;
+}
+
+.speed-section .speed-type-name {
+    font-weight: bold;
+    margin-right: 10px;
+}

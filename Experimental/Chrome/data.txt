@@ -296,7 +296,7 @@
                     "fixedValue": null
                 }
             },
-            "HitDiceUsed": 6,
+            "HitDiceUsed": 0,
             "IsStartingClass": true,
             "Level": 20,
             "SubClassDefinition": {
@@ -1969,7 +1969,7 @@
             "Quantity": 1
         }
     },
-    "LastModified": "2025-04-16T22:11:59.375168Z",
+    "LastModified": "2025-04-16T22:11:59.375Z",
     "Level": 20,
     "MaxCarryWeight": 285,
     "Name": "Chronowisp",

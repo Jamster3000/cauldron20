@@ -331,7 +331,7 @@ function createCommonAction(adventureData) {
             </div>
             <div class="menu-item">
                 <button class="btn btn-default btn-sm actions">Actions</button>
-                <div class="submenu" id="actions">
+                <div class="submenu" title="View all your character's actions that they can take turning combat." id="actions">
                 </div>
             </div>
         </div>
@@ -786,9 +786,9 @@ function createCharacterSheet(adventureData) {
 	overlayContainer.style.marginBottom = '0';
 	overlayContainer.style.backgroundColor = 'rgba(255,255,255, 1)';
 	overlayContainer.style.zIndex = '1';
-	overlayContainer.style.width = "425px";
+	overlayContainer.style.width = "465px";
 
-	//Character Information
+	// Character Information
 	let characterHidden = "";
 	let currentCauldronHitPoints = 0;
 	let currentArmourClass = 0;
@@ -798,42 +798,37 @@ function createCharacterSheet(adventureData) {
 	let hitDiceType = "d" + characterData.Classes[0].Definition.HitDice;
 	let hitDiceUsed = characterData.Classes[0].HitDiceUsed || 0;
 
-	if (adventureData.characters && adventureData.characters.character) {
-		if (Array.isArray(adventureData.characters.character)) {
-			//If there are multiple players to an adventure
-			console.log("Multiple characters found");
-			for (let i = 0; i < adventureData.characters.character.length; i++) {
-				console.log("Checking character:", adventureData.characters.character[i]);
-				if (adventureData.characters.character[i].name === characterData.Name) {
-					currentCauldronHitPoints = (Number(adventureData.characters.character[i].hitpoints || 0) -
-						Number(adventureData.characters.character[i].damage || 0));
-					currentArmourClass = (Number(adventureData.characters.character[i].armor_class || 0));
-					totalHitPoints = Number(adventureData.characters.character[i].hitpoints || 0);
+	// Get character's speed from race data
+	let characterSpeed = characterData.Race.Speed || 30; // Default to 30 if not found
 
-					console.log("Found match, HP:", currentCauldronHitPoints);
+	// Find character in adventure data
+	let currentCharacter = null;
 
-					if (adventureData.characters.character[i].hidden === "yes") {
-						characterHidden = "[hidden]";
-					}
-					break;
+	// character detection logic
+	if (adventureData.characters) {
+		const characters = Array.isArray(adventureData.characters.character)
+			? adventureData.characters.character
+			: [adventureData.characters.character];
+
+		for (const character of characters) {
+			if (character && character.name === characterData.Name) {
+				currentCharacter = character;
+
+				if (character.hidden === "yes") {
+					characterHidden = "[hidden]";
 				}
+				break;
 			}
+		}
+
+		if (currentCharacter) {
+			currentCauldronHitPoints = (Number(currentCharacter.hitpoints || 0) -
+				Number(currentCharacter.damage || 0));
+			currentArmourClass = (Number(currentCharacter.armor_class || 0));
+			totalHitPoints = Number(currentCharacter.hitpoints || 0);
 		} else {
-			//If there is only one player to an adventure
-			console.log("Single character found");
-			currentCauldronHitPoints = (Number(adventureData.characters.character.hitpoints || 0) -
-				Number(adventureData.characters.character.damage || 0));
-			currentArmourClass = (Number(adventureData.characters.character.armor_class || 0));
-			totalHitPoints = Number(adventureData.characters.character.hitpoints || 0);
-
-			console.log("HP calculation:",
-				"hitpoints:", adventureData.characters.character.hitpoints,
-				"damage:", adventureData.characters.character.damage,
-				"result:", currentCauldronHitPoints);
-
-			if (adventureData.characters.character.hidden === "yes") {
-				characterHidden = "[hidden]";
-			}
+			console.warn("Could not find character that matches:", characterData.Name);
+			console.log("Available characters:", characters);
 		}
 	}
 
@@ -850,30 +845,39 @@ function createCharacterSheet(adventureData) {
 	closeButton.addEventListener('click', function () {
 		overlayContainer.remove();
 		characterSheetOpen = false;
+
+		if (window._hpMonitorInterval) {
+			clearInterval(window._hpMonitorInterval);
+			window._hpMonitorInterval = null;
+		}
 	});
 
-	//body
 	const overlayBody = document.createElement('div');
 	overlayBody.classList.add('panel-body');
 
 	overlayBody.innerHTML = `
 		<div id="overlayContainer" style="display: flex;">
 			<div class="ability-panel">
+				<div class="section-label" style="font-size: 10px; color: #666; text-align: center; margin-bottom: 5px;">ABILITY SCORES</div>
 				<h5 style="font-weight: bold;">STR</h5>
-				<button id="strButton" class="button-modification">${characterData.AbilityScores.Score.Strength} (${characterData.AbilityScores.Modifier.Strength >= 0 ? '+' : ''}${characterData.AbilityScores.Modifier.Strength})</button>
+				<button id="strButton" title="Ctrl + Click: ADVANTAGE - Shift + Click: DISADVANTAGE" class="button-modification">${characterData.AbilityScores.Score.Strength} (${characterData.AbilityScores.Modifier.Strength >= 0 ? '+' : ''}${characterData.AbilityScores.Modifier.Strength})</button>
 				<h5 style="font-weight: bold;">DEX</h5>
-				<button id="dexButton" class="button-modification">${characterData.AbilityScores.Score.Dexterity} (${characterData.AbilityScores.Modifier.Dexterity >= 0 ? '+' : ''}${characterData.AbilityScores.Modifier.Dexterity})</button>
+				<button id="dexButton" title="Ctrl + Click: ADVANTAGE - Shift + Click: DISADVANTAGE" class="button-modification">${characterData.AbilityScores.Score.Dexterity} (${characterData.AbilityScores.Modifier.Dexterity >= 0 ? '+' : ''}${characterData.AbilityScores.Modifier.Dexterity})</button>
 				<h5 style="font-weight: bold;">CON</h5>
-				<button id="conButton" class="button-modification">${characterData.AbilityScores.Score.Constitution} (${characterData.AbilityScores.Modifier.Constitution >= 0 ? '+' : ''}${characterData.AbilityScores.Modifier.Constitution})</button>
+				<button id="conButton" title="Ctrl + Click: ADVANTAGE - Shift + Click: DISADVANTAGE" class="button-modification">${characterData.AbilityScores.Score.Constitution} (${characterData.AbilityScores.Modifier.Constitution >= 0 ? '+' : ''}${characterData.AbilityScores.Modifier.Constitution})</button>
 				<h5 style="font-weight: bold;">INT</h5>
-				<button id="intButton" class="button-modification">${characterData.AbilityScores.Score.Intelligence} (${characterData.AbilityScores.Modifier.Intelligence >= 0 ? '+' : ''}${characterData.AbilityScores.Modifier.Intelligence})</button>
+				<button id="intButton" title="Ctrl + Click: ADVANTAGE - Shift + Click: DISADVANTAGE" class="button-modification">${characterData.AbilityScores.Score.Intelligence} (${characterData.AbilityScores.Modifier.Intelligence >= 0 ? '+' : ''}${characterData.AbilityScores.Modifier.Intelligence})</button>
 				<h5 style="font-weight: bold;">WIS</h5>
-				<button id="wisButton" class="button-modification">${characterData.AbilityScores.Score.Wisdom} (${characterData.AbilityScores.Modifier.Wisdom >= 0 ? '+' : ''}${characterData.AbilityScores.Modifier.Wisdom})</button>
+				<button id="wisButton" title="Ctrl + Click: ADVANTAGE - Shift + Click: DISADVANTAGE" class="button-modification">${characterData.AbilityScores.Score.Wisdom} (${characterData.AbilityScores.Modifier.Wisdom >= 0 ? '+' : ''}${characterData.AbilityScores.Modifier.Wisdom})</button>
 				<h5 style="font-weight: bold;">CHA</h5>
-				<button id="chaButton" class="button-modification">${characterData.AbilityScores.Score.Charisma} (${characterData.AbilityScores.Modifier.Charisma >= 0 ? '+' : ''}${characterData.AbilityScores.Modifier.Charisma})</button>
+				<button id="chaButton" title="Ctrl + Click: ADVANTAGE - Shift + Click: DISADVANTAGE" class="button-modification">${characterData.AbilityScores.Score.Charisma} (${characterData.AbilityScores.Modifier.Charisma >= 0 ? '+' : ''}${characterData.AbilityScores.Modifier.Charisma})</button>
 			</div>
 
 			<div class="hit-dice-container">
+				<div class="rest-buttons">
+					<button id="shortRest" class="btn btn-primary btn-xs">Short Rest</button>
+					<button id="longRest" class="btn btn-primary btn-xs" >Long Rest</button>
+				</div>
 				<div class="hit-dice-label">Hit Dice</div>
 				<div class="hit-dice-display">
 					<div class="hit-dice-type">${hitDiceType}</div>
@@ -885,30 +889,42 @@ function createCharacterSheet(adventureData) {
 				</div>
 				<button class="roll-dice" id="rollHitDie" title="Roll a hit die to recover HP">Roll</button>
 			</div>
-        
+    
 			<div id="SkillListDiv" class="skills-panel">
+				<div class="section-label" style="font-size: 10px; color: #666; text-align: center; margin-bottom:5px;">ABILITY CHECKS</div>
 				<ul id="skillList"></ul>
 			</div>
-        
+    
 			<div class="saving-throws-panel">
+				<div class="section-label" style="font-size: 10px; color: #666; text-align: center; margin-bottom: 5px;">SAVING THROWS</div>
 				<ul id="savingThrowElement"></ul>
 			</div>
         
+			<div class="proficiencies-section">
+				<div type="text" id="proficiencies" title="View proficiencies and languages">Profs.</div>
+				<div class="proficiency-indicator"></div>
+			</div>
+    
 			<div class="Character-menu-container" style="margin-top: 125px; height: 40px; margin-left: 0px;">
 				<div class="character-menu menu-panel">
-					<button id="actions" class="btn btn-primary btn-xs menu-btn" style="margin-top: 10px;">Actions</button>
-					<button id="bio" class="btn btn-primary btn-xs menu-btn">Bio</button>
-					<button id="character" class="btn btn-primary btn-xs menu-btn">Character</button>
-					<button id="features" class="btn btn-primary btn-xs menu-btn">Features</button>
-					<button id="inventory" class="btn btn-primary btn-xs menu-btn">Inventory</button>
-					<button id="spells" class="btn btn-primary btn-xs menu-btn">Spells</button>
-					<button id="extras" class="btn btn-primary btn-xs menu-btn">Extras</button>
+					<button title="View all your character's actions that they can take turning combat." id="actions" class="btn btn-primary btn-xs menu-btn" style="margin-top: 10px;">Actions</button>
+					<button title="View your character's backstory, allies, foes, their background and more." id="bio" class="btn btn-primary btn-xs menu-btn">Bio</button>
+					<button title="View your main character sheet. Abilities, skills, saving throws and more." id="character" class="btn btn-primary btn-xs menu-btn">Character</button>
+					<button title="View all your character's features and actions, from races, classes, backgrounds and more." id="features" class="btn btn-primary btn-xs menu-btn">Features</button>
+					<button title="View your character's inventory and all their hoards of items." id="inventory" class="btn btn-primary btn-xs menu-btn">Inventory</button>
+					<button title="View your character's spells." id="spells" class="btn btn-primary btn-xs menu-btn">Spells</button>
+					<button title="Extras include any special abilities, temporary effects and companions" id="extras" class="btn btn-primary btn-xs menu-btn">Extras</button>
 				</div>
 			</div>
-        
+    
 			<div class="armourSection">
 				<input type="text" id="armourClass" placeholder="0" title="Armour Class" class="stats-display input-button-modification" disabled="true" value="${currentArmourClass}">
-				<label class="stats-label">Armour Class</label>
+				<label class="stats-label">Armor Class</label>
+			</div>
+        
+			<div class="speed-section">
+				<input type="text" id="speed" placeholder="30" title="Movement Speed" class="speed-display input-button-modification" disabled="true" value="${characterSpeed}">
+				<label class="speed-label">Speed</label>
 			</div>
 
 			<div class="hp-container">
@@ -926,15 +942,56 @@ function createCharacterSheet(adventureData) {
 		</div>
 	`;
 
+	//proficiencies
+	const profSection = overlayBody.querySelector('.proficiencies-section');
+	const proficienciesElement = profSection.querySelector('#proficiencies');
+
+	const profTooltip = document.createElement('div');
+	profTooltip.className = 'proficiency-tooltip';
+
+	// Build proficiency list for tooltip
+	let proficiencyContent = '';
+
+	// Add armor proficiencies
+	if (characterData.Proficiencys && characterData.Proficiencys.Armour && characterData.Proficiencys.Armour.length > 0) {
+		proficiencyContent += '<div class="proficiency-type"><span class="proficiency-type-name">Armor:</span>';
+		proficiencyContent += `<span>${characterData.Proficiencys.Armour.join(', ')}</span></div>`;
+	}
+
+	// Add weapon proficiencies
+	if (characterData.Proficiencys && characterData.Proficiencys.Weapons && characterData.Proficiencys.Weapons.length > 0) {
+		proficiencyContent += '<div class="proficiency-type"><span class="proficiency-type-name">Weapons:</span>';
+		proficiencyContent += `<span>${characterData.Proficiencys.Weapons.join(', ')}</span></div>`;
+	}
+
+	// Add tool proficiencies
+	if (characterData.Proficiencys && characterData.Proficiencys.Tools && characterData.Proficiencys.Tools.length > 0) {
+		proficiencyContent += '<div class="proficiency-type"><span class="proficiency-type-name">Tools:</span>';
+		proficiencyContent += `<span>${characterData.Proficiencys.Tools.join(', ')}</span></div>`;
+	}
+
+	// Add languages
+	if (characterData.Proficiencys && characterData.Proficiencys.Languages && characterData.Proficiencys.Languages.length > 0) {
+		proficiencyContent += '<div class="proficiency-type"><span class="proficiency-type-name">Languages:</span>';
+		proficiencyContent += `<span>${characterData.Proficiencys.Languages.join(', ')}</span></div>`;
+	}
+
+	if (!proficiencyContent) {
+		proficiencyContent = '<div>No proficiencies found</div>';
+	}
+
+	// Set tooltip content
+	profTooltip.innerHTML = proficiencyContent;
+	profSection.appendChild(profTooltip);
+
+
 	//temp HP event listeners
 	const tempHitPointsInput = overlayBody.querySelector('#tempHitPoints');
 	tempHitPointsInput.addEventListener('change', function () {
 		const newTempHP = parseInt(this.value) || 0; 
 		characterData.TempHitPoints = newTempHP;    
 
-		chrome.storage.local.set({ 'characterData': characterData }, function () {
-			console.log('Temp HP saved to local storage:', newTempHP);
-		});
+		chrome.storage.local.set({ 'characterData': characterData })
 	});
 
 	const rollHitDieButton = overlayBody.querySelector('#rollHitDie');
@@ -980,9 +1037,6 @@ function createCharacterSheet(adventureData) {
 						healAmount: latestRoll
 					}, (response) => {
 						if (response && response.success) {
-							console.log('Healing applied successfully');
-
-							// Update HP display while ensuring it doesn't exceed max HP
 							let newCurrentHP = Number(currentHitPointsInput.value) + Number(latestRoll);
 							if (newCurrentHP > maxHP) {
 								newCurrentHP = maxHP;
@@ -990,12 +1044,6 @@ function createCharacterSheet(adventureData) {
 							currentHitPointsInput.value = newCurrentHP;
 						} else {
 							console.error('Failed to apply healing:', response?.error);
-							// Show error details if available
-							if (response && response.my_character_value) {
-								console.log('my_character value:', response.my_character_value);
-							}
-							// Fallback to manual healing
-							alert(`Automatic healing failed. Please manually heal ${latestRoll} hit points.`);
 						}
 					});
 				} else {
@@ -1007,7 +1055,6 @@ function createCharacterSheet(adventureData) {
 							healAmount: parseInt(healAmount)
 						});
 
-						// Update HP display while ensuring it doesn't exceed max HP
 						let newCurrentHP = Number(currentHitPointsInput.value) + Number(healAmount);
 						if (newCurrentHP > maxHP) {
 							newCurrentHP = maxHP;
@@ -1095,7 +1142,6 @@ function createCharacterSheet(adventureData) {
 		skillElement.disabled = true;
 		skillElement.style.marginTop = '5px';
 
-		//proficient
 		if (skill.isProficient) {
 			skillElement.checked = true;
 		} else {
@@ -1114,6 +1160,7 @@ function createCharacterSheet(adventureData) {
 		skillModifier.style.fontSize = "14px";
 		skillModifier.style.width = "25px";
 		skillModifier.classList.add('skill-button-modification');
+		skillModifier.title = "Ctrl + Click: ADVANTAGE - Shift + Click: DISADVANTAGE" 
 		skillModifier.textContent = skill.totalModifier >= 0 ? `+${skill.totalModifier}` : skill.totalModifier;
 
 		skillModifier.addEventListener('click', function (event) {
@@ -1130,7 +1177,6 @@ function createCharacterSheet(adventureData) {
 
 	const savingThrowElement = document.getElementById('savingThrowElement');
 
-	// Define the correct order of saving throws
 	const savingThrowOrder = ["Strength", "Dexterity", "Constitution", "Intellegence", "Wisdom", "Charisma"];
 
 	// Process saving throws in the defined order
@@ -1138,7 +1184,6 @@ function createCharacterSheet(adventureData) {
 		if (characterData.SavingThrows[savingThrowName]) {
 			const savingThrow = characterData.SavingThrows[savingThrowName];
 
-			// Create container for each saving throw row to maintain alignment
 			const savingThrowRow = document.createElement('div');
 			savingThrowRow.style.display = 'flex';
 			savingThrowRow.style.alignItems = 'center';
@@ -1150,7 +1195,6 @@ function createCharacterSheet(adventureData) {
 			savingThrowRadio.disabled = true;
 			savingThrowRadio.style.marginRight = '5px';
 
-			// Check if proficient
 			savingThrowRadio.checked = savingThrow.isChecked || false;
 
 			// Create button element for modifier
@@ -1160,9 +1204,9 @@ function createCharacterSheet(adventureData) {
 			savingThrowModifier.style.fontSize = "14px";
 			savingThrowModifier.style.width = "25px";
 			savingThrowModifier.classList.add('skill-button-modification');
+            savingThrowModifier.title = "Ctrl + Click: ADVANTAGE - Shift + Click: DISADVANTAGE";
 			savingThrowModifier.textContent = savingThrow.total >= 0 ? `+${savingThrow.total}` : savingThrow.total;
 
-			// Add click event
 			savingThrowModifier.addEventListener('click', function (event) {
 				roll_dice(`1d20+${savingThrow.total}`, event);
 			});
@@ -1172,18 +1216,152 @@ function createCharacterSheet(adventureData) {
 			savingThrowLabel.style.fontSize = "11px";
 			savingThrowLabel.textContent = savingThrowName;
 
-			// Add elements to the row in correct order
 			savingThrowRow.appendChild(savingThrowRadio);
 			savingThrowRow.appendChild(savingThrowModifier);
 			savingThrowRow.appendChild(savingThrowLabel);
 
-			// Add row to the saving throws container
 			savingThrowElement.appendChild(savingThrowRow);
 		}
 	}
 
+	const speedSection = overlayBody.querySelector('.speed-section');
+	const speedInput = speedSection.querySelector('#speed');
+
+	let speeds = {};
+
+	speeds["Walking"] = characterData.Race.Speed || 30;
+
+	if (characterData.customSpeeds && Array.isArray(characterData.customSpeeds)) {
+		characterData.customSpeeds.forEach(customSpeed => {
+			switch (customSpeed.movementId) {
+				case 1: speeds["Walking"] = customSpeed.distance; break;
+				case 2: speeds["Burrowing"] = customSpeed.distance; break;
+				case 3: speeds["Climbing"] = customSpeed.distance; break;
+				case 4: speeds["Flying"] = customSpeed.distance; break;
+				case 5: speeds["Swimming"] = customSpeed.distance; break;
+			}
+		});
+	} else {
+		if (characterData.Race.BurrowSpeed) speeds["Burrowing"] = characterData.Race.BurrowSpeed;
+		if (characterData.Race.ClimbingSpeed) speeds["Climbing"] = characterData.Race.ClimbingSpeed;
+		if (characterData.Race.FlySpeed) speeds["Flying"] = characterData.Race.FlySpeed;
+		if (characterData.Race.SwimSpeed) speeds["Swimming"] = characterData.Race.SwimSpeed;
+	}
+
+	const nonWalkingSpeeds = Object.entries(speeds).filter(([type, speed]) =>
+		type !== "Walking" && speed > 0
+	);
+
+	if (nonWalkingSpeeds.length > 0) {
+		const indicator = document.createElement('div');
+		indicator.className = 'speed-indicator';
+		indicator.title = 'Additional movement types available';
+		speedSection.appendChild(indicator);
+
+		const tooltip = document.createElement('div');
+		tooltip.className = 'speed-tooltip';
+
+		const walkingDiv = document.createElement('div');
+		walkingDiv.className = 'speed-type';
+		walkingDiv.innerHTML = `<span class="speed-type-name">Walking:</span><span>${speeds["Walking"]} ft.</span>`;
+		tooltip.appendChild(walkingDiv);
+
+		nonWalkingSpeeds.forEach(([type, speed]) => {
+			const speedDiv = document.createElement('div');
+			speedDiv.className = 'speed-type';
+			speedDiv.innerHTML = `<span class="speed-type-name">${type}:</span><span>${speed} ft.</span>`;
+			tooltip.appendChild(speedDiv);
+		});
+
+		speedSection.appendChild(tooltip);
+	}
+
 	//set the character sheet to open
 	characterSheetOpen = true;
+	setupHPMonitoring(adventureData);
+}
+
+//This functions keeps check on the character's HP and updated it in the character sheet if there's a change
+function setupHPMonitoring(adventureData) {
+	if (window._hpMonitorInterval) {
+		clearInterval(window._hpMonitorInterval);
+	}
+
+	// Find our character more reliably
+	let characterToMonitor = null;
+	if (adventureData.characters) {
+		const characters = Array.isArray(adventureData.characters.character)
+			? adventureData.characters.character
+			: [adventureData.characters.character];
+
+		for (const character of characters) {
+			if (character && character.name === characterData.Name) {
+				characterToMonitor = character;
+				break;
+			}
+		}
+	}
+
+	if (!characterToMonitor) {
+		console.warn("Could not find character to monitor HP:", characterData.Name);
+		return;
+	}
+
+	// Checks every 500ms
+	window._hpMonitorInterval = setInterval(() => {
+		// Only update if the character sheet is open
+		if (!characterSheetOpen) {
+			clearInterval(window._hpMonitorInterval);
+			window._hpMonitorInterval = null;
+			return;
+		}
+
+		const urlWithJsonOutput = window.location.href + "?output=json";
+		fetch(urlWithJsonOutput)
+			.then(response => response.json())
+			.then(freshData => {
+				const adventure = freshData.adventure;
+
+				// Find our character in fresh data using same approach
+				let currentCharacter = null;
+				if (adventure.characters) {
+					const characters = Array.isArray(adventure.characters.character)
+						? adventure.characters.character
+						: [adventure.characters.character];
+
+					for (const character of characters) {
+						if (character && character.name === characterData.Name) {
+							currentCharacter = character;
+							break;
+						}
+					}
+				}
+
+				if (!currentCharacter) {
+					console.log("Character not found in fresh data");
+					return;
+				}
+
+				const currentHP = (Number(currentCharacter.hitpoints || 0) -
+					Number(currentCharacter.damage || 0));
+				const maxHP = Number(currentCharacter.hitpoints || 0);
+
+				const currentHPInput = document.querySelector('.current-hp-input');
+				const maxHPInput = document.querySelector('.max-hp-input');
+
+				if (currentHPInput && currentHPInput.value !== String(currentHP)) {
+					currentHPInput.value = currentHP;
+					console.log(`Updated HP display: ${currentHP}/${maxHP}`);
+				}
+
+				if (maxHPInput && maxHPInput.value !== String(maxHP)) {
+					maxHPInput.value = maxHP;
+				}
+			})
+			.catch(error => {
+				console.error("Error checking for HP updates:", error);
+			});
+	}, 500);
 }
 
 function showBio(adventureData) {
@@ -1227,13 +1405,13 @@ function showBio(adventureData) {
             <div id="overlayContainer">
             <div class="Character-menu-container" style="position: absolute; margin-top: 23px; right: 0;">
 				<div class="character-menu menu-panel" style="border: 2px solid #336699; padding: 5px; height: 230px;">
-						<button id="actions" class="btn btn-primary btn-xs menu-btn" style="width: 100px; margin-top: 5px;">Actions</button>
-						<button id="bio" class="btn btn-primary btn-xs menu-btn" style="width: 100px;">Bio</button>
-						<button id="character" class="btn btn-primary btn-xs menu-btn" style="width: 100px;">Character</button>
-						<button id="features" class="btn btn-primary btn-xs menu-btn" style="width: 100px;">Features</button>
-						<button id="inventory" class="btn btn-primary btn-xs menu-btn" style="width: 100px;">Inventory</button>
-						<button id="spells" class="btn btn-primary btn-xs menu-btn" style="width: 100px;">Spells</button>
-						<button id="extras" class="btn btn-primary btn-xs menu-btn">Extras</button>
+						<button title="View all your character's actions that they can take turning combat." id="actions" class="btn btn-primary btn-xs menu-btn" style="width: 100px; margin-top: 5px;">Actions</button>
+						<button title="View your character's backstory, allies, foes, their background and more." id="bio" class="btn btn-primary btn-xs menu-btn" style="width: 100px;">Bio</button>
+						<button title="View your main character sheet. Abilities, skills, saving throws and more." id="character" class="btn btn-primary btn-xs menu-btn" style="width: 100px;">Character</button>
+						<button title="View all your character's features and actions, from races, classes, backgrounds and more." id="features" class="btn btn-primary btn-xs menu-btn" style="width: 100px;">Features</button>
+						<button title="View your character's inventory and all their hoards of items." id="inventory" class="btn btn-primary btn-xs menu-btn" style="width: 100px;">Inventory</button>
+						<button title="View your character's spells." id="spells" class="btn btn-primary btn-xs menu-btn" style="width: 100px;">Spells</button>
+						<button title="Extras include any special abilities, temporary effects and companions" id="extras" class="btn btn-primary btn-xs menu-btn">Extras</button>
 				</div>
 			</div>
 
@@ -1479,10 +1657,10 @@ function showActions(adventureData) {
                                 <div id="allActions">
                                     <p><b>Actions In Combat</b></p>
                                     <p style="max-width: 400px; font-size: 12px;">Attack, Cast a Spell, Dash, Disengage, Dodge, Grapple, Help, Hide, Improvise, Ready, Search, Shove, Use an Object</p>
-                                    <button id="unarmedStrike" class="styled-button" style="color: #6385C1;"><b>Unarmed Strike</b></button>
+                                    <button id="unarmedStrike" title="An unarmed, no weapon strike." class="styled-button" style="color: #6385C1;"><b>Unarmed Strike</b></button>
                                     <label id="actionReach" style="font-size: 14px;">reach: 5ft.</label>
-                                    <button id="unarmedStrikeAttackRoll" class="skill-button-modification" style="color: #6385C1;">+${characterData.ProficiencyBonus + Math.floor((characterData.AbilityScores.Modifier.Strength))}</button>
-                                    <button id="unarmedStrikeDamage" class="skill-button-modification" style="color: #6385C1;">1+${characterData.AbilityScores.Modifier.Strength}</button>
+                                    <button id="unarmedStrikeAttackRoll" title="Ctrl + Click: ADVANTAGE - Shift + Click: DISADVANTAGE" class="skill-button-modification" style="color: #6385C1;">+${characterData.ProficiencyBonus + Math.floor((characterData.AbilityScores.Modifier.Strength))}</button>
+                                    <button id="unarmedStrikeDamage" title="Unarmed Damage" class="skill-button-modification" style="color: #6385C1;">1+${characterData.AbilityScores.Modifier.Strength}</button>
                                     <hr>
                                 </div>
                             </ul>
@@ -1507,13 +1685,13 @@ function showActions(adventureData) {
             </div>
             <div class="Character-menu-container" style="position: absolute; margin-top: 23px; right: 0;">
                 <div class="character-menu menu-panel" style="border: 2px solid #336699; padding: 5px; height: 230px;">
-                    <button id="actions" class="btn btn-primary btn-xs menu-btn" style="width: 100px; margin-top: 5px;">Actions</button>
-                    <button id="bio" class="btn btn-primary btn-xs menu-btn" style="width: 100px;">Bio</button>
-                    <button id="character" class="btn btn-primary btn-xs menu-btn" style="width: 100px;">Character</button>
-                    <button id="features" class="btn btn-primary btn-xs menu-btn" style="width: 100px;">Features</button>
-                    <button id="inventory" class="btn btn-primary btn-xs menu-btn" style="width: 100px;">Inventory</button>
-                    <button id="spells" class="btn btn-primary btn-xs menu-btn" style="width: 100px;">Spells</button>
-					<button id="extras" class="btn btn-primary btn-xs menu-btn">Extras</button>
+                    <button title="View all your character's actions that they can take turning combat." id="actions" class="btn btn-primary btn-xs menu-btn" style="width: 100px; margin-top: 5px;">Actions</button>
+                    <button title="View your character's backstory, allies, foes, their background and more." id="bio" class="btn btn-primary btn-xs menu-btn" style="width: 100px;">Bio</button>
+                    <button title="View your main character sheet. Abilities, skills, saving throws and more." id="character" class="btn btn-primary btn-xs menu-btn" style="width: 100px;">Character</button>
+                    <button title="View all your character's features and actions, from races, classes, backgrounds and more." id="features" class="btn btn-primary btn-xs menu-btn" style="width: 100px;">Features</button>
+                    <button title="View your character's inventory and all their hoards of items." id="inventory" class="btn btn-primary btn-xs menu-btn" style="width: 100px;">Inventory</button>
+                    <button title="View your character's spells." id="spells" class="btn btn-primary btn-xs menu-btn" style="width: 100px;">Spells</button>
+					<button title="Extras include any special abilities, temporary effects and companions" id="extras" class="btn btn-primary btn-xs menu-btn">Extras</button>
                 </div>
             </div>
             <div id="ammoList" style="border: 2px solid #336699; padding 8px; height: 260px; width: 120px; margin-left: 3px; margin-top: 235px; overflow-y: auto;"></div>
@@ -1569,6 +1747,7 @@ function showActions(adventureData) {
 			const weaponAttackButton = document.createElement('button');
 			weaponAttackButton.id = "weapon";
 			weaponAttackButton.style.color = "#6385C1";
+			weaponAttackButton.title = "Ctrl + Click: ADVANTAGE - Shift + Click: DISADVANTAGE";
 			weaponAttackButton.textContent = attackRoll.replace('1d20+', '+');
 			weaponAttackButton.classList.add('skill-button-modification');
 			weaponAttackButton.style.marginRight = "8px";
@@ -1578,6 +1757,7 @@ function showActions(adventureData) {
 			damageButton.id = "weapon";
 			damageButton.style.color = "#6385C1";
 			damageButton.textContent = damageRoll;
+            damageButton.title = itemName + " Damage";
 			damageButton.classList.add('skill-button-modification');
 
 			const descriptionText = createProcessedDescription(description);
@@ -1674,6 +1854,7 @@ function showActions(adventureData) {
 		actionButton.style.color = "#6385C1";
 		actionButton.style.fontWeight = "bold";
 		actionButton.textContent = action.Name;
+		actionButton.title = action.Description || "No description available";
 		actionButton.classList.add('styled-button');
 
 		// Create description
@@ -1710,7 +1891,7 @@ function showActions(adventureData) {
 	});
 
 	unarmedStrikeDamage.addEventListener('click', function () {
-		roll_dice(`1+${characterData.AbilityScores.Modifier.Strength}`);
+		sendDataToSidebar(`[b]Unarmed strike Damage[/b]: 1+${characterData.AbilityScores.Modifier.Strength} = ${Number(characterData.AbilityScores.Modifier.Strength) + 1}`, characterData.Name);
 	});
 
 	// Add menu button event listeners
@@ -1829,13 +2010,13 @@ function showFeatures(adventureData) {
         <div id="overlayContainer">
             <div class="Character-menu-container" style="position: absolute; margin-top: 23px; right: 0;">
                 <div class="character-menu menu-panel" style="border: 2px solid #336699; padding: 5px; height: 230px;">
-                    <button id="actions" class="btn btn-primary btn-xs menu-btn" style="width: 100px; margin-top: 5px;">Actions</button>
-                    <button id="bio" class="btn btn-primary btn-xs menu-btn" style="width: 100px;">Bio</button>
-                    <button id="character" class="btn btn-primary btn-xs menu-btn" style="width: 100px;">Character</button>
-                    <button id="features" class="btn btn-primary btn-xs menu-btn" style="width: 100px;">Features</button>
-                    <button id="inventory" class="btn btn-primary btn-xs menu-btn" style="width: 100px;">Inventory</button>
-                    <button id="spells" class="btn btn-primary btn-xs menu-btn" style="width: 100px;">Spells</button>
-					<button id="extras" class="btn btn-primary btn-xs menu-btn">Extras</button>
+                    <button title="View all your character's actions that they can take turning combat." id="actions" class="btn btn-primary btn-xs menu-btn" style="width: 100px; margin-top: 5px;">Actions</button>
+                    <button title="View your character's backstory, allies, foes, their background and more." id="bio" class="btn btn-primary btn-xs menu-btn" style="width: 100px;">Bio</button>
+                    <button title="View your main character sheet. Abilities, skills, saving throws and more." id="character" class="btn btn-primary btn-xs menu-btn" style="width: 100px;">Character</button>
+                    <button title="View all your character's features and actions, from races, classes, backgrounds and more." id="features" class="btn btn-primary btn-xs menu-btn" style="width: 100px;">Features</button>
+                    <button title="View your character's inventory and all their hoards of items." id="inventory" class="btn btn-primary btn-xs menu-btn" style="width: 100px;">Inventory</button>
+                    <button title="View your character's spells." id="spells" class="btn btn-primary btn-xs menu-btn" style="width: 100px;">Spells</button>
+					<button title="Extras include any special abilities, temporary effects and companions" id="extras" class="btn btn-primary btn-xs menu-btn">Extras</button>
                 </div>
             </div>
             <div style="height: 495px; width: 350px; margin-left: 0px; margin-top: 0px; overflow: auto; border: 2px solid #336699; padding: 10px;">
@@ -1916,6 +2097,7 @@ function showFeatures(adventureData) {
 			//button container
 			const featureButton = document.createElement('div');
 			featureButton.classList.add('feature-button');
+			featureButton.title = "Press to expand description";
 
 			//feature button
 			const titleButton = document.createElement('button');
@@ -1991,6 +2173,7 @@ function showFeatures(adventureData) {
 				//feature button container
 				const featureButton = document.createElement('div');
 				featureButton.classList.add('feature-button');
+				featureButton.title = "Press to expand description";
 
 				//title button
 				const titleButton = document.createElement('button');
@@ -1998,6 +2181,7 @@ function showFeatures(adventureData) {
 				titleButton.style.color = "#6385C1";
 				titleButton.style.fontWeight = "bold";
 				titleButton.style.minWidth = "auto";
+				titleButton.title = "Press to send to sidebar";
 				titleButton.style.padding = "4px 8px";
 				titleButton.style.margin = "0";
 				titleButton.textContent = feature.Name;
@@ -2059,6 +2243,7 @@ function showFeatures(adventureData) {
 			//action button container
 			const actionButton = document.createElement('div');
 			actionButton.classList.add('feature-button');
+			featureButton.title = "Press to expand description";
 
 			//title button
 			const titleButton = document.createElement('button');
@@ -2066,6 +2251,7 @@ function showFeatures(adventureData) {
 			titleButton.style.color = "#6385C1";
 			titleButton.style.fontWeight = "bold";
 			titleButton.style.minWidth = "auto";
+			titleButton.title = "Press to send to sidebar";
 			titleButton.style.padding = "4px 8px";
 			titleButton.style.margin = "0";
 			titleButton.textContent = action.Name;
@@ -2123,6 +2309,7 @@ function showFeatures(adventureData) {
 		//race button container
 		const raceButton = document.createElement('div');
 		raceButton.classList.add('feature-button');
+		featureButton.title = "Press to expand description";
 
 		//title button
 		const titleButton = document.createElement('button');
@@ -2130,6 +2317,7 @@ function showFeatures(adventureData) {
 		titleButton.style.color = "#6385C1";
 		titleButton.style.fontWeight = "bold";
 		titleButton.style.minWidth = "auto";
+		titleButton.title = "Press to send to sidebar";
 		titleButton.style.padding = "4px 8px";
 		titleButton.style.margin = "0";
 		titleButton.textContent = characterData.Race.Name;
@@ -2206,6 +2394,7 @@ function showFeatures(adventureData) {
 				//trait button container
 				const traitButton = document.createElement('div');
 				traitButton.classList.add('feature-button');
+				featureButton.title = "Press to expand description";
 
 				// title button
 				const titleButton = document.createElement('button');
@@ -2213,6 +2402,7 @@ function showFeatures(adventureData) {
 				titleButton.style.color = "#6385C1";
 				titleButton.style.fontWeight = "bold";
 				titleButton.style.minWidth = "auto";
+				titleButton.title = "Press to send to sidebar";
 				titleButton.style.padding = "4px 8px";
 				titleButton.style.margin = "0";
 				titleButton.textContent = trait.Name;
@@ -2279,6 +2469,7 @@ function showFeatures(adventureData) {
 			//feat button container
 			const featButton = document.createElement('div');
 			featButton.classList.add('feature-button');
+			featureButton.title = "Press to expand description";
 
 			// title button
 			const titleButton = document.createElement('button');
@@ -2287,6 +2478,7 @@ function showFeatures(adventureData) {
 			titleButton.style.fontWeight = "bold";
 			titleButton.style.minWidth = "auto";
 			titleButton.style.padding = "4px 8px";
+			titleButton.title = "Press to send to sidebar";
 			titleButton.style.margin = "0";
 			titleButton.textContent = feat.Name;
 
@@ -2410,13 +2602,13 @@ function showInventory(adventureData) {
             <div style="display: flex; flex-direction: column;">
                 <div class="Character-menu-container">
                     <div class="character-menu menu-panel" style="border: 2px solid #336699; padding: 5px; height: 230px; margin-left: 3px; margin-top: 0px;">
-                        <button id="actions" class="btn btn-primary btn-xs menu-btn" style="width: 100px; margin-top: 5px;">Actions</button>
-                        <button id="bio" class="btn btn-primary btn-xs menu-btn" style="width: 100px;">Bio</button>
-                        <button id="character" class="btn btn-primary btn-xs menu-btn" style="width: 100px;">Character</button>
-                        <button id="features" class="btn btn-primary btn-xs menu-btn" style="width: 100px;">Features</button>
-                        <button id="inventory" class="btn btn-primary btn-xs menu-btn" style="width: 100px;">Inventory</button>
-                        <button id="spells" class="btn btn-primary btn-xs menu-btn" style="width: 100px;">Spells</button>
-						<button id="extras" class="btn btn-primary btn-xs menu-btn">Extras</button>
+                        <button title="View all your character's actions that they can take turning combat." id="actions" class="btn btn-primary btn-xs menu-btn" style="width: 100px; margin-top: 5px;">Actions</button>
+                        <button title="View your character's backstory, allies, foes, their background and more." id="bio" class="btn btn-primary btn-xs menu-btn" style="width: 100px;">Bio</button>
+                        <button title="View your main character sheet. Abilities, skills, saving throws and more." id="character" class="btn btn-primary btn-xs menu-btn" style="width: 100px;">Character</button>
+                        <button title="View all your character's features and actions, from races, classes, backgrounds and more." id="features" class="btn btn-primary btn-xs menu-btn" style="width: 100px;">Features</button>
+                        <button title="View your character's inventory and all their hoards of items." id="inventory" class="btn btn-primary btn-xs menu-btn" style="width: 100px;">Inventory</button>
+                        <button title="View your character's spells." id="spells" class="btn btn-primary btn-xs menu-btn" style="width: 100px;">Spells</button>
+						<button title="Extras include any special abilities, temporary effects and companions" id="extras" class="btn btn-primary btn-xs menu-btn">Extras</button>
                     </div>
                 </div>
                 ${characterData.Currencies ? `
@@ -2453,7 +2645,6 @@ function showInventory(adventureData) {
 	const inventoryHeader = inventoryDiv.querySelector('.inventory-header');
 	inventoryDiv.insertBefore(searchBar, inventoryHeader.nextSibling);
 
-
 	const allInventoryDiv = content.querySelector('#allInventory');
 
 	if (characterData.Inventory && Object.keys(characterData.Inventory).length > 0) {
@@ -2472,16 +2663,19 @@ function showInventory(adventureData) {
 			//item button
 			const itemButton = document.createElement('button');
 			itemButton.textContent = itemDefinition.Name;
+			itemButton.title = "Press to send to sidebar";
 			itemButton.classList.add('buttonNameWrap', 'item-name');
 
 			//quantity label
 			const quantityLabel = document.createElement('span');
 			quantityLabel.textContent = item.Quantity;
+			quantityLabel.title = `${itemDefinition.Name} quantity`;
 			quantityLabel.classList.add('item-quantity');
 
 			//cost label
 			const costLabel = document.createElement('span');
 			costLabel.textContent = itemDefinition.Cost || "-";
+            costLabel.title = `${itemDefinition.Name} cost`;
 			costLabel.classList.add('item-cost');
 
 			itemRow.appendChild(itemButton);
@@ -2621,13 +2815,13 @@ function showSpells(adventureData) {
             </div>
             <div class="Character-menu-container" style="position: absolute; margin-top: 23px; right: 0;">
                 <div class="character-menu menu-panel" style="border: 2px solid #336699; padding: 5px; height: 230px;">
-                    <button id="actions" class="btn btn-primary btn-xs menu-btn" style="width: 100px; margin-top: 5px;">Actions</button>
-                    <button id="bio" class="btn btn-primary btn-xs menu-btn" style="width: 100px;">Bio</button>
-                    <button id="character" class="btn btn-primary btn-xs menu-btn" style="width: 100px;">Character</button>
-                    <button id="features" class="btn btn-primary btn-xs menu-btn" style="width: 100px;">Features</button>
-                    <button id="inventory" class="btn btn-primary btn-xs menu-btn" style="width: 100px;">Inventory</button>
-                    <button id="spells" class="btn btn-primary btn-xs menu-btn" style="width: 100px;">Spells</button>
-					<button id="extras" class="btn btn-primary btn-xs menu-btn">Extras</button>
+                    <button title="View all your character's actions that they can take turning combat." id="actions" class="btn btn-primary btn-xs menu-btn" style="width: 100px; margin-top: 5px;">Actions</button>
+                    <button title="View your character's backstory, allies, foes, their background and more." id="bio" class="btn btn-primary btn-xs menu-btn" style="width: 100px;">Bio</button>
+                    <button title="View your main character sheet. Abilities, skills, saving throws and more." id="character" class="btn btn-primary btn-xs menu-btn" style="width: 100px;">Character</button>
+                    <button title="View all your character's features and actions, from races, classes, backgrounds and more." id="features" class="btn btn-primary btn-xs menu-btn" style="width: 100px;">Features</button>
+                    <button title="View your character's inventory and all their hoards of items." id="inventory" class="btn btn-primary btn-xs menu-btn" style="width: 100px;">Inventory</button>
+                    <button title="View your character's spells." id="spells" class="btn btn-primary btn-xs menu-btn" style="width: 100px;">Spells</button>
+					<button title="Extras include any special abilities, temporary effects and companions" id="extras" class="btn btn-primary btn-xs menu-btn">Extras</button>
                 </div>
             </div>
         </div>
@@ -2915,12 +3109,14 @@ function addSpellToContainer(spell, container) {
 
 	const spellButtonContainer = document.createElement('div');
 	spellButtonContainer.classList.add('feature-button');
+	spellButtonContainer.title = "Press to expand description";
 
 	const spellTitleButton = document.createElement('button');
 	spellTitleButton.classList.add('styled-button');
 	spellTitleButton.style.color = "#6385C1";
 	spellTitleButton.style.fontWeight = "bold";
 	spellTitleButton.style.minWidth = "auto";
+    spellTitleButton.title = "Press to send to sidebar";
 	spellTitleButton.style.padding = "4px 8px";
 	spellTitleButton.style.margin = "0";
 	spellTitleButton.textContent = spell.Definition.Name;
@@ -3050,13 +3246,13 @@ function showExtras(adventureData) {
             </div>
             <div class="Character-menu-container" style="position: absolute; margin-top: 23px; right: 0;">
                 <div class="character-menu menu-panel" style="border: 2px solid #336699; padding: 5px; height: 230px;">
-                    <button id="actions" class="btn btn-primary btn-xs menu-btn" style="width: 100px; margin-top: 5px;">Actions</button>
-                    <button id="bio" class="btn btn-primary btn-xs menu-btn" style="width: 100px;">Bio</button>
-                    <button id="character" class="btn btn-primary btn-xs menu-btn" style="width: 100px;">Character</button>
-                    <button id="features" class="btn btn-primary btn-xs menu-btn" style="width: 100px;">Features</button>
-                    <button id="inventory" class="btn btn-primary btn-xs menu-btn" style="width: 100px;">Inventory</button>
-                    <button id="spells" class="btn btn-primary btn-xs menu-btn" style="width: 100px;">Spells</button>
-                    <button id="extras" class="btn btn-primary btn-xs menu-btn">Extras</button>
+                    <button title="View all your character's actions that they can take turning combat." id="actions" class="btn btn-primary btn-xs menu-btn" style="width: 100px; margin-top: 5px;">Actions</button>
+                    <button title="View your character's backstory, allies, foes, their background and more." id="bio" class="btn btn-primary btn-xs menu-btn" style="width: 100px;">Bio</button>
+                    <button title="View your main character sheet. Abilities, skills, saving throws and more." id="character" class="btn btn-primary btn-xs menu-btn" style="width: 100px;">Character</button>
+                    <button title="View all your character's features and actions, from races, classes, backgrounds and more." id="features" class="btn btn-primary btn-xs menu-btn" style="width: 100px;">Features</button>
+                    <button title="View your character's inventory and all their hoards of items." id="inventory" class="btn btn-primary btn-xs menu-btn" style="width: 100px;">Inventory</button>
+                    <button title="View your character's spells." id="spells" class="btn btn-primary btn-xs menu-btn" style="width: 100px;">Spells</button>
+                    <button title="Extras include any special abilities, temporary effects and companions" id="extras" class="btn btn-primary btn-xs menu-btn">Extras</button>
                 </div>
             </div>
         </div>
@@ -3075,6 +3271,7 @@ function showExtras(adventureData) {
 			//dropdown button container
 			const featureButton = document.createElement('div');
 			featureButton.classList.add('feature-button');
+			featureButton.title = "Press to expand description";
 
 			//title button
 			const titleButton = document.createElement('button');
@@ -3084,6 +3281,7 @@ function showExtras(adventureData) {
 			titleButton.style.minWidth = "auto";
 			titleButton.style.padding = "4px 8px";
 			titleButton.style.margin = "0";
+			titleButton.title = "Press to send to sidebar";
 			titleButton.textContent = creature.Name;
 
 			//arrow icon
