@@ -3,11 +3,104 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>D&D Beyond Character Info</title>
+    <title>Your Characters</title>
     <link rel="stylesheet" href="/css/popup.css" />
+    <style>
+        /* Prevent width changes from scrollbar */
+        html {
+            overflow-y: scroll;
+            scrollbar-width: thin; /* For Firefox */
+        }
+
+        /* For Chrome, Safari, and Opera */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+
+        /* Set a fixed width for the popup */
+        body {
+            width: 380px;
+            overflow-x: hidden;
+        }
+
+        /* Rest of your styles */
+        .collapsible {
+            margin-top: 20px;
+            padding: 10px;
+        }
+
+            .active, .collapsible:hover {
+                background-color: #ccc;
+            }
+
+            .collapsible:after {
+                content: '\002B';
+                font-weight: bold;
+                float: right;
+                margin-left: 5px;
+            }
+
+        .active:after {
+            content: "\2212";
+        }
+
+        .report-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.2s ease-out;
+            background-color: #f9f9f9;
+            padding: 0 15px;
+            border-radius: 0 0 4px 4px;
+        }
+
+        .report-form {
+            padding: 15px 0;
+        }
+
+        .form-group {
+            margin-bottom: 10px;
+        }
+
+            .form-group label {
+                display: block;
+                margin-bottom: 5px;
+            }
+
+            .form-group textarea {
+                width: 100%;
+                padding: 8px;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                box-sizing: border-box;
+            }
+
+            .form-group input[type="text"] {
+                width: 100%;
+                padding: 8px;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                box-sizing: border-box;
+            }
+
+        .form-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+        }
+    </style>
 </head>
+
 <body>
-    <h1>D&D Beyond Characters</h1>
+    <h1>Your Characters</h1>
 
     <div id="character-selection">
         <label for="characterSelect">Select Character:</label>
@@ -41,6 +134,26 @@
             <i class="fa fa-upload"></i> Import
             <input type="file" id="importFile" accept=".json">
         </button>
+    </div>
+
+    <button class="collapsible">Report Incorrect Character Data</button>
+    <div class="report-content">
+        <form class="report-form" action="https://formsubmit.co/jrbaines.04@gmail.com" method="POST">
+            <input type="text" name="_honey" style="display:none">
+            <input type="hidden" name="_captcha" value="false">
+            <input type="hidden" name="_subject" value="Cauldron20 Character Data Report">
+            <div class="form-group">
+                <label for="reportDescription">Describe the incorrect data:</label>
+                <textarea id="reportDescription" name="reportDescription" rows="4" placeholder="Please describe what data is incorrect (e.g., 'My strength modifier shows +3 but should be +4')" required></textarea>
+            </div>
+            <div class="form-group">
+                <label for="characterIdReport">Character ID:</label>
+                <input type="text" id="characterIdReport" name="characterIdReport" placeholder="Your D&D Beyond character ID">
+            </div>
+            <div class="form-buttons">
+                <button type="submit" class="action-button">Submit Report</button>
+            </div>
+        </form>
     </div>
 
     <!-- From Uiverse.io by mobinkakei -->

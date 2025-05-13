@@ -367,6 +367,7 @@
     border-radius: 4px;
     padding: 5px;
     width: max-content;
+    max-width: 300px; /* Add a maximum width to enforce wrapping */
     top: 100%;
     right: 0;
     margin-bottom: 5px;

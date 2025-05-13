@@ -1077,6 +1077,22 @@ function gatherSpells(data, characterData) {
         };
     }
 
+    // Initialize Pact Magic for warlocks
+    if (className === "warlock") {
+        // Calculate warlock pact magic details
+        const pactLevel = getPactMagicLevel(classLevel);
+        const pactSlotsCount = getPactMagicSlots(classLevel);
+
+        // Initialize the Pact property in characterData
+        characterData.Pact = {
+            SlotsUsed: 0,  // Start with 0 used slots
+            SlotLevel: pactLevel, // The spell level of pact magic slots
+            MaxSlots: pactSlotsCount // Total number of pact slots
+        };
+
+        console.log(`Initialized Pact Magic for level ${classLevel} Warlock: ${pactSlotsCount} slots of level ${pactLevel}`);
+    }
+
     //====
     // SPELL INFO
     //====
@@ -1369,6 +1385,24 @@ function gatherSpells(data, characterData) {
     console.log("Generated spell slots:", spellSlots);
     return { spellSlots, spellInfo, spells };
 }
+
+// Helper function to determine pact magic level based on warlock level
+function getPactMagicLevel(warlockLevel) {
+    if (warlockLevel >= 9) return 5;    // 9th level and up gets 5th level slots
+    if (warlockLevel >= 7) return 4;    // 7th and 8th level get 4th level slots
+    if (warlockLevel >= 5) return 3;    // 5th and 6th level get 3rd level slots
+    if (warlockLevel >= 3) return 2;    // 3rd and 4th level get 2nd level slots
+    return 1;                           // 1st and 2nd level get 1st level slots
+}
+
+// Helper function to determine number of pact magic slots based on warlock level
+function getPactMagicSlots(warlockLevel) {
+    if (warlockLevel >= 17) return 4;   // 17th level and up gets 4 slots
+    if (warlockLevel >= 11) return 3;   // 11th-16th level gets 3 slots
+    if (warlockLevel >= 2) return 2;    // 2nd-10th level gets 2 slots
+    return 1;                           // 1st level gets 1 slot
+}
+
 
 function getActivationType(type) {
     switch (type) {
@@ -1816,40 +1850,143 @@ function formatCreatureSenses(senses) {
 }
 
 function getProficiencies(characterData, data) {
-    Proficiencys = {
+    let proficiencies = {
         Armour: [],
         Weapons: [],
         Tools: [],
         Languages: []
+    };
+
+    // Helper to add items uniquely
+    function addUnique(list, items) {
+        if (!Array.isArray(items)) items = [items];
+        items.forEach(item => {
+            if (item && !list.includes(item)) {
+                list.push(item);
+            }
+        });
     }
 
-    for (let i = 0; i < data.modifiers.race.length; i++) {
-        const iteration = data.modifiers.race[i];
-        if (iteration.type === "language") { Proficiencys.Languages.push(iteration.friendlySubtypeName); }
-        if (iteration.type === "armor") { Proficiencys.Armour.push(iteration.friendlySubtypeName); }
-        if (iteration.type === "weapon") { Proficiencys.Weapons.push(iteration.friendlySubtypeName); }
-        if (iteration.type === "tool") { Proficiencys.Tools.push(iteration.friendlySubtypeName); }
+    // Get base proficiencies from class
+    if (data.classes && data.classes[0] && data.classes[0].definition) {
+        const classProfs = data.classes[0].definition.proficiencies || [];
+        classProfs.forEach(prof => {
+            if (prof.toLowerCase().includes('armor')) {
+                addUnique(proficiencies.Armour, prof);
+            }
+            if (prof.toLowerCase().includes('weapons')) {
+                addUnique(proficiencies.Weapons, prof);
+            }
+        });
     }
 
-    for (let i = 0; i < data.modifiers.class.length; i++) {
-        const iteration = data.modifiers.class[i];
-        if (iteration.type === "proficiency") {
-            if (iteration.subType.includes("armor")) { Proficiencys.Armour.push(iteration.friendlySubtypeName); }
-            if (iteration.subType.includes("weapons")) { Proficiencys.Weapons.push(iteration.friendlySubtypeName); }
-            if (iteration.subType.includes("tool")) { Proficiencys.Tools.push(iteration.friendlySubtypeName); }
-            if (iteration.subType.includes("language")) { Proficiencys.Languages.push(iteration.friendlySubtypeName); }
+    // Get racial weapon proficiencies
+    if (data.race && data.race.racialTraits) {
+        data.race.racialTraits.forEach(trait => {
+            if (trait.definition.name === "Dwarven Combat Training") {
+                const weapons = ["Battleaxe", "Handaxe", "Light Hammer", "Warhammer"];
+                addUnique(proficiencies.Weapons, weapons);
+            }
+            // Add tool proficiency from race
+            if (trait.definition.name === "Tool Proficiency") {
+                addUnique(proficiencies.Tools, "Mason's Tools");
+            }
+        });
+    }
+
+    // Get background proficiencies
+    if (data.background && data.background.definition) {
+        // Get tool proficiencies from background
+        const toolProfs = data.background.definition.toolProficienciesDescription;
+        if (toolProfs) {
+            const tools = toolProfs.split(',')
+                .map(t => t.trim())
+                .filter(t => t && t !== "");
+            addUnique(proficiencies.Tools, tools);
+        }
+
+        // Get languages from background
+        if (data.background.definition.languages) {
+            addUnique(proficiencies.Languages, data.background.definition.languages);
         }
     }
 
-    for (let i = 0; i < data.modifiers.background.length; i++) {
-        const iteration = data.modifiers.background[i];
-        if (iteration.type === "language") { Proficiencys.Languages.push(iteration.friendlySubtypeName); }
-        if (iteration.type === "armor") { Proficiencys.Armour.push(iteration.friendlySubtypeName); }
-        if (iteration.type === "weapon") { Proficiencys.Weapons.push(iteration.friendlySubtypeName); }
-        if (iteration.type === "tool") { Proficiencys.Tools.push(iteration.friendlySubtypeName); }
+    // Get racial languages
+    if (data.race && data.race.racialTraits) {
+        data.race.racialTraits.forEach(trait => {
+            if (trait.definition.name === "Languages") {
+                const languages = trait.definition.options || [];
+                languages.forEach(lang => addUnique(proficiencies.Languages, lang.label));
+            }
+        });
     }
 
-    return Proficiencys;
+    // Get subrace languages
+    if (data.race.subRaceDefinition && data.race.subRaceDefinition.racialTraits) {
+        data.race.subRaceDefinition.racialTraits.forEach(trait => {
+            if (trait.definition.name === "Languages") {
+                const languages = trait.definition.options || [];
+                languages.forEach(lang => addUnique(proficiencies.Languages, lang.label));
+            }
+        });
+    }
+
+    // Check for custom languages
+    if (data.customLanguages && Array.isArray(data.customLanguages)) {
+        data.customLanguages.forEach(lang => {
+            if (lang.name) {
+                addUnique(proficiencies.Languages, lang.name);
+            }
+        });
+    }
+
+    // Check for languages in modifiers
+    const areas = ["race", "class", "background", "feat", "item"];
+    for (let area of areas) {
+        if (data.modifiers[area]) {
+            data.modifiers[area].forEach(mod => {
+                if (mod.type === "language" || mod.subType === "language") {
+                    if (mod.friendlySubtypeName) {
+                        addUnique(proficiencies.Languages, mod.friendlySubtypeName);
+                    }
+                }
+            });
+        }
+    }
+
+    const standardLanguages = [
+        "Common", "Dwarvish", "Elvish", "Giant", "Gnomish", "Goblin",
+        "Halfling", "Orc", "Draconic", "Common Sign Language", "Abyssal",
+        "Celestial", "Infernal", "Deep Speech", "Primordial", "Sylvan",
+        "Undercommon", "Leonin", "Kraul", "Loxodon", "Merfolk", "Sphinx",
+        "Vedalken", "Abanasinia", "Ergot", "Kharolian", "Kenderspeak",
+        "Khur", "Nordmaarian", "Solamnic", "Riedran", "Quori", "Thri-kreen",
+        "Gith", "Dambrathan", "Midani", "Alzhedo", "Chondathan", "Damaran",
+        "Waelan", "Guran", "Halruaan", "Illuskan", "Roushoum", "Chessentan",
+        "Mulhorandi", "Untheric", "Thayan", "Rashemi", "Shaaran", "Shou",
+        "Tuigan", "Turmic", "Uluik", "Aeorian", "Galapa", "Marquesian",
+        "Minotaur", "Naush", "Qoniiran", "Shadow Cant", "Ywan", "Zemnian",
+        "Blink Dog", "Bullywug", "Giant Eagle", "Giant Elk", "Giant Owl",
+        "Gnoll", "Grell", "Grung", "Hook Horror", "Kruthik", "Modron",
+        "Otyugh", "Sahuagin", "Slaad", "Tlincalli", "Troglodyte", "Umber Hulk",
+        "Vegepygmy", "Winter Wolf", "Worg", "Yeti"
+    ];
+
+
+
+
+    // Clean up and sort the lists
+    proficiencies.Armour = [...new Set(proficiencies.Armour)].sort();
+    proficiencies.Weapons = [...new Set(proficiencies.Weapons)].sort();
+    proficiencies.Tools = [...new Set(proficiencies.Tools)].sort();
+    proficiencies.Languages = [...new Set(proficiencies.Languages)].sort();
+
+    // Set "None" for Armor if no armor proficiencies
+    if (proficiencies.Armour.length === 0) {
+        proficiencies.Armour = ["None"];
+    }
+
+    return proficiencies;
 }
 
 function savingThrows(characterData, data, stats) {
@@ -2506,3 +2643,214 @@ function displayMessage(message, type) {
 function displayError(message) {
     displayMessage(message, message ? "error" : "");
 }
+
+/*Form feedback */
+
+document.addEventListener('DOMContentLoaded', function () {
+    // Fetch character info when the button is clicked
+    document.getElementById('fetchButton').addEventListener('click', function () {
+        showSpinner();
+        fetchCharacterInfo();
+    });
+
+    document.getElementById('editButton').addEventListener('click', function () {
+        chrome.tabs.create({ url: chrome.runtime.getURL('html/edit.html') });
+    });
+
+    //export data
+    document.getElementById('exportButton').addEventListener('click', function () {
+        exportCharacterData();
+    });
+
+    //import data
+    document.getElementById('importFile').addEventListener('change', function (event) {
+        importCharacterData(event);
+    });
+
+    // Character selection dropdown
+    const characterSelect = document.getElementById('characterSelect');
+    characterSelect.addEventListener('change', function () {
+        const selectedId = characterSelect.value;
+        if (selectedId) {
+            loadSelectedCharacter(selectedId);
+        } else {
+            clearCharacterInfo();
+        }
+    });
+
+    // Delete character button
+    document.getElementById('deleteCharacterButton').addEventListener('click', function () {
+        deleteSelectedCharacter();
+    });
+
+    const characterInfoElement = document.getElementById('characterInfo');
+    characterInfoElement.style.display = 'none';
+
+    // Load characters and populate dropdown
+    loadCharacters();
+
+    // Retrieve the stored character ID and populate the input field
+    chrome.storage.local.get(['characterId', 'characterData'], function (result) {
+        if (result.characterData) {
+            console.log("result.characterData got");
+            displayCharacterInfo(result.characterData);
+            document.getElementById('exportButton').disabled = false;
+        } else if (result.characterId) {
+            console.log("characterId got");
+            fetchCharacterInfo();
+        } else {
+            console.log("never mind");
+            document.getElementById('exportButton').disabled = true;
+        }
+    });
+
+    // Add event listener for Enter key press
+    document.getElementById('characterIdInput').addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+            showSpinner();
+            document.getElementById('fetchButton').click();
+        }
+    });
+
+    const reportForm = document.querySelector('.report-form');
+    if (reportForm) {
+        // Add a note about data collection to the form
+        const noteDiv = document.createElement('div');
+        noteDiv.className = 'form-note';
+        noteDiv.innerHTML = '<small>Note: This form collects your report description, character ID (if provided), and basic browser information to help troubleshoot issues. No personal data is stored.</small>';
+        reportForm.insertBefore(noteDiv, document.querySelector('.form-buttons'));
+
+        reportForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+            showSpinner();
+
+            // Get form data
+            const description = document.getElementById('reportDescription').value;
+            const characterIdReport = document.getElementById('characterIdReport');
+            const characterId = characterIdReport ? characterIdReport.value : '';
+
+            // Basic validation
+            if (!description || !description.trim()) {
+                hideSpinner();
+                displayMessage("Description is required", "error");
+                return;
+            }
+
+            // Prepare the form data
+            const formData = new FormData();
+
+            // Add regular form fields
+            formData.append('Report Description', description);
+            formData.append('Character ID', characterId || 'Not provided');
+            formData.append('Extension Version', chrome.runtime.getManifest().version);
+
+            var prefix = (Array.prototype.slice
+                .call(window.getComputedStyle(document.documentElement, ""))
+                .join("")
+                .match(/-(moz|webkit|ms|o)-/))[1];
+
+            formData.append('Browser', prefix);
+
+            // Check if we need to include character data
+            const characterDataField = document.getElementById('characterDataField');
+            if (characterDataField && characterDataField.value) {
+                try {
+                    const parsedData = JSON.parse(characterDataField.value);
+                    const characterName = parsedData.Name || "Unknown";
+                    formData.append('Character Name', characterName);
+
+                    if (characterId) {
+                        const dndbeyondUrl = `https://www.dndbeyond.com/characters/${characterId}`;
+                        formData.append('D&D Beyond Character Link', dndbeyondUrl);
+                    }
+                } catch (error) {
+                    console.error("Error parsing character data:", error);
+                }
+            }
+
+            // Submit form to Formspree
+            fetch('https://formspree.io/f/mkgrpgwb', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'Accept': 'application/json'
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    hideSpinner();
+
+                    if (data.ok) {
+                        displayMessage("Report submitted successfully! Thank you for your feedback.", "success");
+
+                        // Reset the form
+                        reportForm.reset();
+
+                        // Reset character data field if it exists
+                        const characterDataField = document.getElementById('characterDataField');
+                        if (characterDataField) {
+                            characterDataField.value = '';
+                        }
+
+                        // Close report section
+                        const collapsible = document.querySelector('.collapsible');
+                        if (collapsible && collapsible.classList.contains('active')) {
+                            collapsible.click();
+                        }
+                    } else {
+                        displayMessage("Error submitting report. Please try again later.", "error");
+                    }
+                })
+                .catch(error => {
+                    hideSpinner();
+                    console.error('Error submitting form:', error);
+                    displayMessage("Error submitting report. Please try again later.", "error");
+                });
+        });
+    }
+
+    const collapsibles = document.getElementsByClassName("collapsible");
+    for (let i = 0; i < collapsibles.length; i++) {
+        collapsibles[i].addEventListener("click", function () {
+            this.classList.toggle("active");
+            const content = this.nextElementSibling;
+
+            if (content.style.maxHeight) {
+                // Closing the collapsible
+                content.style.maxHeight = null;
+
+                setTimeout(() => {
+                    window.scrollTo(0, 0);
+                    document.body.style.minHeight = 'auto';
+                }, 210);
+            } else {
+                // Opening the collapsible - fill in the character ID from the selected character
+                content.style.maxHeight = content.scrollHeight + "px";
+
+                // Auto-populate character ID in the report form
+                const characterSelect = document.getElementById('characterSelect');
+                const selectedId = characterSelect.value;
+                const characterIdReport = document.getElementById('characterIdReport');
+
+                if (selectedId && characterIdReport) {
+                    characterIdReport.value = selectedId;
+                }
+
+                if (!this.heightObserver) {
+                    this.heightObserver = new MutationObserver(() => {
+                        if (content.style.maxHeight) {
+                            content.style.maxHeight = content.scrollHeight + "px";
+                        }
+                    });
+
+                    this.heightObserver.observe(content, {
+                        childList: true,
+                        subtree: true,
+                        characterData: true
+                    });
+                }
+            }
+        });
+    }
+});
+

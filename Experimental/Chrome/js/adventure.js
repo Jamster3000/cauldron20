@@ -949,41 +949,46 @@ function createCharacterSheet(adventureData) {
 	const profTooltip = document.createElement('div');
 	profTooltip.className = 'proficiency-tooltip';
 
-	// Build proficiency list for tooltip
 	let proficiencyContent = '';
 
-	// Add armor proficiencies
+	//armor proficiencies
 	if (characterData.Proficiencys && characterData.Proficiencys.Armour && characterData.Proficiencys.Armour.length > 0) {
-		proficiencyContent += '<div class="proficiency-type"><span class="proficiency-type-name">Armor:</span>';
-		proficiencyContent += `<span>${characterData.Proficiencys.Armour.join(', ')}</span></div>`;
+		proficiencyContent += '<div class="proficiency-type">';
+		proficiencyContent += '<span class="proficiency-type-name">Armor:</span>';
+		proficiencyContent += `<span>${characterData.Proficiencys.Armour.join(', ')}</span>`;
+		proficiencyContent += '</div>';
 	}
 
-	// Add weapon proficiencies
+	//weapon proficiencies
 	if (characterData.Proficiencys && characterData.Proficiencys.Weapons && characterData.Proficiencys.Weapons.length > 0) {
-		proficiencyContent += '<div class="proficiency-type"><span class="proficiency-type-name">Weapons:</span>';
-		proficiencyContent += `<span>${characterData.Proficiencys.Weapons.join(', ')}</span></div>`;
+		proficiencyContent += '<div class="proficiency-type">';
+		proficiencyContent += '<span class="proficiency-type-name">Weapons:</span>';
+		proficiencyContent += `<span>${characterData.Proficiencys.Weapons.join(', ')}</span>`;
+		proficiencyContent += '</div>';
 	}
 
-	// Add tool proficiencies
+	//tools proficiencies
 	if (characterData.Proficiencys && characterData.Proficiencys.Tools && characterData.Proficiencys.Tools.length > 0) {
-		proficiencyContent += '<div class="proficiency-type"><span class="proficiency-type-name">Tools:</span>';
-		proficiencyContent += `<span>${characterData.Proficiencys.Tools.join(', ')}</span></div>`;
+		proficiencyContent += '<div class="proficiency-type">';
+		proficiencyContent += '<span class="proficiency-type-name">Tools:</span>';
+		proficiencyContent += `<span>${characterData.Proficiencys.Tools.join(', ')}</span>`;
+		proficiencyContent += '</div>';
 	}
 
-	// Add languages
+	//languages
 	if (characterData.Proficiencys && characterData.Proficiencys.Languages && characterData.Proficiencys.Languages.length > 0) {
-		proficiencyContent += '<div class="proficiency-type"><span class="proficiency-type-name">Languages:</span>';
-		proficiencyContent += `<span>${characterData.Proficiencys.Languages.join(', ')}</span></div>`;
+		proficiencyContent += '<div class="proficiency-type">';
+		proficiencyContent += '<span class="proficiency-type-name">Languages:</span>';
+		proficiencyContent += `<span>${characterData.Proficiencys.Languages.join(', ')}</span>`;
+		proficiencyContent += '</div>';
 	}
 
 	if (!proficiencyContent) {
 		proficiencyContent = '<div>No proficiencies found</div>';
 	}
 
-	// Set tooltip content
 	profTooltip.innerHTML = proficiencyContent;
 	profSection.appendChild(profTooltip);
-
 
 	//temp HP event listeners
 	const tempHitPointsInput = overlayBody.querySelector('#tempHitPoints');
@@ -1019,7 +1024,6 @@ function createCharacterSheet(adventureData) {
 		const rollCommand = `1d${hitDieSides}+${constitutionModifier}`;
 		roll_dice(rollCommand);
 
-		// Save the updated hit dice usage immediately
 		chrome.storage.local.set({ 'characterData': characterData });
 
 		// Wait for the roll to finish and appear in the sidebar
@@ -1031,7 +1035,6 @@ function createCharacterSheet(adventureData) {
 			if (sidebarContent) {
 				const latestRoll = findLatestRoll(sidebarContent);
 				if (latestRoll) {
-					console.log("Applying healing:", latestRoll);
 					chrome.runtime.sendMessage({
 						type: 'APPLY_HEALING',
 						healAmount: latestRoll
@@ -1047,7 +1050,6 @@ function createCharacterSheet(adventureData) {
 						}
 					});
 				} else {
-					console.log("Couldn't find the dice roll result");
 					const healAmount = prompt("Enter the healing amount from your hit die roll:", "");
 					if (healAmount && !isNaN(healAmount)) {
 						chrome.runtime.sendMessage({
@@ -1064,6 +1066,118 @@ function createCharacterSheet(adventureData) {
 				}
 			}
 		}, 2000);
+	});
+
+	//short rest button
+	const shortRestButton = overlayBody.querySelector('#shortRest');
+	shortRestButton.addEventListener('click', function () {
+		if (confirm("Take a short rest? This will allow you to spend Hit Dice and recover HP.")) {
+			//warlocks get their spellslots back on a short rest.
+			if (characterData.Classes[0].Definition.Name === "Warlock") {
+				// Reset Pact slots on short rest
+				if (characterData.Pact) {
+					characterData.Pact.SlotsUsed = 0;
+				}
+
+				// Also reset traditional spell slots if they exist
+				if (characterData.SpellSlots) {
+					const warlockLevel = characterData.Classes[0].Level;
+					const highestSpellLevel = findHighestWarlockSpellLevel(characterData);
+					const slotsCount = getPactSlotsCount(warlockLevel);
+
+					if (characterData.SpellSlots[highestSpellLevel - 1]) {
+						characterData.SpellSlots[highestSpellLevel - 1].Used = 0;
+					}
+				}
+
+				// Update the UI if on spells tab
+				const warlockContainer = document.querySelector('.spell-level-container[style*="background-color: #f0f0f0"]');
+				if (warlockContainer) {
+					const description = warlockContainer.querySelector('p');
+					if (description) {
+						const warlockLevel = characterData.Classes[0].Level;
+						const slotsCount = getPactSlotsCount(warlockLevel);
+						const highestSpellLevel = findHighestWarlockSpellLevel(characterData);
+						description.innerHTML = `As a level ${warlockLevel} Warlock, you have <b>${slotsCount}</b> spell slots of level <b>${highestSpellLevel}</b> that regenerate on a short rest.`;
+					}
+				}
+			}
+
+			//some class features are restored on a short rest.
+			let featuresRestored = [];
+
+			//check for any features with teh LimitedUse key that recharges on a short rest
+			if (characterData.Actions) {
+				for (let i = 0; i < Object.keys(characterData.Actions).length; i++) {
+					const action = characterData.Actions[i];
+					if (action.LimitedUse && action.LimitedUse.ResetType == "ShortRest") {
+						action.LimitedUse.NumberUsed = 0;
+						featuresRestored.push(action.name);
+					}
+				}
+			}
+
+			chrome.storage.local.set({ 'characterData': characterData });
+		}
+	});
+
+	const longRestButton = overlayBody.querySelector('#longRest');
+	longRestButton.addEventListener('click', function () {
+		if (confirm("Take a long rest? This will restore your hit points, hit dice, and spell slots.")) {
+			const hitDiceRecovered = Math.max(1, Math.floor(hitDiceTotal / 2));
+
+			let newHitDiceUsed = characterData.Classes[0].HitDiceUsed - hitDiceRecovered;
+			if (newHitDiceUsed < 0) newHitDiceUsed = 0;
+			characterData.Classes[0].HitDiceUsed = newHitDiceUsed;
+
+			//restore hit dice
+			hitDiceUsed = newHitDiceUsed;
+			const hitDiceFraction = overlayBody.querySelector('.hit-dice-fraction');
+			if (hitDiceFraction) {
+				hitDiceFraction.innerHTML = `
+				<div class="hit-dice-count">${hitDiceTotal - hitDiceUsed}</div>
+				<div>/</div>
+				<div class="hit-dice-count">${hitDiceTotal}</div>`;
+			}
+
+			//restore HP to max
+			const currentHitPointsInput = overlayBody.querySelector('.current-hp-input');
+			const maxHP = Number(overlayBody.querySelector('.max-hp-input').value);
+			if (currentHitPointsInput) {
+				currentHitPointsInput.value = maxHP;
+
+				chrome.runtime.sendMessage({
+					type: "APPLY_HEALING",
+					healAmount: 1000
+				});
+			}
+
+			//reset all spell slots
+			if (characterData.SpellSlots) {
+				for (let i = 0; i < characterData.SpellSlots.length; i++) {
+					if (characterData.SpellSlots[i]) {
+						characterData.SpellSlots[i].Used = 0;
+					}
+				}
+			}
+
+			//reset all features that recharge on a long rest
+			let featuresRestored = [];
+
+			if (characterData.Actions) {
+				for (let i = 0; i < Object.keys(characterData.Actions).length; i++) {
+					const action = characterData.Actions[i];
+					if (action.LimitedUse &&
+						(action.LimitedUse.ResetType === "LongRest" ||
+							action.LimitedUse.rechargeType === "Long Rest")) {
+						action.LimitedUse.NumberUsed = 0;
+						featuresRestored.push(action.Name);
+					}
+				}
+			}
+
+			chrome.storage.local.set({ 'characterData': characterData });
+		}
 	});
 
 	const strButton = overlayBody.querySelector('#strButton');
@@ -1189,7 +1303,7 @@ function createCharacterSheet(adventureData) {
 			savingThrowRow.style.alignItems = 'center';
 			savingThrowRow.style.marginBottom = '5px';
 
-			// Create radio button element
+			// radio button element
 			const savingThrowRadio = document.createElement('input');
 			savingThrowRadio.type = "radio";
 			savingThrowRadio.disabled = true;
@@ -1197,7 +1311,7 @@ function createCharacterSheet(adventureData) {
 
 			savingThrowRadio.checked = savingThrow.isChecked || false;
 
-			// Create button element for modifier
+			//modifier button
 			const savingThrowModifier = document.createElement('button');
 			savingThrowModifier.id = "modifierButton";
 			savingThrowModifier.style.marginRight = "5px";
@@ -1211,7 +1325,7 @@ function createCharacterSheet(adventureData) {
 				roll_dice(`1d20+${savingThrow.total}`, event);
 			});
 
-			// Create label element
+			// label element
 			const savingThrowLabel = document.createElement('label');
 			savingThrowLabel.style.fontSize = "11px";
 			savingThrowLabel.textContent = savingThrowName;
@@ -2243,7 +2357,7 @@ function showFeatures(adventureData) {
 			//action button container
 			const actionButton = document.createElement('div');
 			actionButton.classList.add('feature-button');
-			featureButton.title = "Press to expand description";
+			actionButton.title = "Press to expand description";
 
 			//title button
 			const titleButton = document.createElement('button');
@@ -2309,7 +2423,7 @@ function showFeatures(adventureData) {
 		//race button container
 		const raceButton = document.createElement('div');
 		raceButton.classList.add('feature-button');
-		featureButton.title = "Press to expand description";
+		raceButton.title = "Press to expand description";
 
 		//title button
 		const titleButton = document.createElement('button');
@@ -2469,7 +2583,7 @@ function showFeatures(adventureData) {
 			//feat button container
 			const featButton = document.createElement('div');
 			featButton.classList.add('feature-button');
-			featureButton.title = "Press to expand description";
+			featButton.title = "Press to expand description";
 
 			// title button
 			const titleButton = document.createElement('button');
@@ -2760,7 +2874,8 @@ function showSpells(adventureData) {
 
 	let characterHidden = "";
 
-	if (adventureData.characters.character.length != null) {
+	// Get character's hidden status from adventure data
+	if (Array.isArray(adventureData.characters.character)) {
 		for (let i = 0; i < adventureData.characters.character.length; i++) {
 			if (adventureData.characters.character[i].name === characterData.Name) {
 				if (adventureData.characters.character[i].hidden === "yes") {
@@ -2821,13 +2936,13 @@ function showSpells(adventureData) {
                     <button title="View all your character's features and actions, from races, classes, backgrounds and more." id="features" class="btn btn-primary btn-xs menu-btn" style="width: 100px;">Features</button>
                     <button title="View your character's inventory and all their hoards of items." id="inventory" class="btn btn-primary btn-xs menu-btn" style="width: 100px;">Inventory</button>
                     <button title="View your character's spells." id="spells" class="btn btn-primary btn-xs menu-btn" style="width: 100px;">Spells</button>
-					<button title="Extras include any special abilities, temporary effects and companions" id="extras" class="btn btn-primary btn-xs menu-btn">Extras</button>
+                    <button title="Extras include any special abilities, temporary effects and companions" id="extras" class="btn btn-primary btn-xs menu-btn">Extras</button>
                 </div>
             </div>
         </div>
     `;
 
-	//search bar feature
+	// Search bar feature
 	const spellsDiv = content.querySelector('div[style*="height: 495px"]');
 	const searchBar = addSearchBar(spellsDiv, '.spell-container', (items, searchTerm) => {
 		items.forEach(item => {
@@ -2868,43 +2983,170 @@ function showSpells(adventureData) {
 	const spellSaveDcSection = spellsDiv.querySelector('div[style*="display: flex; margin-bottom: 15px"]');
 	spellsDiv.insertBefore(searchBar, spellSaveDcSection.nextSibling);
 
-
 	// Populate cantrips and spells
 	const cantripsContainer = content.querySelector('#cantrips');
 	const spellContainer = content.querySelector('#spellContainer');
 
 	const spellsByLevel = {};
 
-	for (const spellKey in characterData.Spells) {
-		const spell = characterData.Spells[spellKey];
-		const level = spell.Definition.Level;
+	if (characterData.Spells) {
+		for (const spellKey in characterData.Spells) {
+			const spell = characterData.Spells[spellKey];
+			if (spell && spell.Definition) {
+				const level = spell.Definition.Level;
 
-		if (!spellsByLevel[level]) {
-			spellsByLevel[level] = [];
+				if (!spellsByLevel[level]) {
+					spellsByLevel[level] = [];
+				}
+
+				spellsByLevel[level].push(spell);
+			}
 		}
 
-		spellsByLevel[level].push(spell);
+		for (const level in spellsByLevel) {
+			spellsByLevel[level].sort((a, b) => {
+				return a.Definition.Name.localeCompare(b.Definition.Name);
+			});
+		}
 	}
 
-	for (const level in spellsByLevel) {
-		spellsByLevel[level].sort((a, b) => {
-			return a.Definition.Name.localeCompare(b.Definition.Name);
-		});
-	}
-
-	// Add cantrips to the cantrips container
-	if (spellsByLevel[0]) {
+	if (spellsByLevel[0] && spellsByLevel[0].length > 0) {
 		spellsByLevel[0].forEach(spell => {
 			addSpellToContainer(spell, cantripsContainer);
 		});
+	} else {
+		const noSpellsMsg = document.createElement('p');
+		noSpellsMsg.textContent = "No cantrips known.";
+		noSpellsMsg.style.fontStyle = 'italic';
+		noSpellsMsg.style.color = '#666';
+		cantripsContainer.appendChild(noSpellsMsg);
 	}
 
-	// Add each level of spells to the spell container
-	for (let level = 1; level <= 9; level++) {
-		const spellSlotData = characterData.SpellSlots[level - 1];
-		const hasSpells = spellsByLevel[level] && spellsByLevel[level].length > 0;
-		const hasSpellSlots = spellSlotData && spellSlotData.Available > 0;
+	//Warlock Pact Magic
+	const isWarlock = characterData.Classes &&
+		characterData.Classes[0] &&
+		characterData.Classes[0].Definition &&
+		characterData.Classes[0].Definition.Name === "Warlock";
 
+	if (isWarlock) {
+		const warlockContainer = document.createElement('div');
+		warlockContainer.classList.add('spell-level-container');
+		warlockContainer.style.backgroundColor = '#f0f0f0';
+		warlockContainer.style.padding = '10px';
+		warlockContainer.style.marginBottom = '15px';
+
+		//h4 element
+		const warlockHeader = document.createElement('h4');
+		warlockHeader.textContent = 'Pact Magic Spell Slots';
+		warlockContainer.appendChild(warlockHeader);
+
+		const warlockLevel = characterData.Classes[0].Level;
+		const highestSpellLevel = findHighestWarlockSpellLevel(characterData);
+		const slotsCount = getPactSlotsCount(warlockLevel);
+		const slotsUsed = characterData.Pact.SlotsUsed;
+
+		// Create slot indicators for Warlocks
+		const slotsContainer = document.createElement('div');
+		slotsContainer.classList.add('spell-slots-container');
+
+		const label = document.createElement('span');
+		label.textContent = 'Pact Magic Slots: ';
+		label.style.fontWeight = 'bold';
+		slotsContainer.appendChild(label);
+
+		//pact spell slot indications
+		for (let i = 0; i < slotsCount; i++) {
+			const slotElement = document.createElement('div');
+			slotElement.classList.add('spell-slot');
+
+			if (i < slotsUsed) {
+				slotElement.classList.add('used');
+				slotElement.title = 'Used spell slot (click to restore)';
+			} else {
+				slotElement.classList.add('available');
+				slotElement.title = 'Available spell slot (click to use)';
+			}
+
+			slotElement.setAttribute('data-slot-type', 'pact');
+			slotElement.setAttribute('data-index', i);
+
+			slotElement.addEventListener('click', function () {
+				if (this.classList.contains('available')) {
+					this.classList.remove('available');
+					this.classList.add('used');
+					this.title = 'Used spell slot (click to restore)';
+
+					characterData.Pact.SlotsUsed = Math.min(
+						(characterData.Pact.SlotsUsed || 0) + 1,
+						slotsCount
+					);
+					chrome.storage.local.set({ 'characterData': characterData }, function () {
+						chrome.storage.local.get(['activeCharacterId', 'characters'], function (result) {
+							if (result.activeCharacterId && result.characters &&
+								result.characters[result.activeCharacterId]) {
+								result.characters[result.activeCharacterId].Pact = characterData.Pact;
+								chrome.storage.local.set({ 'characters': result.characters });
+							}
+						});
+					});
+					//description
+					description.innerHTML = `As a level ${warlockLevel} Warlock, you have <b>${slotsCount - characterData.Pact.SlotsUsed}</b> of <b>${slotsCount}</b> spell slots of level <b>${highestSpellLevel}</b> that regenerate on a short rest.`;
+					// counter
+					counter.textContent = ` (${slotsCount - characterData.Pact.SlotsUsed}/${slotsCount})`;
+
+					updateWarlockSpellSelectors();
+				} else {
+					this.classList.remove('used');
+					this.classList.add('available');
+					this.title = 'Available spell slot (click to use)';
+
+					characterData.Pact.SlotsUsed = Math.max(0, (characterData.Pact.SlotsUsed || 0) - 1);
+
+					chrome.storage.local.set({ 'characterData': characterData }, function () {
+						chrome.storage.local.get(['activeCharacterId', 'characters'], function (result) {
+							if (result.activeCharacterId && result.characters &&
+								result.characters[result.activeCharacterId]) {
+								result.characters[result.activeCharacterId].Pact = characterData.Pact;
+								chrome.storage.local.set({ 'characters': result.characters });
+							}
+						});
+					});
+
+					// description
+					description.innerHTML = `As a level ${warlockLevel} Warlock, you have <b>${slotsCount - characterData.Pact.SlotsUsed}</b> of <b>${slotsCount}</b> spell slots of level <b>${highestSpellLevel}</b> that regenerate on a short rest.`;
+
+					// counter
+					counter.textContent = ` (${slotsCount - characterData.Pact.SlotsUsed}/${slotsCount})`;
+					updateWarlockSpellSelectors();
+				}
+			});
+
+			slotsContainer.appendChild(slotElement);
+		}
+
+		//counter display
+		const counter = document.createElement('span');
+		counter.textContent = ` (${slotsCount - slotsUsed}/${slotsCount})`;
+		counter.style.marginLeft = '5px';
+		slotsContainer.appendChild(counter);
+		warlockContainer.appendChild(slotsContainer);
+
+		//description
+		const description = document.createElement('p');
+		description.innerHTML = `As a level ${warlockLevel} Warlock, you have <b>${slotsCount - slotsUsed}</b> of <b>${slotsCount}</b> spell slots of level <b>${highestSpellLevel}</b> that regenerate on a short rest.`;
+		warlockContainer.appendChild(description);
+
+		spellContainer.appendChild(warlockContainer);
+	}
+
+	//Each level of spells to the spell container
+	for (let level = 1; level <= 9; level++) {
+		const hasSpells = spellsByLevel[level] && spellsByLevel[level].length > 0;
+		const hasSpellSlots = characterData.SpellSlots &&
+			characterData.SpellSlots[level - 1] &&
+			characterData.SpellSlots[level - 1].Available > 0;
+
+		// Skip levels with no spells and no slots
 		if (!hasSpells && !hasSpellSlots) {
 			continue;
 		}
@@ -2914,9 +3156,12 @@ function showSpells(adventureData) {
 
 		const levelHeader = document.createElement('h4');
 		levelHeader.textContent = `Level ${level}`;
+        levelHeader.classList.add('spell-level-header');
 		levelContainer.appendChild(levelHeader);
 
-		if (hasSpellSlots && characterData.Classes[0].Definition.Name !== "Warlock") {
+		// Add spell slot indicators for non-Warlocks
+		if (hasSpellSlots && !isWarlock) {
+			const spellSlotData = characterData.SpellSlots[level - 1];
 			const slotsContainer = document.createElement('div');
 			slotsContainer.classList.add('spell-slots-container');
 
@@ -2948,18 +3193,41 @@ function showSpells(adventureData) {
 						this.classList.add('used');
 						this.title = 'Used spell slot (click to restore)';
 
-						if (characterData.SpellSlots[slotLevel]) {
-							characterData.SpellSlots[slotLevel].Used += 1;
+						if (characterData.SpellSlots && characterData.SpellSlots[slotLevel]) {
+							characterData.SpellSlots[slotLevel].Used = Math.min(
+								characterData.SpellSlots[slotLevel].Used + 1,
+								characterData.SpellSlots[slotLevel].Available
+							);
+
+							// Update counter text
+							const counter = this.parentNode.querySelector('span:last-child');
+							if (counter) {
+								counter.textContent = ` (${characterData.SpellSlots[slotLevel].Available - characterData.SpellSlots[slotLevel].Used}/${characterData.SpellSlots[slotLevel].Available})`;
+							}
+
 							chrome.storage.local.set({ 'characterData': characterData });
+
+							// Update all spell level selectors that reference this level
+							updateSpellLevelSelectors(slotLevel + 1);
 						}
 					} else {
 						this.classList.remove('used');
 						this.classList.add('available');
 						this.title = 'Available spell slot (click to use)';
 
-						if (characterData.SpellSlots[slotLevel]) {
-							characterData.SpellSlots[slotLevel].Used -= 1;
+						if (characterData.SpellSlots && characterData.SpellSlots[slotLevel]) {
+							characterData.SpellSlots[slotLevel].Used = Math.max(0, characterData.SpellSlots[slotLevel].Used - 1);
+
+							// Update counter text
+							const counter = this.parentNode.querySelector('span:last-child');
+							if (counter) {
+								counter.textContent = ` (${characterData.SpellSlots[slotLevel].Available - characterData.SpellSlots[slotLevel].Used}/${characterData.SpellSlots[slotLevel].Available})`;
+							}
+
 							chrome.storage.local.set({ 'characterData': characterData });
+
+							// Update all spell level selectors that reference this level
+							updateSpellLevelSelectors(slotLevel + 1);
 						}
 					}
 				});
@@ -2976,6 +3244,7 @@ function showSpells(adventureData) {
 			levelContainer.appendChild(slotsContainer);
 		}
 
+		//spell list
 		if (hasSpells) {
 			const spellsWrapper = document.createElement('div');
 			spellsByLevel[level].forEach(spell => {
@@ -2993,29 +3262,7 @@ function showSpells(adventureData) {
 		spellContainer.appendChild(levelContainer);
 	}
 
-	if (characterData.Classes[0].Definition.Name === "Warlock") {
-		const warlockContainer = document.createElement('div');
-		warlockContainer.classList.add('spell-level-container');
-		warlockContainer.style.backgroundColor = '#f0f0f0';
-		warlockContainer.style.padding = '10px';
-		warlockContainer.style.marginBottom = '15px';
-
-		const warlockHeader = document.createElement('h4');
-		warlockHeader.textContent = 'Pact Magic Spell Slots';
-		warlockContainer.appendChild(warlockHeader);
-
-		let highestSpellLevel = findHighestWarlockSpellLevel(characterData);
-		const warlockLevel = characterData.Classes[0].Level;
-		const slotsCount = getPactSlotsCount(warlockLevel);
-
-		const description = document.createElement('p');
-		description.innerHTML = `As a level ${warlockLevel} Warlock, you have <b>${slotsCount}</b> spell slots of level <b>${highestSpellLevel}</b> that regenerate on a short rest.`;
-		warlockContainer.appendChild(description);
-
-		spellContainer.insertBefore(warlockContainer, spellContainer.firstChild);
-	}
-
-	// Add menu button event listeners
+	// menu button event listeners
 	const actionButton = content.querySelector('#actions');
 	actionButton.addEventListener('click', () => showActions(adventureData));
 
@@ -3044,7 +3291,7 @@ function showSpells(adventureData) {
 
 	function calculateSpellSaveDC() {
 		let spellcastingAbilityModifier = 0;
-		const characterClass = characterData.Classes[0]?.Definition?.Name;
+		const characterClass = characterData.Classes && characterData.Classes[0]?.Definition?.Name;
 
 		switch (characterClass) {
 			case "Wizard":
@@ -3062,6 +3309,9 @@ function showSpells(adventureData) {
 			case "Warlock":
 				spellcastingAbilityModifier = characterData.AbilityScores.Modifier.Charisma;
 				break;
+			default:
+				// Default to Intelligence if class not recognized
+				spellcastingAbilityModifier = characterData.AbilityScores.Modifier.Intelligence;
 		}
 
 		return 8 + characterData.ProficiencyBonus + spellcastingAbilityModifier;
@@ -3069,7 +3319,7 @@ function showSpells(adventureData) {
 
 	function calculateSpellAttackBonus() {
 		let spellcastingAbilityModifier = 0;
-		const characterClass = characterData.Classes[0]?.Definition?.Name;
+		const characterClass = characterData.Classes && characterData.Classes[0]?.Definition?.Name;
 
 		switch (characterClass) {
 			case "Wizard":
@@ -3087,19 +3337,26 @@ function showSpells(adventureData) {
 			case "Warlock":
 				spellcastingAbilityModifier = characterData.AbilityScores.Modifier.Charisma;
 				break;
+			default:
+				// Default to Intelligence if class not recognized
+				spellcastingAbilityModifier = characterData.AbilityScores.Modifier.Intelligence;
 		}
 
 		return characterData.ProficiencyBonus + spellcastingAbilityModifier;
 	}
 
-	function findHighestWarlockSpellLevel(characterData) {
-		const warlockLevel = characterData.Classes[0].Level;
-
-		if (warlockLevel >= 9) return 5;
-		if (warlockLevel >= 7) return 4;
-		if (warlockLevel >= 5) return 3;
-		if (warlockLevel >= 3) return 2;
-		return 1;
+	function updateSpellLevelSelectors(level) {
+		document.querySelectorAll('.spell-level-selector').forEach(selector => {
+			const options = selector.querySelectorAll('option');
+			options.forEach(option => {
+				if (option.value == level && !option.value.startsWith('pact-')) {
+					if (characterData.SpellSlots && characterData.SpellSlots[level - 1]) {
+						const slotData = characterData.SpellSlots[level - 1];
+						option.disabled = slotData.Used >= slotData.Available;
+					}
+				}
+			});
+		});
 	}
 }
 
@@ -3107,21 +3364,30 @@ function addSpellToContainer(spell, container) {
 	const spellContainer = document.createElement('div');
 	spellContainer.classList.add('spell-container');
 
+	// Button container
 	const spellButtonContainer = document.createElement('div');
 	spellButtonContainer.classList.add('feature-button');
+	spellButtonContainer.style.display = 'flex';
+	spellButtonContainer.style.alignItems = 'center';
+	spellButtonContainer.style.justifyContent = 'space-between';
 	spellButtonContainer.title = "Press to expand description";
 
+	const leftSide = document.createElement('div');
+	leftSide.style.display = 'flex';
+	leftSide.style.alignItems = 'center';
+
+	// Spell button
 	const spellTitleButton = document.createElement('button');
 	spellTitleButton.classList.add('styled-button');
 	spellTitleButton.style.color = "#6385C1";
 	spellTitleButton.style.fontWeight = "bold";
 	spellTitleButton.style.minWidth = "auto";
-    spellTitleButton.title = "Press to send to sidebar";
 	spellTitleButton.style.padding = "4px 8px";
 	spellTitleButton.style.margin = "0";
+	spellTitleButton.title = "Press to cast spell";
 	spellTitleButton.textContent = spell.Definition.Name;
 
-	// Add prepared indicator if applicable
+	// Spell prepared indicator
 	if (spell.Prepared) {
 		const preparedIcon = document.createElement('span');
 		preparedIcon.innerHTML = ' ✓';
@@ -3130,50 +3396,188 @@ function addSpellToContainer(spell, container) {
 		spellTitleButton.appendChild(preparedIcon);
 	}
 
-	// arrow icon
+	leftSide.appendChild(spellTitleButton);
+
+	// Level indicator
+	const spellLevel = spell.Definition.Level;
+	const canBeUpcast = spellLevel > 0 && spell.Definition.Description.includes("At Higher Levels") || spell.Definition.Description.includes("Higher-Level");
+
+	let levelSelector = null;
+	if (canBeUpcast) {
+		levelSelector = document.createElement('select');
+		levelSelector.classList.add('spell-level-selector');
+		levelSelector.style.marginLeft = '8px';
+		levelSelector.style.height = '24px';
+		levelSelector.style.fontSize = '12px';
+
+		// Find the highest available spell slot level
+		let maxLevel = 9;
+
+		for (let level = spellLevel; level <= maxLevel; level++) {
+			const hasSlots = characterData.SpellSlots &&
+				characterData.SpellSlots[level - 1] &&
+				characterData.SpellSlots[level - 1].Available > 0 &&
+				characterData.SpellSlots[level - 1].Used < characterData.SpellSlots[level - 1].Available;
+
+			const option = document.createElement('option');
+			option.value = level;
+			option.textContent = `Level ${level}`;
+			option.disabled = !hasSlots;
+
+			if (level === spellLevel) {
+				option.selected = true;
+			}
+
+			levelSelector.appendChild(option);
+		}
+
+		// For Warlocks, add the Pact Magic option
+		if (characterData.Classes && characterData.Classes[0]?.Definition.Name === "Warlock") {
+			const warlockLevel = characterData.Classes[0].Level;
+			const pactLevel = findHighestWarlockSpellLevel(characterData);
+
+			if (spellLevel <= pactLevel) {
+				const pactSlotsTotal = getPactSlotsCount(warlockLevel);
+				const pactSlotsUsed = characterData.Pact?.SlotsUsed || 0;
+				const hasPactSlots = pactSlotsUsed < pactSlotsTotal;
+
+				const pactOption = document.createElement('option');
+				pactOption.value = `pact-${pactLevel}`;
+				pactOption.textContent = `Pact Magic (${pactLevel})`;
+				pactOption.disabled = !hasPactSlots;
+
+				levelSelector.appendChild(pactOption);
+			}
+		}
+
+		leftSide.appendChild(levelSelector);
+	}
+
+	// Right side with arrow icon
 	const arrowIcon = document.createElement('span');
 	arrowIcon.classList.add('arrow-icon');
 	arrowIcon.innerHTML = '▶';
 
-	spellButtonContainer.appendChild(spellTitleButton);
+	// elements to container
+	spellButtonContainer.appendChild(leftSide);
 	spellButtonContainer.appendChild(arrowIcon);
 
-	//spell info div
+	// Spell info div
 	const spellInfo = document.createElement('div');
 	spellInfo.classList.add('spell-info');
 	spellInfo.style.display = 'none';
 
-	//spell information
+	// Spell information
 	const components = spell.Definition.FormatSpell?.Components?.replace('Components: ', '') || '';
 	const range = spell.Definition.FormatSpell?.Range?.replace('Range: ', '') || '';
 	const castingTime = spell.Definition.FormatSpell?.Time?.replace('Casting Time: ', '') || '';
 	const duration = spell.Definition.FormatSpell?.Duration?.replace('Duration: ', '') || '';
 
 	spellInfo.innerHTML = `
-        <div><strong>School:</strong> ${spell.Definition.FormatSpell?.SchoolLevel || ''}</div>
-        <div><strong>Casting Time:</strong> ${castingTime}</div>
-        <div><strong>Range:</strong> ${range}</div>
-        <div><strong>Components:</strong> ${components}</div>
-        <div><strong>Duration:</strong> ${duration}</div>
+      <div><strong>School:</strong> ${spell.Definition.FormatSpell?.SchoolLevel || ''}</div>
+      <div><strong>Casting Time:</strong> ${castingTime}</div>
+      <div><strong>Range:</strong> ${range}</div>
+      <div><strong>Components:</strong> ${components}</div>
+      <div><strong>Duration:</strong> ${duration}</div>
     `;
 
-	// spell description
+	// Spell description
 	const spellDescription = document.createElement('div');
 	spellDescription.classList.add('feature-description');
 	spellDescription.style.display = 'none';
 
-	//dice roll links
+	// Process description with dice roll links
 	const processedDescription = createProcessedDescription(spell.Definition.Description.replaceAll("� ", "• "));
 	spellDescription.appendChild(processedDescription);
 
+	// Highlight upcast sections for spells that can be upcast
+	if (canBeUpcast) {
+		const upcastRegex = /(At Higher Levels[^.]*\..*?)(?=\n\n|\n[A-Z]|$)/is;
+		const match = spell.Definition.Description.match(upcastRegex);
+
+		if (match) {
+			const upcastSection = document.createElement('div');
+			upcastSection.style.backgroundColor = '#f8f9fa';
+			upcastSection.style.padding = '8px';
+			upcastSection.style.marginTop = '10px';
+			upcastSection.style.borderLeft = '3px solid #6385C1';
+
+			const upcastTitle = document.createElement('strong');
+			upcastTitle.textContent = 'At Higher Levels: ';
+
+			const upcastText = document.createElement('span');
+			upcastText.textContent = match[1].replace("At Higher Levels: ", "").replace("At Higher Levels.", "");
+
+			upcastSection.appendChild(upcastTitle);
+			upcastSection.appendChild(upcastText);
+			spellDescription.appendChild(upcastSection);
+		}
+	}
+
+	//Event listeners
 	spellTitleButton.addEventListener('click', function (event) {
 		event.stopPropagation();
-		const message = `Casting: ${spell.Definition.Name}`;
-		sendDataToSidebar(message, characterData.Name);
+
+		let selectedLevel = spellLevel;
+		let isPactMagic = false;
+
+		if (canBeUpcast && levelSelector) {
+			const selectedValue = levelSelector.value;
+			isPactMagic = selectedValue.startsWith('pact-');
+			if (isPactMagic) {
+				selectedLevel = parseInt(selectedValue.split('-')[1]);
+			} else {
+				selectedLevel = parseInt(selectedValue);
+			}
+		}
+
+		const castingMessage = `Casting: ${spell.Definition.Name}`;
+		sendDataToSidebar(castingMessage, characterData.Name);
+
+		// spell slot usage
+		if (spell.Definition.Level > 0) {
+			//warlock
+			if (isPactMagic || (characterData.Classes[0]?.Definition.Name === "Warlock" && !canBeUpcast)) {
+				const pactLevel = findHighestWarlockSpellLevel(characterData);
+				const warlockLevel = characterData.Classes[0].Level;
+				const totalSlots = getPactSlotsCount(warlockLevel);
+
+				if (spell.Definition.Level <= pactLevel && characterData.Pact.SlotsUsed < totalSlots) {
+					characterData.Pact.SlotsUsed = Math.min(
+						(characterData.Pact.SlotsUsed || 0) + 1,
+						totalSlots
+					);
+
+					chrome.storage.local.set({ 'characterData': characterData }, function () {
+						chrome.storage.local.get(['activeCharacterId', 'characters'], function (result) {
+							if (result.activeCharacterId && result.characters &&
+								result.characters[result.activeCharacterId]) {
+								result.characters[result.activeCharacterId].Pact = characterData.Pact;
+								chrome.storage.local.set({ 'characters': result.characters });
+							}
+						});
+					});
+
+					//update the display and pact spell slots
+					updateWarlockSpellSlotDisplay();
+				}
+			} else if (characterData.SpellSlots && selectedLevel > 0) {
+				if (characterData.SpellSlots[selectedLevel - 1] &&
+					characterData.SpellSlots[selectedLevel - 1].Used < characterData.SpellSlots[selectedLevel - 1].Available) {
+
+					characterData.SpellSlots[selectedLevel - 1].Used++;
+
+					// Update the UI for regular spell slots
+					updateSpellSlotDisplay(selectedLevel);
+
+					chrome.storage.local.set({ 'characterData': characterData });
+				}
+			}
+		}
 	});
 
 	spellButtonContainer.addEventListener('click', function (event) {
-		if (event.target !== spellTitleButton) {
+		if (event.target !== spellTitleButton && !event.target.classList.contains('spell-level-selector')) {
 			const isVisible = spellDescription.style.display === 'block';
 
 			if (isVisible) {
@@ -3188,6 +3592,7 @@ function addSpellToContainer(spell, container) {
 		}
 	});
 
+	// Build full spell container
 	spellContainer.appendChild(spellButtonContainer);
 	spellContainer.appendChild(spellInfo);
 	spellContainer.appendChild(spellDescription);
@@ -3195,6 +3600,124 @@ function addSpellToContainer(spell, container) {
 	container.appendChild(spellContainer);
 }
 
+function updateSpellSlotDisplay(level) {
+	// Find all spell level containers that match this level
+	const levelContainers = document.querySelectorAll('.spell-level-container');
+
+	levelContainers.forEach(container => {
+		const header = container.querySelector('.spell-level-header');
+		if (header && header.textContent === `Level ${level}`) {
+			// Update the spell slot indicators
+			const slots = container.querySelectorAll('.spell-slot');
+			const slotData = characterData.SpellSlots[level - 1];
+
+			if (slots && slotData) {
+				slots.forEach((slot, index) => {
+					if (index < slotData.Used) {
+						slot.classList.remove('available');
+						slot.classList.add('used');
+						slot.title = 'Used spell slot (click to restore)';
+					} else if (index < slotData.Available) {
+						slot.classList.remove('used');
+						slot.classList.add('available');
+						slot.title = 'Available spell slot (click to use)';
+					}
+				});
+
+				// Update the counter text
+				const counter = container.querySelector('.spell-slots-container span:last-child');
+				if (counter) {
+					counter.textContent = ` (${slotData.Available - slotData.Used}/${slotData.Available})`;
+				}
+			}
+		}
+	});
+
+	// Update all spell level selectors
+	document.querySelectorAll('.spell-level-selector').forEach(selector => {
+		const options = selector.querySelectorAll('option');
+		options.forEach(option => {
+			if (!option.value.startsWith('pact-')) {
+				const optionLevel = parseInt(option.value);
+				if (optionLevel === level) {
+					const slotData = characterData.SpellSlots[level - 1];
+					if (slotData) {
+						option.disabled = slotData.Used >= slotData.Available;
+					}
+				}
+			}
+		});
+	});
+}
+
+
+function updateWarlockSpellSlotDisplay() {
+	// Find the Warlock pact magic container - use a more reliable selector
+	const allLevelContainers = document.querySelectorAll('.spell-level-container');
+	let warlockContainer = null;
+
+	// Find the container with the "Pact Magic Spell Slots" header
+	for (const container of allLevelContainers) {
+		const header = container.querySelector('h4');
+		if (header && header.textContent === 'Pact Magic Spell Slots') {
+			warlockContainer = container;
+			break;
+		}
+	}
+
+	if (!warlockContainer) {
+		console.log('Could not find Warlock Pact Magic container');
+		return;  // Exit if container not found
+	}
+
+	const warlockLevel = characterData.Classes[0].Level;
+	const pactLevel = findHighestWarlockSpellLevel(characterData);
+	const totalSlots = getPactSlotsCount(warlockLevel);
+	const slotsUsed = characterData.Pact.SlotsUsed || 0;
+
+	const slotElements = warlockContainer.querySelectorAll('.spell-slot');
+	slotElements.forEach((slot, index) => {
+		if (index < slotsUsed) {
+			slot.classList.remove('available');
+			slot.classList.add('used');
+			slot.title = 'Used spell slot (click to restore)';
+		} else {
+			slot.classList.remove('used');
+			slot.classList.add('available');
+			slot.title = 'Available spell slot (click to use)';
+		}
+	});
+
+	const description = warlockContainer.querySelector('p');
+	if (description) {
+		description.innerHTML = `As a level ${warlockLevel} Warlock, you have <b>${totalSlots - slotsUsed}</b> of <b>${totalSlots}</b> spell slots of level <b>${pactLevel}</b> that regenerate on a short rest.`;
+	}
+
+	const counter = warlockContainer.querySelector('.spell-slots-container span:last-child');
+	if (counter) {
+		counter.textContent = ` (${totalSlots - slotsUsed}/${totalSlots})`;
+	}
+
+	updateWarlockSpellSelectors();
+}
+
+function updateWarlockSpellSelectors() {
+	const warlockLevel = characterData.Classes[0]?.Level;
+	if (!warlockLevel) return;
+
+	const pactLevel = findHighestWarlockSpellLevel(characterData);
+	const totalSlots = getPactSlotsCount(warlockLevel);
+	const slotsUsed = characterData.Pact.SlotsUsed || 0;
+	const hasPactSlots = slotsUsed < totalSlots;
+
+	document.querySelectorAll('.spell-level-selector').forEach(selector => {
+		Array.from(selector.options).forEach(opt => {
+			if (opt.value && opt.value.startsWith('pact-')) {
+				opt.disabled = !hasPactSlots;
+			}
+		});
+	});
+}
 
 function getPactSlotsCount(level) {
 	if (level >= 17) return 4;
@@ -3964,4 +4487,14 @@ function findLatestRoll(chatContainer) {
 		}
 	}
 	return null;
+}
+
+function findHighestWarlockSpellLevel(characterData) {
+	const warlockLevel = characterData.Classes[0].Level;
+
+	if (warlockLevel >= 9) return 5;
+	if (warlockLevel >= 7) return 4;
+	if (warlockLevel >= 5) return 3;
+	if (warlockLevel >= 3) return 2;
+	return 1;
 }
