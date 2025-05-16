@@ -904,6 +904,14 @@ function createCharacterSheet(adventureData) {
 				<div type="text" id="proficiencies" title="View proficiencies and languages">Profs.</div>
 				<div class="proficiency-indicator"></div>
 			</div>
+
+			<div class="dragPushLift">
+				<p>Drag<br>Push<br>Lift <code>${characterData.DragPushLift}</code> Lbs</p>
+			</div>
+
+			<div class="rage-container"></div>
+
+			<div class="bard-container" id="bard-container"></div>
     
 			<div class="Character-menu-container" style="margin-top: 125px; height: 40px; margin-left: 0px;">
 				<div class="character-menu menu-panel">
@@ -942,9 +950,358 @@ function createCharacterSheet(adventureData) {
 		</div>
 	`;
 
+	//inspiration
+	const isBard = characterData.Classes[0]?.Definition?.Name === "Bard";
+
+	if (isBard) {
+		const bardicContainer = overlayBody.querySelector('#bard-container');
+		bardicContainer.style.display = "block";
+
+		// Bardic Inspiration
+		let bardicDie = "d6";
+		let maxInspiration = 0;
+		let usedInspiration = 0;
+		let inspirationActionKey = null;
+
+		const bardLevel = characterData.Classes[0].Level;
+		if (bardLevel >= 15) {
+			bardicDie = "d12";
+		} else if (bardLevel >= 10) {
+			bardicDie = "d10";
+		} else if (bardLevel >= 5) {
+			bardicDie = "d8";
+		}
+
+		// inspiration uses
+		maxInspiration = Math.max(1, characterData.AbilityScores.Modifier.Charisma);
+
+		// Check for College of Lore - Additional Magical Secrets feature
+		const hasLoreCollege = characterData.Classes[0]?.SubClassDefinition?.Name === "College of Lore";
+
+		for (const key in characterData.Actions) {
+			if (characterData.Actions[key].Name && characterData.Actions[key].Name.includes("Bardic Inspiration")) {
+				if (characterData.Actions[key].LimitedUse) {
+					usedInspiration = characterData.Actions[key].LimitedUse.NumberUsed || 0;
+					inspirationActionKey = key;
+				}
+				break;
+			}
+		}
+
+		// Bardic Inspiration header
+		const bardicHeader = document.createElement('div');
+		bardicHeader.textContent = "BARDIC INSPIR-\nATION";
+		bardicHeader.style.fontWeight = 'bold';
+		bardicHeader.style.fontSize = '12px';
+		bardicHeader.style.color = 'rgb(51, 102, 153)';
+		bardicContainer.appendChild(bardicHeader);
+
+		// Die type display
+		const dieType = document.createElement('div');
+		dieType.textContent = bardicDie;
+		dieType.style.fontWeight = 'bold';
+		dieType.style.fontSize = '14px';
+		dieType.style.margin = '4px 0';
+		bardicContainer.appendChild(dieType);
+
+		// Increase button
+		const increaseBtn = document.createElement('button');
+		increaseBtn.innerHTML = "+";
+		increaseBtn.className = "skill-button-modification";
+		increaseBtn.style.padding = "0px 5px";
+		increaseBtn.style.margin = "4px auto";
+		increaseBtn.style.display = "block";
+		increaseBtn.title = "Recover Bardic Inspiration";
+		increaseBtn.disabled = usedInspiration <= 0;
+		bardicContainer.appendChild(increaseBtn);
+
+		// Counter display
+		const inspirationCount = document.createElement('span');
+		inspirationCount.textContent = `${maxInspiration - usedInspiration}/${maxInspiration}`;
+		inspirationCount.style.fontWeight = 'bold';
+		inspirationCount.style.display = 'block';
+		inspirationCount.style.margin = '4px 0';
+		bardicContainer.appendChild(inspirationCount);
+
+		// Decrease button
+		const decreaseBtn = document.createElement('button');
+		decreaseBtn.innerHTML = "−";
+		decreaseBtn.className = "skill-button-modification";
+		decreaseBtn.style.padding = "0px 5px";
+		decreaseBtn.style.margin = "4px auto";
+		decreaseBtn.style.display = "block";
+		decreaseBtn.title = "Use Bardic Inspiration";
+		decreaseBtn.disabled = usedInspiration >= maxInspiration;
+		bardicContainer.appendChild(decreaseBtn);
+
+		// Event listeners for the buttons
+		decreaseBtn.addEventListener('click', function () {
+			if (usedInspiration < maxInspiration) {
+				usedInspiration++;
+				inspirationCount.textContent = `${maxInspiration - usedInspiration}/${maxInspiration}`;
+				decreaseBtn.disabled = usedInspiration >= maxInspiration;
+				increaseBtn.disabled = false;
+
+				if (inspirationActionKey && characterData.Actions[inspirationActionKey]) {
+					characterData.Actions[inspirationActionKey].LimitedUse.NumberUsed = usedInspiration;
+
+					chrome.storage.local.set({ 'characterData': characterData });
+
+					chrome.storage.local.get(['activeCharacterId', 'characters'], function (result) {
+						if (result.activeCharacterId && result.characters &&
+							result.characters[result.activeCharacterId]) {
+							if (result.characters[result.activeCharacterId].Actions &&
+								result.characters[result.activeCharacterId].Actions[inspirationActionKey]) {
+								result.characters[result.activeCharacterId].Actions[inspirationActionKey].LimitedUse.NumberUsed =
+									usedInspiration;
+
+								chrome.storage.local.set({ 'characters': result.characters });
+							}
+						}
+					});
+				}
+			}
+		});
+
+		increaseBtn.addEventListener('click', function () {
+			if (usedInspiration > 0) {
+				usedInspiration--;
+				inspirationCount.textContent = `${maxInspiration - usedInspiration}/${maxInspiration}`;
+				increaseBtn.disabled = usedInspiration <= 0;
+				decreaseBtn.disabled = false;
+
+				if (inspirationActionKey && characterData.Actions[inspirationActionKey]) {
+					characterData.Actions[inspirationActionKey].LimitedUse.NumberUsed = usedInspiration;
+
+					chrome.storage.local.set({ 'characterData': characterData });
+
+					chrome.storage.local.get(['activeCharacterId', 'characters'], function (result) {
+						if (result.activeCharacterId && result.characters &&
+							result.characters[result.activeCharacterId]) {
+							if (result.characters[result.activeCharacterId].Actions &&
+								result.characters[result.activeCharacterId].Actions[inspirationActionKey]) {
+								result.characters[result.activeCharacterId].Actions[inspirationActionKey].LimitedUse.NumberUsed =
+									usedInspiration;
+
+								chrome.storage.local.set({ 'characters': result.characters });
+							}
+						}
+					});
+				}
+			}
+		});
+
+		// Tooltip description
+		const bardicDescription = document.createElement('div');
+		bardicDescription.className = 'bardic-description';
+		bardicDescription.style.position = 'absolute';
+		bardicDescription.style.display = 'none';
+		bardicDescription.style.backgroundColor = 'white';
+		bardicDescription.style.border = '1px solid #ccc';
+		bardicDescription.style.borderRadius = '4px';
+		bardicDescription.style.padding = '8px';
+		bardicDescription.style.zIndex = '1050';
+		bardicDescription.style.width = '250px';
+		bardicDescription.style.fontSize = '12px';
+		bardicDescription.style.textAlign = 'left';
+		bardicDescription.style.boxShadow = '0 2px 4px rgba(0,0,0,0.2)';
+
+		// Description text
+		let descText = `Bardic Inspiration (${bardicDie}):\n`;
+		descText += "• As a Bonus Action, give inspiration to a creature within 60 ft.\n";
+		descText += `• Target can add ${bardicDie} to one ability check, attack roll, or saving throw within 10 minutes.\n`;
+
+		if (bardLevel >= 5) {
+			descText += "• Font of Inspiration: Regain all uses on a short or long rest.\n";
+		} else {
+			descText += "• Regain all uses on a long rest.\n";
+		}
+
+		if (hasLoreCollege && bardLevel >= 6) {
+			descText += "\nCutting Words:\n";
+			descText += `• Use reaction to subtract ${bardicDie} from an enemy's attack roll, ability check, or damage roll.`;
+		}
+
+		bardicDescription.innerText = descText;
+
+		// Show/hide tooltip on hover
+		bardicContainer.addEventListener('mouseenter', function () {
+			const rect = bardicContainer.getBoundingClientRect();
+			bardicDescription.style.top = `${rect.top + window.scrollY + rect.height}px`;
+			bardicDescription.style.left = `${rect.left + window.scrollX - 150}px`;
+			bardicDescription.style.display = 'block';
+		});
+
+		bardicContainer.addEventListener('mouseleave', function () {
+			bardicDescription.style.display = 'none';
+		});
+
+		document.body.appendChild(bardicDescription);
+	}
+
+	//rage (only appears if the character uses rage)
+	const hasRage = characterData.Classes &&
+		characterData.Classes[0]?.Definition?.Name === "Barbarian" ||
+		(characterData.Actions &&
+			Object.values(characterData.Actions).some(action => action.Name && action.Name.includes("Rage")));
+
+	if (hasRage) {
+		let maxRages = 3;
+		let usedRages = 0;
+		let rageActionKey = null;
+
+		for (const key in characterData.Actions) {
+			if (characterData.Actions[key].Name && characterData.Actions[key].Name.includes("Rage")) {
+				if (characterData.Actions[key].LimitedUse && characterData.Actions[key].LimitedUse.MaxUse) {
+					maxRages = characterData.Actions[key].LimitedUse.MaxUse;
+					usedRages = characterData.Actions[key].LimitedUse.NumberUsed || 0;
+					rageActionKey = key;
+				}
+				break;
+			}
+		}
+
+		// rage container
+		const rageContainer = overlayBody.querySelector('.rage-container');
+
+		// Rage header
+		const rageHeader = document.createElement('div');
+		rageHeader.textContent = "RAGE";
+		rageHeader.style.fontWeight = 'bold';
+		rageHeader.style.fontSize = '12px';
+		rageHeader.style.color = 'rgb(51, 102, 153)';
+		rageContainer.appendChild(rageHeader);
+
+		// Increase button 
+		const increaseBtn = document.createElement('button');
+		increaseBtn.innerHTML = "+";
+		increaseBtn.className = "skill-button-modification";
+		increaseBtn.style.padding = "0px 5px";
+		increaseBtn.style.margin = "4px auto";
+		increaseBtn.style.display = "block";
+		increaseBtn.title = "Recover rage";
+		increaseBtn.disabled = usedRages <= 0;
+		rageContainer.appendChild(increaseBtn);
+
+		// Counter display
+		const rageCount = document.createElement('span');
+		rageCount.textContent = `${maxRages - usedRages}/${maxRages}`;
+		rageCount.style.fontWeight = 'bold';
+		rageCount.style.display = 'block';
+		rageCount.style.margin = '4px 0';
+		rageContainer.appendChild(rageCount);
+
+		// Decrease button
+		const decreaseBtn = document.createElement('button');
+		decreaseBtn.innerHTML = "−";
+		decreaseBtn.className = "skill-button-modification";
+		decreaseBtn.style.padding = "0px 5px";
+		decreaseBtn.style.margin = "4px auto";
+		decreaseBtn.style.display = "block";
+		decreaseBtn.title = "Use rage";
+		decreaseBtn.disabled = usedRages >= maxRages;
+		rageContainer.appendChild(decreaseBtn);
+
+		decreaseBtn.addEventListener('click', function () {
+			if (usedRages < maxRages) {
+				usedRages++;
+				rageCount.textContent = `${maxRages - usedRages}/${maxRages}`;
+				decreaseBtn.disabled = usedRages >= maxRages;
+				increaseBtn.disabled = false;
+
+				if (rageActionKey && characterData.Actions[rageActionKey]) {
+					characterData.Actions[rageActionKey].LimitedUse.NumberUsed = usedRages;
+
+					chrome.storage.local.set({ 'characterData': characterData });
+
+					chrome.storage.local.get(['activeCharacterId', 'characters'], function (result) {
+						if (result.activeCharacterId && result.characters &&
+							result.characters[result.activeCharacterId]) {
+							if (result.characters[result.activeCharacterId].Actions &&
+								result.characters[result.activeCharacterId].Actions[rageActionKey]) {
+								result.characters[result.activeCharacterId].Actions[rageActionKey].LimitedUse.NumberUsed =
+									usedRages;
+
+								chrome.storage.local.set({ 'characters': result.characters });
+							}
+						}
+					});
+				}
+			}
+		});
+
+		increaseBtn.addEventListener('click', function () {
+			if (usedRages > 0) {
+				usedRages--;
+				rageCount.textContent = `${maxRages - usedRages}/${maxRages}`;
+				increaseBtn.disabled = usedRages <= 0;
+				decreaseBtn.disabled = false;
+
+				if (rageActionKey && characterData.Actions[rageActionKey]) {
+					characterData.Actions[rageActionKey].LimitedUse.NumberUsed = usedRages;
+
+					chrome.storage.local.set({ 'characterData': characterData });
+
+					chrome.storage.local.get(['activeCharacterId', 'characters'], function (result) {
+						if (result.activeCharacterId && result.characters &&
+							result.characters[result.activeCharacterId]) {
+							if (result.characters[result.activeCharacterId].Actions &&
+								result.characters[result.activeCharacterId].Actions[rageActionKey]) {
+								result.characters[result.activeCharacterId].Actions[rageActionKey].LimitedUse.NumberUsed =
+									usedRages;
+
+								chrome.storage.local.set({ 'characters': result.characters });
+							}
+						}
+					});
+				}
+			}
+		});
+
+		// tooltip
+		const rageDescription = document.createElement('div');
+		rageDescription.className = 'rage-description';
+		rageDescription.style.position = 'absolute';
+		rageDescription.style.display = 'none';
+		rageDescription.style.backgroundColor = 'white';
+		rageDescription.style.border = '1px solid #ccc';
+		rageDescription.style.borderRadius = '4px';
+		rageDescription.style.padding = '8px';
+		rageDescription.style.zIndex = '1050';
+		rageDescription.style.width = '250px';
+		rageDescription.style.fontSize = '12px';
+		rageDescription.style.textAlign = 'left';
+		rageDescription.style.boxShadow = '0 2px 4px rgba(0,0,0,0.2)';
+
+		// rage description text
+		let rageDescriptionText = "While raging:";
+		rageDescriptionText += "\n• Advantage on Strength checks & saves";
+		rageDescriptionText += "\n• +2 damage with melee Strength attacks";
+		rageDescriptionText += "\n• Resistance to bludgeoning, piercing, slashing";
+		rageDescriptionText += "\n• Cannot cast or concentrate on spells";
+
+		rageDescription.innerText = rageDescriptionText;
+
+		// tooltip on hover
+		rageContainer.addEventListener('mouseenter', function () {
+			const rect = rageContainer.getBoundingClientRect();
+			rageDescription.style.top = `${rect.top + window.scrollY + rect.height}px`;
+			rageDescription.style.left = `${rect.left + window.scrollX - 150}px`;
+			rageDescription.style.display = 'block';
+		});
+
+		rageContainer.addEventListener('mouseleave', function () {
+			rageDescription.style.display = 'none';
+		});
+
+		document.body.appendChild(rageDescription);
+	} else {
+		const rageContainer = overlayBody.querySelector('.rage-container');
+		rageContainer.style.display = "none";
+	}
+
 	//proficiencies
 	const profSection = overlayBody.querySelector('.proficiencies-section');
-	const proficienciesElement = profSection.querySelector('#proficiencies');
 
 	const profTooltip = document.createElement('div');
 	profTooltip.className = 'proficiency-tooltip';
@@ -992,12 +1349,39 @@ function createCharacterSheet(adventureData) {
 
 	//temp HP event listeners
 	const tempHitPointsInput = overlayBody.querySelector('#tempHitPoints');
-	tempHitPointsInput.addEventListener('change', function () {
-		const newTempHP = parseInt(this.value) || 0; 
-		characterData.TempHitPoints = newTempHP;    
+	if (tempHitPointsInput) {
+		tempHitPointsInput.disabled = false;
+		tempHitPointsInput.style.pointerEvents = 'auto';
+		tempHitPointsInput.style.zIndex = '100'; 
 
-		chrome.storage.local.set({ 'characterData': characterData })
-	});
+		// Add multiple event listeners to ensure it works
+		tempHitPointsInput.addEventListener('mousedown', function (e) {
+			e.stopPropagation(); 
+		});
+
+		tempHitPointsInput.addEventListener('click', function (e) {
+			e.stopPropagation();
+		});
+
+		tempHitPointsInput.addEventListener('focus', function () {
+			searchInputFocused = true;
+		});
+
+		tempHitPointsInput.addEventListener('change', function () {
+			const newTempHP = parseInt(this.value) || 0;
+			characterData.TempHitPoints = newTempHP;
+
+			chrome.storage.local.set({ 'characterData': characterData });
+
+			chrome.storage.local.get(['activeCharacterId', 'characters'], function (result) {
+				if (result.activeCharacterId && result.characters &&
+					result.characters[result.activeCharacterId]) {
+					result.characters[result.activeCharacterId].TempHitPoints = newTempHP;
+					chrome.storage.local.set({ 'characters': result.characters });
+				}
+			});
+		});
+	}
 
 	const rollHitDieButton = overlayBody.querySelector('#rollHitDie');
 	rollHitDieButton.addEventListener('click', function (event) {
@@ -1069,58 +1453,6 @@ function createCharacterSheet(adventureData) {
 	});
 
 	//short rest button
-	const shortRestButton = overlayBody.querySelector('#shortRest');
-	shortRestButton.addEventListener('click', function () {
-		if (confirm("Take a short rest? This will allow you to spend Hit Dice and recover HP.")) {
-			//warlocks get their spellslots back on a short rest.
-			if (characterData.Classes[0].Definition.Name === "Warlock") {
-				// Reset Pact slots on short rest
-				if (characterData.Pact) {
-					characterData.Pact.SlotsUsed = 0;
-				}
-
-				// Also reset traditional spell slots if they exist
-				if (characterData.SpellSlots) {
-					const warlockLevel = characterData.Classes[0].Level;
-					const highestSpellLevel = findHighestWarlockSpellLevel(characterData);
-					const slotsCount = getPactSlotsCount(warlockLevel);
-
-					if (characterData.SpellSlots[highestSpellLevel - 1]) {
-						characterData.SpellSlots[highestSpellLevel - 1].Used = 0;
-					}
-				}
-
-				// Update the UI if on spells tab
-				const warlockContainer = document.querySelector('.spell-level-container[style*="background-color: #f0f0f0"]');
-				if (warlockContainer) {
-					const description = warlockContainer.querySelector('p');
-					if (description) {
-						const warlockLevel = characterData.Classes[0].Level;
-						const slotsCount = getPactSlotsCount(warlockLevel);
-						const highestSpellLevel = findHighestWarlockSpellLevel(characterData);
-						description.innerHTML = `As a level ${warlockLevel} Warlock, you have <b>${slotsCount}</b> spell slots of level <b>${highestSpellLevel}</b> that regenerate on a short rest.`;
-					}
-				}
-			}
-
-			//some class features are restored on a short rest.
-			let featuresRestored = [];
-
-			//check for any features with teh LimitedUse key that recharges on a short rest
-			if (characterData.Actions) {
-				for (let i = 0; i < Object.keys(characterData.Actions).length; i++) {
-					const action = characterData.Actions[i];
-					if (action.LimitedUse && action.LimitedUse.ResetType == "ShortRest") {
-						action.LimitedUse.NumberUsed = 0;
-						featuresRestored.push(action.name);
-					}
-				}
-			}
-
-			chrome.storage.local.set({ 'characterData': characterData });
-		}
-	});
-
 	const longRestButton = overlayBody.querySelector('#longRest');
 	longRestButton.addEventListener('click', function () {
 		if (confirm("Take a long rest? This will restore your hit points, hit dice, and spell slots.")) {
@@ -1135,9 +1467,9 @@ function createCharacterSheet(adventureData) {
 			const hitDiceFraction = overlayBody.querySelector('.hit-dice-fraction');
 			if (hitDiceFraction) {
 				hitDiceFraction.innerHTML = `
-				<div class="hit-dice-count">${hitDiceTotal - hitDiceUsed}</div>
-				<div>/</div>
-				<div class="hit-dice-count">${hitDiceTotal}</div>`;
+            <div class="hit-dice-count">${hitDiceTotal - hitDiceUsed}</div>
+            <div>/</div>
+            <div class="hit-dice-count">${hitDiceTotal}</div>`;
 			}
 
 			//restore HP to max
@@ -1161,22 +1493,164 @@ function createCharacterSheet(adventureData) {
 				}
 			}
 
+			// Reset Warlock pact slots if they exist
+			if (characterData.Pact) {
+				characterData.Pact.SlotsUsed = 0;
+			}
+
 			//reset all features that recharge on a long rest
 			let featuresRestored = [];
 
 			if (characterData.Actions) {
 				for (let i = 0; i < Object.keys(characterData.Actions).length; i++) {
 					const action = characterData.Actions[i];
-					if (action.LimitedUse &&
-						(action.LimitedUse.ResetType === "LongRest" ||
-							action.LimitedUse.rechargeType === "Long Rest")) {
+					if (action && action.LimitedUse) {
+						// Check for long rest recharge
+						if (action.LimitedUse.ResetType === "LongRest" ||
+							action.LimitedUse.ResetType === "Long Rest" ||
+							!action.LimitedUse.ResetType) { // Default to long rest if not specified
+							action.LimitedUse.NumberUsed = 0;
+							featuresRestored.push(action.Name);
+						}
+					}
+				}
+			}
+
+			// Update UI for any restored features that are currently displayed
+			const rageCounter = document.querySelector('.rage-container span');
+			if (rageCounter && featuresRestored.some(name => name.includes('Rage'))) {
+				// Find max rage uses
+				let maxRages = 0;
+				for (const key in characterData.Actions) {
+					if (characterData.Actions[key].Name && characterData.Actions[key].Name.includes("Rage")) {
+						maxRages = characterData.Actions[key].LimitedUse.MaxUse || 0;
+						break;
+					}
+				}
+				rageCounter.textContent = `${maxRages}/${maxRages}`;
+			}
+
+			// Update UI for bardic inspiration if restored
+			const inspirationCounter = document.querySelector('#bard-container span');
+			if (inspirationCounter && featuresRestored.some(name => name.includes('Bardic Inspiration'))) {
+				// Find max inspiration uses (Charisma mod, min 1)
+				const maxInspiration = Math.max(1, characterData.AbilityScores.Modifier.Charisma);
+				inspirationCounter.textContent = `${maxInspiration}/${maxInspiration}`;
+			}
+
+			chrome.storage.local.set({ 'characterData': characterData });
+
+			// Update the UI for all usage trackers
+			document.querySelectorAll('.usage-tracker').forEach(tracker => {
+				const usesLabel = tracker.querySelector('.uses-label');
+				const decreaseBtn = tracker.querySelector('button:first-of-type');
+				const increaseBtn = tracker.querySelector('button:last-of-type');
+
+				if (usesLabel) {
+					const parts = usesLabel.textContent.split('/');
+					if (parts.length === 2) {
+						const maxUses = parseInt(parts[1]);
+						usesLabel.textContent = `0/${maxUses}`;
+						if (decreaseBtn) decreaseBtn.disabled = true;
+						if (increaseBtn) increaseBtn.disabled = false;
+					}
+				}
+			});
+
+			alert("Long rest complete! Your hit points, hit dice, spell slots, and features have been restored.");
+		}
+	});
+
+	//short rest button
+	const shortRestButton = overlayBody.querySelector('#shortRest');
+	shortRestButton.addEventListener('click', function () {
+		if (confirm("Take a short rest? This will allow you to spend Hit Dice and recover some features.")) {
+			//warlocks get their spellslots back on a short rest.
+			if (characterData.Classes[0]?.Definition?.Name === "Warlock") {
+				// Reset Pact slots on short rest
+				if (characterData.Pact) {
+					characterData.Pact.SlotsUsed = 0;
+				}
+
+				// Also reset traditional spell slots if they exist for warlocks
+				if (characterData.SpellSlots) {
+					const warlockLevel = characterData.Classes[0].Level;
+					const highestSpellLevel = findHighestWarlockSpellLevel(characterData);
+
+					if (characterData.SpellSlots[highestSpellLevel - 1]) {
+						characterData.SpellSlots[highestSpellLevel - 1].Used = 0;
+					}
+				}
+
+				// Update any displayed warlock spell slot UI
+				updateWarlockSpellSlotDisplay();
+			}
+
+			//class features that restore on a short rest.
+			let featuresRestored = [];
+
+			//check for any features with the LimitedUse key that recharges on a short rest
+			if (characterData.Actions) {
+				for (let i = 0; i < Object.keys(characterData.Actions).length; i++) {
+					const action = characterData.Actions[i];
+					if (action && action.LimitedUse &&
+						(action.LimitedUse.ResetType === "ShortRest" || action.LimitedUse.ResetType === "Short Rest")) {
 						action.LimitedUse.NumberUsed = 0;
 						featuresRestored.push(action.Name);
 					}
 				}
 			}
 
+			// Check if sorcerer with Font of Inspiration (level 5+)
+			const isBard = characterData.Classes[0]?.Definition?.Name === "Bard";
+			const bardLevel = characterData.Classes[0]?.Level || 0;
+
+			// Font of Inspiration - Bards level 5+ regain Bardic Inspiration on short rest
+			if (isBard && bardLevel >= 5) {
+				for (const key in characterData.Actions) {
+					if (characterData.Actions[key].Name &&
+						characterData.Actions[key].Name.includes("Bardic Inspiration")) {
+						characterData.Actions[key].LimitedUse.NumberUsed = 0;
+						featuresRestored.push(characterData.Actions[key].Name);
+						break;
+					}
+				}
+
+				// Update UI for bardic inspiration
+				const inspirationCounter = document.querySelector('#bard-container span');
+				if (inspirationCounter) {
+					const maxInspiration = Math.max(1, characterData.AbilityScores.Modifier.Charisma);
+					inspirationCounter.textContent = `${maxInspiration}/${maxInspiration}`;
+				}
+			}
+
+			// Update UI for any restored features that are currently displayed
+			document.querySelectorAll('.usage-tracker').forEach(tracker => {
+				const featureButton = tracker.closest('.feature-button');
+				if (featureButton) {
+					const nameButton = featureButton.querySelector('.styled-button');
+					if (nameButton && featuresRestored.includes(nameButton.textContent)) {
+						const usesLabel = tracker.querySelector('.uses-label');
+						const decreaseBtn = tracker.querySelector('button:first-of-type');
+						const increaseBtn = tracker.querySelector('button:last-of-type');
+
+						if (usesLabel) {
+							const parts = usesLabel.textContent.split('/');
+							if (parts.length === 2) {
+								const maxUses = parseInt(parts[1]);
+								usesLabel.textContent = `0/${maxUses}`;
+								if (decreaseBtn) decreaseBtn.disabled = true;
+								if (increaseBtn) increaseBtn.disabled = false;
+							}
+						}
+					}
+				}
+			});
+
 			chrome.storage.local.set({ 'characterData': characterData });
+
+			alert("Short rest complete! You can now roll hit dice to recover HP. " +
+				(featuresRestored.length > 0 ? "Some of your features have been restored." : ""));
 		}
 	});
 
@@ -1896,7 +2370,6 @@ function showActions(adventureData) {
 
 			weaponAttackButton.addEventListener('click', function (event) {
 				//attack roll and reduces ammunition by 1 every attack roll made
-
 				roll_dice(attackRoll, event);
 
 				const weaponAmmoMap = {
@@ -1917,6 +2390,7 @@ function showActions(adventureData) {
 					}
 				}
 
+				// In the weapon attack button click handler
 				if (ammoType) {
 					for (let j = 0; j < Object.keys(characterData.Inventory).length; j++) {
 						const itemName = characterData.Inventory[j].Definition?.Name?.toLowerCase() || '';
@@ -1926,20 +2400,30 @@ function showActions(adventureData) {
 						if (isMatchingAmmo && characterData.Inventory[j].Quantity > 0) {
 							characterData.Inventory[j].Quantity = Number(characterData.Inventory[j].Quantity) - 1;
 
+							// Save to both data structures for persistence
 							chrome.storage.local.set({ 'characterData': characterData });
 
+							// Also update in the characters collection
+							chrome.storage.local.get(['activeCharacterId', 'characters'], function (result) {
+								if (result.activeCharacterId && result.characters &&
+									result.characters[result.activeCharacterId]) {
+									result.characters[result.activeCharacterId].Inventory[j].Quantity =
+										characterData.Inventory[j].Quantity;
+
+									chrome.storage.local.set({ 'characters': result.characters });
+								}
+							});
+
+							// Update the UI
 							const ammoDiv = document.getElementById('ammoList');
 							if (ammoDiv) {
-								const ammoItems = ammoDiv.querySelectorAll('div');
+								// Find the ammo container that matches the item name
+								const ammoContainers = ammoDiv.querySelectorAll('[data-inventory-index]');
 
-								for (let k = 0; k < ammoItems.length; k++) {
-									const label = ammoItems[k].querySelector('label');
-
-									if (label && label.textContent === characterData.Inventory[j].Definition.Name) {
-										const quantityLabel = ammoItems[k].querySelector('label:nth-of-type(2)');
-										if (quantityLabel) {
-											quantityLabel.textContent = characterData.Inventory[j].Quantity;
-										}
+								for (const ammoLabel of ammoContainers) {
+									const inventoryIndex = ammoLabel.getAttribute('data-inventory-index');
+									if (parseInt(inventoryIndex) === j) {
+										ammoLabel.textContent = characterData.Inventory[j].Quantity;
 										break;
 									}
 								}
@@ -1949,6 +2433,7 @@ function showActions(adventureData) {
 						}
 					}
 				}
+
 			});
 
 			damageButton.addEventListener('click', function () {
@@ -2045,15 +2530,23 @@ function showActions(adventureData) {
 	const ammoDiv = content.querySelector('#ammoList');
 	const ammoList = ["Crossbow Bolts", "Arrows", "Sling Bullets", "Blowgun Needles", "Ammuniton", "Bullets"];
 
+	// Add a header to the ammo section
+	const ammoHeader = document.createElement('div');
+	ammoHeader.textContent = "Ammunition";
+	ammoHeader.style.fontWeight = "bold";
+	ammoHeader.style.textAlign = "center";
+	ammoHeader.style.marginBottom = "5px";
+	ammoDiv.appendChild(ammoHeader);
+
 	for (let i = 0; i < Object.keys(characterData.Inventory).length; i++) {
 		// Check if any string from ammoList is contained within the inventory item name
 		const itemName = characterData.Inventory[i].Definition.Name;
 		const isAmmo = ammoList.some(ammoType => itemName.includes(ammoType));
 
 		if (isAmmo) {
-			// Create a container for each ammo item
 			const ammoItemContainer = document.createElement('div');
 			ammoItemContainer.style.textAlign = 'center';
+			ammoItemContainer.style.marginBottom = "8px";
 
 			// Name label
 			const nameLabel = document.createElement('label');
@@ -2061,28 +2554,119 @@ function showActions(adventureData) {
 			nameLabel.style.fontSize = "14px";
 			nameLabel.style.display = "block";
 
+			// Control container for +/- buttons and amount
+			const controlContainer = document.createElement('div');
+			controlContainer.style.display = "flex";
+			controlContainer.style.alignItems = "center";
+			controlContainer.style.justifyContent = "center";
+			controlContainer.style.marginTop = "3px";
+
+			// Minus button
+			const minusButton = document.createElement('button');
+			minusButton.innerHTML = "−";
+			minusButton.className = "btn btn-default btn-xs";
+			minusButton.style.padding = "0px 5px";
+			minusButton.title = "Decrease ammunition";
+
 			// Amount label
 			const ammoAmountLabel = document.createElement('label');
 			ammoAmountLabel.textContent = characterData.Inventory[i].Quantity;
 			ammoAmountLabel.style.fontSize = "14px";
 			ammoAmountLabel.style.fontWeight = "bold";
-			ammoAmountLabel.style.display = "block";
-			ammoAmountLabel.style.marginTop = "3px";
+			ammoAmountLabel.style.margin = "0 8px";
 			ammoAmountLabel.style.color = "#0056b3";
+			ammoAmountLabel.setAttribute('data-inventory-index', i);
 
-			const breakLine = document.createElement('hr');
-			breakLine.style.marginTop = "5px";
-			breakLine.style.marginBottom = "5px";
+			// Plus button
+			const plusButton = document.createElement('button');
+			plusButton.innerHTML = "+";
+			plusButton.className = "btn btn-default btn-xs";
+			plusButton.style.padding = "0px 5px";
+			plusButton.title = "Add ammunition";
+
+			// Add event listeners to buttons
+			// Add event listeners to buttons
+			minusButton.addEventListener('click', function () {
+				const inventoryIndex = ammoAmountLabel.getAttribute('data-inventory-index');
+				if (characterData.Inventory[inventoryIndex].Quantity > 0) {
+					characterData.Inventory[inventoryIndex].Quantity--;
+					ammoAmountLabel.textContent = characterData.Inventory[inventoryIndex].Quantity;
+
+					// Save to storage - both formats
+					chrome.storage.local.set({ 'characterData': characterData });
+
+					// Also update in the characters collection for persistence
+					chrome.storage.local.get(['activeCharacterId', 'characters'], function (result) {
+						if (result.activeCharacterId && result.characters &&
+							result.characters[result.activeCharacterId]) {
+							result.characters[result.activeCharacterId].Inventory[inventoryIndex].Quantity =
+								characterData.Inventory[inventoryIndex].Quantity;
+
+							chrome.storage.local.set({ 'characters': result.characters });
+						}
+					});
+				}
+			});
+
+			plusButton.addEventListener('click', function () {
+				const inventoryIndex = ammoAmountLabel.getAttribute('data-inventory-index');
+				characterData.Inventory[inventoryIndex].Quantity++;
+				ammoAmountLabel.textContent = characterData.Inventory[inventoryIndex].Quantity;
+
+				// Save to storage - both formats
+				chrome.storage.local.set({ 'characterData': characterData });
+
+				// Also update in the characters collection for persistence
+				chrome.storage.local.get(['activeCharacterId', 'characters'], function (result) {
+					if (result.activeCharacterId && result.characters &&
+						result.characters[result.activeCharacterId]) {
+						result.characters[result.activeCharacterId].Inventory[inventoryIndex].Quantity =
+							characterData.Inventory[inventoryIndex].Quantity;
+
+						chrome.storage.local.set({ 'characters': result.characters });
+					}
+				});
+			});
+
+			// Assemble the control container
+			controlContainer.appendChild(minusButton);
+			controlContainer.appendChild(ammoAmountLabel);
+			controlContainer.appendChild(plusButton);
 
 			// Append children to container
 			ammoItemContainer.appendChild(nameLabel);
-			ammoItemContainer.appendChild(ammoAmountLabel);
+			ammoItemContainer.appendChild(controlContainer);
 
-			// Append container and breakLine to ammoDiv
+			// Append container to ammoDiv
 			ammoDiv.appendChild(ammoItemContainer);
+
+			// Add a separator between items
+			const breakLine = document.createElement('hr');
+			breakLine.style.marginTop = "5px";
+			breakLine.style.marginBottom = "5px";
 			ammoDiv.appendChild(breakLine);
 		}
 	}
+
+	// Add a note about ammunition management
+	if (ammoDiv.childElementCount > 1) {  // If we added any ammo items
+		const ammoNote = document.createElement('p');
+		ammoNote.textContent = "Use + and − buttons to adjust ammunition quantities.";
+		ammoNote.style.fontSize = "10px";
+		ammoNote.style.fontStyle = "italic";
+		ammoNote.style.textAlign = "center";
+		ammoNote.style.marginTop = "5px";
+		ammoDiv.appendChild(ammoNote);
+	} else {
+		// No ammo found
+		const noAmmoMsg = document.createElement('p');
+		noAmmoMsg.textContent = "No ammunition found in inventory.";
+		noAmmoMsg.style.fontStyle = "italic";
+		noAmmoMsg.style.fontSize = "12px";
+		noAmmoMsg.style.textAlign = "center";
+		ammoDiv.appendChild(noAmmoMsg);
+	}
+
 
 	setupDiceRollHandlers();
 }
@@ -2231,6 +2815,19 @@ function showFeatures(adventureData) {
 			featureButton.appendChild(titleButton);
 			featureButton.appendChild(arrowSpan);
 
+			const hasLimitedUse = checkForLimitedUse(feature.Name);
+
+			// If the feature has limited uses, add a usage tracker
+			if (hasLimitedUse) {
+				const usageTracker = createUsageTracker(feature.Name, hasLimitedUse);
+				featureButton.appendChild(titleButton);
+				featureButton.appendChild(usageTracker);
+				featureButton.appendChild(arrowSpan);
+			} else {
+				featureButton.appendChild(titleButton);
+				featureButton.appendChild(arrowSpan);
+			}
+
 			//description container
 			const featureDesc = document.createElement('div');
 			featureDesc.classList.add('feature-description');
@@ -2308,6 +2905,19 @@ function showFeatures(adventureData) {
 				featureButton.appendChild(titleButton);
 				featureButton.appendChild(arrowSpan);
 
+				const hasLimitedUse = checkForLimitedUse(feature.Name);
+
+				// If the feature has limited uses, add a usage tracker
+				if (hasLimitedUse) {
+					const usageTracker = createUsageTracker(feature.Name, hasLimitedUse);
+					featureButton.appendChild(titleButton);
+					featureButton.appendChild(usageTracker);
+					featureButton.appendChild(arrowSpan);
+				} else {
+					featureButton.appendChild(titleButton);
+					featureButton.appendChild(arrowSpan);
+				}
+
 				//feature description
 				const featureDesc = document.createElement('div');
 				featureDesc.classList.add('feature-description');
@@ -2378,6 +2988,19 @@ function showFeatures(adventureData) {
 			actionButton.appendChild(titleButton);
 			actionButton.appendChild(arrowSpan);
 
+			const hasLimitedUse = checkForLimitedUse(action.Name);
+
+			// If the feature has limited uses, add a usage tracker
+			if (hasLimitedUse) {
+				const usageTracker = createUsageTracker(action.Name, hasLimitedUse);
+				actionButton.appendChild(titleButton);
+				actionButton.appendChild(usageTracker);
+				actionButton.appendChild(arrowSpan);
+			} else {
+				actionButton.appendChild(titleButton);
+				actionButton.appendChild(arrowSpan);
+			}
+
 			//description container
 			const actionDesc = document.createElement('div');
 			actionDesc.classList.add('feature-description');
@@ -2443,6 +3066,19 @@ function showFeatures(adventureData) {
 
 		raceButton.appendChild(titleButton);
 		raceButton.appendChild(arrowSpan);
+
+		const hasLimitedUse = checkForLimitedUse(characterData.Race.Name);
+
+		// If the feature has limited uses, add a usage tracker
+		if (hasLimitedUse) {
+			const usageTracker = createUsageTracker(characterData.Race.Name, hasLimitedUse);
+			raceButton.appendChild(titleButton);
+			raceButton.appendChild(usageTracker);
+			raceButton.appendChild(arrowSpan);
+		} else {
+			raceButton.appendChild(titleButton);
+			raceButton.appendChild(arrowSpan);
+		}
 
 		//description
 		const raceDesc = document.createElement('div');
@@ -2529,6 +3165,19 @@ function showFeatures(adventureData) {
 				traitButton.appendChild(titleButton);
 				traitButton.appendChild(arrowSpan);
 
+				const hasLimitedUse = checkForLimitedUse(trait.Name);
+
+				// If the feature has limited uses, add a usage tracker
+				if (hasLimitedUse) {
+					const usageTracker = createUsageTracker(trait.Name, hasLimitedUse);
+					traitButton.appendChild(titleButton);
+					traitButton.appendChild(usageTracker);
+					traitButton.appendChild(arrowSpan);
+				} else {
+					traitButton.appendChild(titleButton);
+					traitButton.appendChild(arrowSpan);
+				}
+
 				//description container
 				const traitDesc = document.createElement('div');
 				traitDesc.classList.add('feature-description');
@@ -2604,6 +3253,19 @@ function showFeatures(adventureData) {
 			featButton.appendChild(titleButton);
 			featButton.appendChild(arrowSpan);
 
+			const hasLimitedUse = checkForLimitedUse(feat.Name);
+
+			// If the feature has limited uses, add a usage tracker
+			if (hasLimitedUse) {
+				const usageTracker = createUsageTracker(feat.Name, hasLimitedUse);
+				featButton.appendChild(titleButton);
+				featButton.appendChild(usageTracker);
+				featButton.appendChild(arrowSpan);
+			} else {
+				featButton.appendChild(titleButton);
+				featButton.appendChild(arrowSpan);
+			}
+
 			//feat container
 			const featDesc = document.createElement('div');
 			featDesc.classList.add('feature-description');
@@ -2652,9 +3314,6 @@ function showFeatures(adventureData) {
 		characterSheetOpen = false;
 		createCharacterSheet(adventureData);
 	});
-
-	const featuresButton = content.querySelector('#features');
-	featuresButton.addEventListener('click', () => showFeatures(adventureData));
 
 	const inventoryButton = content.querySelector('#inventory');
 	inventoryButton.addEventListener('click', () => showInventory(adventureData));
@@ -2725,17 +3384,17 @@ function showInventory(adventureData) {
 						<button title="Extras include any special abilities, temporary effects and companions" id="extras" class="btn btn-primary btn-xs menu-btn">Extras</button>
                     </div>
                 </div>
-                ${characterData.Currencies ? `
-                    <div id="currencyList" style="border: 2px solid #336699; padding: 8px; height: 260px; width: 120px; margin-top: 5px; margin-left: 3px; overflow-y: auto;">
-                        <div style="margin-top: 25px; margin-left: 5px;">
-                            ${characterData.Currencies.pp ? `<label style="margin-left: 10px;">PP&nbsp;:&nbsp;&nbsp;${characterData.Currencies.pp}</label><hr class="hrBreakline">` : ''}
-                            ${characterData.Currencies.gp ? `<label style="margin-left: 10px;">GP&nbsp;:&nbsp;&nbsp;${characterData.Currencies.gp}</label><hr class="hrBreakline">` : ''}
-                            ${characterData.Currencies.ep ? `<label style="margin-left: 10px;">EP&nbsp;:&nbsp;&nbsp;${characterData.Currencies.ep}</label><hr class="hrBreakline">` : ''}
-                            ${characterData.Currencies.sp ? `<label style="margin-left: 10px;">SP&nbsp;:&nbsp;&nbsp;${characterData.Currencies.sp}</label><hr class="hrBreakline">` : ''}
-                            ${characterData.Currencies.cp ? `<label style="margin-left: 10px;">CP&nbsp;:&nbsp;&nbsp;${characterData.Currencies.cp}</label>` : ''}
-                        </div>
+                <div id="currencyList" style="border: 2px solid #336699; padding: 8px; padding-left: 2px; padding-right: 2px; height: 260px; width: 120px; margin-top: 5px; margin-left: 3px; overflow-y: auto;">
+                    <div style="margin-left: 5px;">
+                        ${characterData.Currencies.pp ? `<label style="margin-left: 10px;">PP&nbsp;:&nbsp;&nbsp;<code>${characterData.Currencies.pp}</code></label><hr class="hrBreakline">` : ''}
+                        ${characterData.Currencies.gp ? `<label style="margin-left: 10px;">GP&nbsp;:&nbsp;&nbsp;<code>${characterData.Currencies.gp}</code></label><hr class="hrBreakline">` : ''}
+                        ${characterData.Currencies.ep ? `<label style="margin-left: 10px;">EP&nbsp;:&nbsp;&nbsp;<code>${characterData.Currencies.ep}</code></label><hr class="hrBreakline">` : ''}
+                        ${characterData.Currencies.sp ? `<label style="margin-left: 10px;">SP&nbsp;:&nbsp;&nbsp;<code>${characterData.Currencies.sp}</code></label><hr class="hrBreakline">` : ''}
+                        ${characterData.Currencies.cp ? `<label style="margin-left: 10px;">CP&nbsp;:&nbsp;&nbsp;<code>${characterData.Currencies.cp}</code></label>` : ''}
                     </div>
-                ` : ''}
+					<hr style="height: 1.5px; background-color: #d3d3d3; margin-top: 0px; border-radius: 10px; margin-bottom: 5px;">
+					<p id="carryWeight" style="text-align: center; font-size: 14px;">Total carrying weight: </p> 
+                </div>
             </div>
         </div>
     `;
@@ -2835,6 +3494,41 @@ function showInventory(adventureData) {
 		allInventoryDiv.appendChild(noInventoryMessage);
 	}
 
+	//calculate the total item weight
+	const currencyList = content.querySelector('#currencyList');
+	const weightElement = currencyList.querySelector('#carryWeight');
+	let totalWeight = 0;
+
+	if (characterData.Inventory ** Object.keys(characterData.Inventory).length > 0) {
+		for (let i = 0; o < Object.keys(characterData.Inventory).length; i++) {
+			const item = characterData.Inventory[i];
+			const itemWeight = item.Definition.Weight || 0;
+			totalWeight += itemWeight * item.Quantity;
+		}
+	}
+
+	//add the coin weight if the preferences is not set to ignore
+	if (!characterData.Preferences.ignoreCoinWeight) {
+		const copper = characterData.Currencies.cp || 0;
+		const silver = characterData.Currencies.sp || 0;
+		const electrum = characterData.Currencies.ep || 0;
+		const gold = characterData.Currencies.gp || 0;
+		const platinum = characterData.Currencies.pp || 0;
+
+		const totalCoins = copper + silver + electrum + gold + platinum;
+		const coinWeight = Math.floor(totalCoins / 50);
+
+		totalWeight += coinWeight;
+	}
+
+	weightElement.innerHTML = `Total carrying weight: <br><code>${totalWeight} lbs</code>`;
+
+	const maxCarryWeight = characterData.MaxCarryWeight || 0;
+	if (maxCarryWeight > 0) {
+		weightElement.innerHTML += `<code>/ ${maxCarryWeight} lbs</code>`;
+	}
+
+	//event listeners
 	const actionButton = content.querySelector('#actions');
 	actionButton.addEventListener('click', () => showActions(adventureData));
 
@@ -4497,4 +5191,127 @@ function findHighestWarlockSpellLevel(characterData) {
 	if (warlockLevel >= 5) return 3;
 	if (warlockLevel >= 3) return 2;
 	return 1;
+}
+
+//check if a feature has limited use
+function checkForLimitedUse(featureName) {
+	if (!characterData || !characterData.Actions) return null;
+
+	for (const key in characterData.Actions) {
+		const action = characterData.Actions[key];
+
+		if (action.Name === featureName &&
+			action.LimitedUse &&
+			action.LimitedUse.MaxUse) {
+
+			return {
+				maxUses: action.LimitedUse.MaxUse,
+				usedCount: action.LimitedUse.NumberUsed || 0,
+				resetType: action.LimitedUse.ResetType || "LongRest",
+				actionKey: key
+			};
+		}
+	}
+
+	return null;
+}
+
+//tracker for limited usage features
+function createUsageTracker(featureName, limitedUseData) {
+	const container = document.createElement('div');
+	container.classList.add('usage-tracker');
+	container.style.display = 'flex';
+	container.style.alignItems = 'center';
+	container.style.marginLeft = '10px';
+
+	// label showing uses
+	const usesLabel = document.createElement('span');
+	usesLabel.classList.add('uses-label');
+	usesLabel.textContent = `${limitedUseData.usedCount}/${limitedUseData.maxUses}`;
+	usesLabel.title = `Recharges on ${limitedUseData.resetType}`;
+	usesLabel.style.fontSize = '12px';
+	usesLabel.style.marginRight = '5px';
+
+	// decrease button 
+	const decreaseBtn = document.createElement('button');
+	decreaseBtn.classList.add('skill-button-modification');
+	decreaseBtn.textContent = '-';
+	decreaseBtn.title = "Use feature";
+	decreaseBtn.style.width = '20px';
+	decreaseBtn.style.height = '20px';
+	decreaseBtn.style.padding = '0';
+	decreaseBtn.style.lineHeight = '1';
+	decreaseBtn.style.marginRight = '2px';
+	decreaseBtn.disabled = limitedUseData.usedCount <= 0;
+
+	// increase button
+	const increaseBtn = document.createElement('button');
+	increaseBtn.classList.add('skill-button-modification');
+	increaseBtn.textContent = '+';
+	increaseBtn.title = "Recover use";
+	increaseBtn.style.width = '20px';
+	increaseBtn.style.height = '20px';
+	increaseBtn.style.padding = '0';
+	increaseBtn.style.lineHeight = '1';
+	increaseBtn.disabled = limitedUseData.usedCount >= limitedUseData.maxUses;
+
+	decreaseBtn.addEventListener('click', function (event) {
+		event.stopPropagation();
+
+		if (limitedUseData.usedCount > 0) {
+			limitedUseData.usedCount--;
+			usesLabel.textContent = `${limitedUseData.usedCount}/${limitedUseData.maxUses}`;
+			decreaseBtn.disabled = limitedUseData.usedCount <= 0;
+			increaseBtn.disabled = false;
+
+			// Save to character data
+			updateFeatureUsage(featureName, limitedUseData);
+		}
+	});
+
+	increaseBtn.addEventListener('click', function (event) {
+		event.stopPropagation(); 
+
+		if (limitedUseData.usedCount < limitedUseData.maxUses) {
+			limitedUseData.usedCount++;
+			usesLabel.textContent = `${limitedUseData.usedCount}/${limitedUseData.maxUses}`;
+			increaseBtn.disabled = limitedUseData.usedCount >= limitedUseData.maxUses;
+			decreaseBtn.disabled = false;
+
+			// Save to character data
+			updateFeatureUsage(featureName, limitedUseData);
+		}
+	});
+
+	container.appendChild(usesLabel);
+	container.appendChild(decreaseBtn);
+	container.appendChild(increaseBtn);
+
+	return container;
+}
+
+function updateFeatureUsage(featureName, limitedUseData) {
+	if (!characterData || !characterData.Actions) return;
+
+	const actionKey = limitedUseData.actionKey;
+	if (characterData.Actions[actionKey]) {
+		characterData.Actions[actionKey].LimitedUse.NumberUsed = limitedUseData.usedCount;
+
+		chrome.storage.local.set({ 'characterData': characterData }, function () {
+			chrome.storage.local.get(['activeCharacterId', 'characters'], function (result) {
+				if (result.activeCharacterId && result.characters &&
+					result.characters[result.activeCharacterId]) {
+
+					if (result.characters[result.activeCharacterId].Actions &&
+						result.characters[result.activeCharacterId].Actions[actionKey]) {
+
+						result.characters[result.activeCharacterId].Actions[actionKey].LimitedUse.NumberUsed =
+							limitedUseData.usedCount;
+
+						chrome.storage.local.set({ 'characters': result.characters });
+					}
+				}
+			});
+		});
+	}
 }

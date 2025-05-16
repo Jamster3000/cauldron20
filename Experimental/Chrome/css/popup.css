@@ -1,5 +1,6 @@
 ﻿body {
-    width: 300px;
+    overflow-x: hidden;
+    width: 380px;
     padding: 15px;
     font-family: Arial, sans-serif;
     background-color: #f0f0f0;
@@ -311,8 +312,91 @@ button {
     margin-bottom: 15px;
 }
 
-/* Adding separator between character sections */
 #character-input {
     border-top: 1px solid #ddd;
     padding-top: 15px;
+}
+
+/* Form submission */
+
+html {
+    overflow-y: scroll;
+    scrollbar-width: thin;
+}
+
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+.collapsible {
+    margin-top: 20px;
+    padding: 10px;
+}
+
+    .active, .collapsible:hover {
+        background-color: #ccc;
+    }
+
+    .collapsible:after {
+        content: '\002B';
+        font-weight: bold;
+        float: right;
+        margin-left: 5px;
+    }
+
+.active:after {
+    content: "\2212";
+}
+
+.report-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.2s ease-out;
+    background-color: #f9f9f9;
+    padding: 0 15px;
+    border-radius: 0 0 4px 4px;
+}
+
+.report-form {
+    padding: 15px 0;
+}
+
+.form-group {
+    margin-bottom: 10px;
+}
+
+    .form-group label {
+        display: block;
+        margin-bottom: 5px;
+    }
+
+    .form-group textarea {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        box-sizing: border-box;
+    }
+
+    .form-group input[type="text"] {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        box-sizing: border-box;
+    }
+
+.form-buttons {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 15px;
 }

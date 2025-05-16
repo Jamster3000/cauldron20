@@ -167,7 +167,8 @@
             "FixedSaveDc": null,
             "IsMartialArts": false,
             "LimitedUse": {
-                "MaxUse": 1
+                "MaxUse": 1,
+                "NumberUsed": 1
             },
             "Name": "Sorcerous Restoration",
             "OnMissDescription": "",

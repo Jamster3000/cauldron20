@@ -5,10 +5,6 @@
         fetchCharacterInfo();
     });
 
-    document.getElementById('editButton').addEventListener('click', function () {
-        chrome.tabs.create({ url: chrome.runtime.getURL('html/edit.html') });
-    });
-
     //export data
     document.getElementById('exportButton').addEventListener('click', function () {
         exportCharacterData();
@@ -420,7 +416,6 @@ function calculateCharacterData(data) {
     };
 
     const usesMilestones = data.preferences && data.preferences.progressionType === 1;
-    console.log("Progression type:", data.preferences?.progressionType, "Uses milestones:", usesMilestones);
 
     let totalCharacterLevel = 0;
     if (data.classes && Array.isArray(data.classes)) {
@@ -448,6 +443,7 @@ function calculateCharacterData(data) {
     characterData.Inventory = gatherInventory(data, characterData);
     characterData.Classes = gatherClasses(data, characterData);
     characterData.Feats = gatherFeats(data);
+    characterData.Preferences = data.preferences;
 
     // Gather actions first without processing templates
     characterData.Actions = gatherActionsRaw(data);

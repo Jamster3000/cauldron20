@@ -322,12 +322,12 @@
 /*proficiencies*/
 .proficiencies-section {
     position: absolute;
-    left: 150px;
+    left: 151px;
     top: 165px;
     border: 2px solid #336699;
     padding: 2px;
     border-radius: 4px;
-    width: 55px;
+    width: 51px;
     height: 65px;
     display: flex;
     align-items: center;
@@ -449,6 +449,20 @@
         transform: scale(0.95);
     }
 
+    .skill-button-modification:disabled,
+    .skill-button-modification[disabled] {
+        background-color: #E0E0E0;
+        color: #A0A0A0;
+        border: 1px solid #CCCCCC;
+        box-shadow: none;
+        cursor: not-allowed;
+        opacity: 0.7;
+        pointer-events: none;
+        /* Optional: Remove the scale effect if disabled */
+        transform: none;
+    }
+
+
 
 .input-button-modification {
     background-color: #fafafa;
@@ -498,26 +512,35 @@
         transform: scale(0.95);
     }
 
+    .styled-button:disabled {
+        background-color: #e0e0e0;
+        color: #a0a0a0;
+        border-color: #cccccc;
+        box-shadow: none;
+        cursor: not-allowed;
+        opacity: 0.7;
+        pointer-events: none;
+    }
 
-/*
+
+    /*
 ===================
 ==== Features =====
 ===================
 */
-
-.feature-button {
-    color: #6385C1;
-    text-align: left;
-    width: 100%;
-    margin-bottom: 5px;
-    cursor: pointer;
-    background: transparent;
-    border: none;
-    padding: 5px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
+    .feature-button {
+        color: #6385C1;
+        text-align: left;
+        width: 100%;
+        margin-bottom: 5px;
+        cursor: pointer;
+        background: transparent;
+        border: none;
+        padding: 5px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
 
     .feature-button:hover {
         background-color: #f0f0f0;
@@ -857,4 +880,48 @@ input:disabled {
 .speed-section .speed-type-name {
     font-weight: bold;
     margin-right: 10px;
+}
+
+.dragPushLift {
+    position: absolute;
+    left: 151px;
+    top: 235px;
+    border: 2px solid #336699;
+    padding: 2px;
+    border-radius: 4px;
+    width: 51px;
+    height: 110px;
+    margin-left: 255px;
+}
+
+    .dragPushLift p {
+        text-align: center;
+        align-items: center;
+        justify-content: center;
+    }
+
+.rage-container {
+    position: absolute;
+    left: 151px;
+    top: 350px;
+    border: 2px solid #336699;
+    padding: 2px;
+    border-radius: 4px;
+    width: 51px;
+    height: 110px;
+    margin-left: 255px;
+    text-align: center;
+}
+
+.bard-container {
+    position: absolute;
+    left: 151px;
+    top: 350px;
+    border: 2px solid #336699;
+    padding: 2px;
+    border-radius: 4px;
+    width: 51px;
+    height: 160px;
+    margin-left: 255px;
+    text-align: center;
 }
