@@ -20,7 +20,8 @@
     "https://www.cauldron-vtt.net/character/new",
     "https://www.cauldron-vtt.net/character/weapon/*",
     "https://www.cauldron-vtt.net/character/*",
-    "https://www.cauldron-vtt.net/character"
+    "https://www.cauldron-vtt.net/character",
+    "https://www.dndbeyond.com/characters/*"
   ],
   "action": {
     "default_icon": "icon128.png",
@@ -44,6 +45,14 @@
       ],
       "js": [ "js/adventure.js" ],
       "css": [ "css/characterSheet.css" ]
+    },
+    {
+      "matches": [
+        "https://www.dndbeyond.com/characters/*"
+      ],
+      "js": [ "js/dndbeyond-sync.js" ],
+      "run_at": "document_idle"
     }
+
   ]
 }

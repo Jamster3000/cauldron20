@@ -799,7 +799,7 @@ function createCharacterSheet(adventureData) {
 	let hitDiceUsed = characterData.Classes[0].HitDiceUsed || 0;
 
 	// Get character's speed from race data
-	let characterSpeed = characterData.Race.Speed || 30; // Default to 30 if not found
+	let characterSpeed = characterData.Race.Speed || 30;
 
 	// Find character in adventure data
 	let currentCharacter = null;
@@ -1137,6 +1137,9 @@ function createCharacterSheet(adventureData) {
 		});
 
 		document.body.appendChild(bardicDescription);
+	} else {
+		const bardicContainer = overlayBody.querySelector('#bard-container');
+        bardicContainer.style.display = "none";
 	}
 
 	//rage (only appears if the character uses rage)
@@ -1452,10 +1455,10 @@ function createCharacterSheet(adventureData) {
 		}, 2000);
 	});
 
-	//short rest button
+	//long rest button
 	const longRestButton = overlayBody.querySelector('#longRest');
 	longRestButton.addEventListener('click', function () {
-		if (confirm("Take a long rest? This will restore your hit points, hit dice, and spell slots.")) {
+		if (confirm("Take a long rest? This will restore your hit points, hit dice, spell slots and other limited use features")) {
 			const hitDiceRecovered = Math.max(1, Math.floor(hitDiceTotal / 2));
 
 			let newHitDiceUsed = characterData.Classes[0].HitDiceUsed - hitDiceRecovered;
@@ -1508,7 +1511,7 @@ function createCharacterSheet(adventureData) {
 						// Check for long rest recharge
 						if (action.LimitedUse.ResetType === "LongRest" ||
 							action.LimitedUse.ResetType === "Long Rest" ||
-							!action.LimitedUse.ResetType) { // Default to long rest if not specified
+							!action.LimitedUse.ResetType) {
 							action.LimitedUse.NumberUsed = 0;
 							featuresRestored.push(action.Name);
 						}
@@ -1516,10 +1519,9 @@ function createCharacterSheet(adventureData) {
 				}
 			}
 
-			// Update UI for any restored features that are currently displayed
+			// Update UI
 			const rageCounter = document.querySelector('.rage-container span');
 			if (rageCounter && featuresRestored.some(name => name.includes('Rage'))) {
-				// Find max rage uses
 				let maxRages = 0;
 				for (const key in characterData.Actions) {
 					if (characterData.Actions[key].Name && characterData.Actions[key].Name.includes("Rage")) {
@@ -1530,17 +1532,16 @@ function createCharacterSheet(adventureData) {
 				rageCounter.textContent = `${maxRages}/${maxRages}`;
 			}
 
-			// Update UI for bardic inspiration if restored
+			// Update UI for bardic inspiration
 			const inspirationCounter = document.querySelector('#bard-container span');
 			if (inspirationCounter && featuresRestored.some(name => name.includes('Bardic Inspiration'))) {
-				// Find max inspiration uses (Charisma mod, min 1)
 				const maxInspiration = Math.max(1, characterData.AbilityScores.Modifier.Charisma);
 				inspirationCounter.textContent = `${maxInspiration}/${maxInspiration}`;
 			}
 
 			chrome.storage.local.set({ 'characterData': characterData });
 
-			// Update the UI for all usage trackers
+			// Update the UI for all limited features
 			document.querySelectorAll('.usage-tracker').forEach(tracker => {
 				const usesLabel = tracker.querySelector('.uses-label');
 				const decreaseBtn = tracker.querySelector('button:first-of-type');
@@ -1556,8 +1557,6 @@ function createCharacterSheet(adventureData) {
 					}
 				}
 			});
-
-			alert("Long rest complete! Your hit points, hit dice, spell slots, and features have been restored.");
 		}
 	});
 
@@ -1567,12 +1566,10 @@ function createCharacterSheet(adventureData) {
 		if (confirm("Take a short rest? This will allow you to spend Hit Dice and recover some features.")) {
 			//warlocks get their spellslots back on a short rest.
 			if (characterData.Classes[0]?.Definition?.Name === "Warlock") {
-				// Reset Pact slots on short rest
 				if (characterData.Pact) {
 					characterData.Pact.SlotsUsed = 0;
 				}
 
-				// Also reset traditional spell slots if they exist for warlocks
 				if (characterData.SpellSlots) {
 					const warlockLevel = characterData.Classes[0].Level;
 					const highestSpellLevel = findHighestWarlockSpellLevel(characterData);
@@ -1582,7 +1579,6 @@ function createCharacterSheet(adventureData) {
 					}
 				}
 
-				// Update any displayed warlock spell slot UI
 				updateWarlockSpellSlotDisplay();
 			}
 
@@ -1601,11 +1597,11 @@ function createCharacterSheet(adventureData) {
 				}
 			}
 
-			// Check if sorcerer with Font of Inspiration (level 5+)
+			// Check if sorcerer with Font of Inspiration
 			const isBard = characterData.Classes[0]?.Definition?.Name === "Bard";
 			const bardLevel = characterData.Classes[0]?.Level || 0;
 
-			// Font of Inspiration - Bards level 5+ regain Bardic Inspiration on short rest
+			// Font of Inspiration - Bards regain Bardic Inspiration on short rest
 			if (isBard && bardLevel >= 5) {
 				for (const key in characterData.Actions) {
 					if (characterData.Actions[key].Name &&
@@ -1648,9 +1644,6 @@ function createCharacterSheet(adventureData) {
 			});
 
 			chrome.storage.local.set({ 'characterData': characterData });
-
-			alert("Short rest complete! You can now roll hit dice to recover HP. " +
-				(featuresRestored.length > 0 ? "Some of your features have been restored." : ""));
 		}
 	});
 
@@ -1875,7 +1868,7 @@ function setupHPMonitoring(adventureData) {
 		clearInterval(window._hpMonitorInterval);
 	}
 
-	// Find our character more reliably
+	// Find character
 	let characterToMonitor = null;
 	if (adventureData.characters) {
 		const characters = Array.isArray(adventureData.characters.character)
@@ -1894,6 +1887,11 @@ function setupHPMonitoring(adventureData) {
 		console.warn("Could not find character to monitor HP:", characterData.Name);
 		return;
 	}
+
+	let lastKnownHP = {
+		current: Number(characterToMonitor.hitpoints || 0) - Number(characterToMonitor.damage || 0),
+		max: Number(characterToMonitor.hitpoints || 0)
+	};
 
 	// Checks every 500ms
 	window._hpMonitorInterval = setInterval(() => {
@@ -1937,9 +1935,17 @@ function setupHPMonitoring(adventureData) {
 				const currentHPInput = document.querySelector('.current-hp-input');
 				const maxHPInput = document.querySelector('.max-hp-input');
 
-				if (currentHPInput && currentHPInput.value !== String(currentHP)) {
-					currentHPInput.value = currentHP;
-					console.log(`Updated HP display: ${currentHP}/${maxHP}`);
+				// Check if HP has changed from last known value
+				if (currentHP !== lastKnownHP.current) {
+					// Update the UI
+					if (currentHPInput) {
+						currentHPInput.value = currentHP;
+						console.log(`Updated HP display: ${currentHP}/${maxHP}`);
+					}
+
+					// Update last known HP
+					lastKnownHP.current = currentHP;
+					lastKnownHP.max = maxHP;
 				}
 
 				if (maxHPInput && maxHPInput.value !== String(maxHP)) {

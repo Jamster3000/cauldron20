@@ -31,6 +31,11 @@
         deleteSelectedCharacter();
     });
 
+    // Add edit button functionality from the second event listener
+    document.getElementById('editButton').addEventListener('click', function () {
+        chrome.tabs.create({ url: chrome.runtime.getURL('html/edit.html') });
+    });
+
     const characterInfoElement = document.getElementById('characterInfo');
     characterInfoElement.style.display = 'none';
 
@@ -59,6 +64,149 @@
             document.getElementById('fetchButton').click();
         }
     });
+
+    // Add report form functionality from the second event listener
+    const reportForm = document.querySelector('.report-form');
+    if (reportForm) {
+        // Add a note about data collection to the form
+        const noteDiv = document.createElement('div');
+        noteDiv.className = 'form-note';
+        noteDiv.innerHTML = '<small>Note: This form collects your report description, character ID (if provided), and basic browser information to help troubleshoot issues. No personal data is stored.</small>';
+        reportForm.insertBefore(noteDiv, document.querySelector('.form-buttons'));
+
+        reportForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+            showSpinner();
+
+            // Get form data
+            const description = document.getElementById('reportDescription').value;
+            const characterIdReport = document.getElementById('characterIdReport');
+            const characterId = characterIdReport ? characterIdReport.value : '';
+
+            // Basic validation
+            if (!description || !description.trim()) {
+                hideSpinner();
+                displayMessage("Description is required", "error");
+                return;
+            }
+
+            // Prepare the form data
+            const formData = new FormData();
+
+            // Add regular form fields
+            formData.append('Report Description', description);
+            formData.append('Character ID', characterId || 'Not provided');
+            formData.append('Extension Version', chrome.runtime.getManifest().version);
+
+            var prefix = (Array.prototype.slice
+                .call(window.getComputedStyle(document.documentElement, ""))
+                .join("")
+                .match(/-(moz|webkit|ms|o)-/))[1];
+
+            formData.append('Browser', prefix);
+
+            // Check if we need to include character data
+            const characterDataField = document.getElementById('characterDataField');
+            if (characterDataField && characterDataField.value) {
+                try {
+                    const parsedData = JSON.parse(characterDataField.value);
+                    const characterName = parsedData.Name || "Unknown";
+                    formData.append('Character Name', characterName);
+
+                    if (characterId) {
+                        const dndbeyondUrl = `https://www.dndbeyond.com/characters/${characterId}`;
+                        formData.append('D&D Beyond Character Link', dndbeyondUrl);
+                    }
+                } catch (error) {
+                    console.error("Error parsing character data:", error);
+                }
+            }
+
+            // Submit form to Formspree
+            fetch('https://formspree.io/f/mkgrpgwb', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'Accept': 'application/json'
+                }
+            })
+                .then(response => response.json())
+                .then(data => {
+                    hideSpinner();
+
+                    if (data.ok) {
+                        displayMessage("Report submitted successfully! Thank you for your feedback.", "success");
+
+                        // Reset the form
+                        reportForm.reset();
+
+                        // Reset character data field if it exists
+                        const characterDataField = document.getElementById('characterDataField');
+                        if (characterDataField) {
+                            characterDataField.value = '';
+                        }
+
+                        // Close report section
+                        const collapsible = document.querySelector('.collapsible');
+                        if (collapsible && collapsible.classList.contains('active')) {
+                            collapsible.click();
+                        }
+                    } else {
+                        displayMessage("Error submitting report. Please try again later.", "error");
+                    }
+                })
+                .catch(error => {
+                    hideSpinner();
+                    console.error('Error submitting form:', error);
+                    displayMessage("Error submitting report. Please try again later.", "error");
+                });
+        });
+    }
+
+    // Add collapsible functionality from the second event listener
+    const collapsibles = document.getElementsByClassName("collapsible");
+    for (let i = 0; i < collapsibles.length; i++) {
+        collapsibles[i].addEventListener("click", function () {
+            this.classList.toggle("active");
+            const content = this.nextElementSibling;
+
+            if (content.style.maxHeight) {
+                // Closing the collapsible
+                content.style.maxHeight = null;
+
+                setTimeout(() => {
+                    window.scrollTo(0, 0);
+                    document.body.style.minHeight = 'auto';
+                }, 210);
+            } else {
+                // Opening the collapsible - fill in the character ID from the selected character
+                content.style.maxHeight = content.scrollHeight + "px";
+
+                // Auto-populate character ID in the report form
+                const characterSelect = document.getElementById('characterSelect');
+                const selectedId = characterSelect.value;
+                const characterIdReport = document.getElementById('characterIdReport');
+
+                if (selectedId && characterIdReport) {
+                    characterIdReport.value = selectedId;
+                }
+
+                if (!this.heightObserver) {
+                    this.heightObserver = new MutationObserver(() => {
+                        if (content.style.maxHeight) {
+                            content.style.maxHeight = content.scrollHeight + "px";
+                        }
+                    });
+
+                    this.heightObserver.observe(content, {
+                        childList: true,
+                        subtree: true,
+                        characterData: true
+                    });
+                }
+            }
+        });
+    }
 });
 
 //populate the character dropdown
@@ -257,7 +405,7 @@ function importCharacterData(event) {
 
 function fetchCharacterInfo() {
     const characterIdInput = document.getElementById('characterIdInput');
-    const characterId = parseInt(characterIdInput.value, 10);
+    const characterId = Number(characterIdInput.value);
 
     if (isNaN(characterId) || characterId <= 0) {
         displayError("Invalid Character ID")
@@ -265,6 +413,7 @@ function fetchCharacterInfo() {
         return;
     }
 
+    document.getElementById('errorMessage').textContent = "Loading character data...";
     characterIdInput.value = '';
 
     fetch(`https://character-service.dndbeyond.com/character/v5/character/${characterId}`)
@@ -283,6 +432,8 @@ function fetchCharacterInfo() {
         })
         .then(data => {
             if (!data) return;
+            // Clear the loading message when data is received
+            document.getElementById('errorMessage').textContent = "";
             console.log("Data ", data.data);
             calculateCharacterData(data.data);
             chrome.storage.local.get(['characterData', 'characters'], function (result) {
@@ -306,6 +457,11 @@ function fetchCharacterInfo() {
                 }
             });
 
+            hideSpinner();
+        })
+        .catch(error => {
+            console.error("Error fetching character data:", error);
+            displayError("Error fetching character data. Please try again.");
             hideSpinner();
         });
 }
@@ -2639,214 +2795,3 @@ function displayMessage(message, type) {
 function displayError(message) {
     displayMessage(message, message ? "error" : "");
 }
-
-/*Form feedback */
-
-document.addEventListener('DOMContentLoaded', function () {
-    // Fetch character info when the button is clicked
-    document.getElementById('fetchButton').addEventListener('click', function () {
-        showSpinner();
-        fetchCharacterInfo();
-    });
-
-    document.getElementById('editButton').addEventListener('click', function () {
-        chrome.tabs.create({ url: chrome.runtime.getURL('html/edit.html') });
-    });
-
-    //export data
-    document.getElementById('exportButton').addEventListener('click', function () {
-        exportCharacterData();
-    });
-
-    //import data
-    document.getElementById('importFile').addEventListener('change', function (event) {
-        importCharacterData(event);
-    });
-
-    // Character selection dropdown
-    const characterSelect = document.getElementById('characterSelect');
-    characterSelect.addEventListener('change', function () {
-        const selectedId = characterSelect.value;
-        if (selectedId) {
-            loadSelectedCharacter(selectedId);
-        } else {
-            clearCharacterInfo();
-        }
-    });
-
-    // Delete character button
-    document.getElementById('deleteCharacterButton').addEventListener('click', function () {
-        deleteSelectedCharacter();
-    });
-
-    const characterInfoElement = document.getElementById('characterInfo');
-    characterInfoElement.style.display = 'none';
-
-    // Load characters and populate dropdown
-    loadCharacters();
-
-    // Retrieve the stored character ID and populate the input field
-    chrome.storage.local.get(['characterId', 'characterData'], function (result) {
-        if (result.characterData) {
-            console.log("result.characterData got");
-            displayCharacterInfo(result.characterData);
-            document.getElementById('exportButton').disabled = false;
-        } else if (result.characterId) {
-            console.log("characterId got");
-            fetchCharacterInfo();
-        } else {
-            console.log("never mind");
-            document.getElementById('exportButton').disabled = true;
-        }
-    });
-
-    // Add event listener for Enter key press
-    document.getElementById('characterIdInput').addEventListener('keypress', function (e) {
-        if (e.key === 'Enter') {
-            showSpinner();
-            document.getElementById('fetchButton').click();
-        }
-    });
-
-    const reportForm = document.querySelector('.report-form');
-    if (reportForm) {
-        // Add a note about data collection to the form
-        const noteDiv = document.createElement('div');
-        noteDiv.className = 'form-note';
-        noteDiv.innerHTML = '<small>Note: This form collects your report description, character ID (if provided), and basic browser information to help troubleshoot issues. No personal data is stored.</small>';
-        reportForm.insertBefore(noteDiv, document.querySelector('.form-buttons'));
-
-        reportForm.addEventListener('submit', function (e) {
-            e.preventDefault();
-            showSpinner();
-
-            // Get form data
-            const description = document.getElementById('reportDescription').value;
-            const characterIdReport = document.getElementById('characterIdReport');
-            const characterId = characterIdReport ? characterIdReport.value : '';
-
-            // Basic validation
-            if (!description || !description.trim()) {
-                hideSpinner();
-                displayMessage("Description is required", "error");
-                return;
-            }
-
-            // Prepare the form data
-            const formData = new FormData();
-
-            // Add regular form fields
-            formData.append('Report Description', description);
-            formData.append('Character ID', characterId || 'Not provided');
-            formData.append('Extension Version', chrome.runtime.getManifest().version);
-
-            var prefix = (Array.prototype.slice
-                .call(window.getComputedStyle(document.documentElement, ""))
-                .join("")
-                .match(/-(moz|webkit|ms|o)-/))[1];
-
-            formData.append('Browser', prefix);
-
-            // Check if we need to include character data
-            const characterDataField = document.getElementById('characterDataField');
-            if (characterDataField && characterDataField.value) {
-                try {
-                    const parsedData = JSON.parse(characterDataField.value);
-                    const characterName = parsedData.Name || "Unknown";
-                    formData.append('Character Name', characterName);
-
-                    if (characterId) {
-                        const dndbeyondUrl = `https://www.dndbeyond.com/characters/${characterId}`;
-                        formData.append('D&D Beyond Character Link', dndbeyondUrl);
-                    }
-                } catch (error) {
-                    console.error("Error parsing character data:", error);
-                }
-            }
-
-            // Submit form to Formspree
-            fetch('https://formspree.io/f/mkgrpgwb', {
-                method: 'POST',
-                body: formData,
-                headers: {
-                    'Accept': 'application/json'
-                }
-            })
-                .then(response => response.json())
-                .then(data => {
-                    hideSpinner();
-
-                    if (data.ok) {
-                        displayMessage("Report submitted successfully! Thank you for your feedback.", "success");
-
-                        // Reset the form
-                        reportForm.reset();
-
-                        // Reset character data field if it exists
-                        const characterDataField = document.getElementById('characterDataField');
-                        if (characterDataField) {
-                            characterDataField.value = '';
-                        }
-
-                        // Close report section
-                        const collapsible = document.querySelector('.collapsible');
-                        if (collapsible && collapsible.classList.contains('active')) {
-                            collapsible.click();
-                        }
-                    } else {
-                        displayMessage("Error submitting report. Please try again later.", "error");
-                    }
-                })
-                .catch(error => {
-                    hideSpinner();
-                    console.error('Error submitting form:', error);
-                    displayMessage("Error submitting report. Please try again later.", "error");
-                });
-        });
-    }
-
-    const collapsibles = document.getElementsByClassName("collapsible");
-    for (let i = 0; i < collapsibles.length; i++) {
-        collapsibles[i].addEventListener("click", function () {
-            this.classList.toggle("active");
-            const content = this.nextElementSibling;
-
-            if (content.style.maxHeight) {
-                // Closing the collapsible
-                content.style.maxHeight = null;
-
-                setTimeout(() => {
-                    window.scrollTo(0, 0);
-                    document.body.style.minHeight = 'auto';
-                }, 210);
-            } else {
-                // Opening the collapsible - fill in the character ID from the selected character
-                content.style.maxHeight = content.scrollHeight + "px";
-
-                // Auto-populate character ID in the report form
-                const characterSelect = document.getElementById('characterSelect');
-                const selectedId = characterSelect.value;
-                const characterIdReport = document.getElementById('characterIdReport');
-
-                if (selectedId && characterIdReport) {
-                    characterIdReport.value = selectedId;
-                }
-
-                if (!this.heightObserver) {
-                    this.heightObserver = new MutationObserver(() => {
-                        if (content.style.maxHeight) {
-                            content.style.maxHeight = content.scrollHeight + "px";
-                        }
-                    });
-
-                    this.heightObserver.observe(content, {
-                        childList: true,
-                        subtree: true,
-                        characterData: true
-                    });
-                }
-            }
-        });
-    }
-});
-

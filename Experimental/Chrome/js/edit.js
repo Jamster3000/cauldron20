@@ -1,10 +1,15 @@
 document.addEventListener('DOMContentLoaded', function () {
-    chrome.storage.local.get('characterData', function (result) {
+    chrome.storage.local.get(['characterData', 'characterId'], function (result) {
         const characterData = result.characterData;
+        const characterId = result.characterId;
         const title = document.getElementById('title');
-        
+
         if (characterData) {
-            title.textContent += " - " + characterData.Name;
+            if (characterId) {
+                title.textContent += ` - ${characterData.Name} (ID: ${characterId})`;
+            } else {
+                title.textContent += ` - ${characterData.Name}`;
+            }
             showCharacterData(characterData);
         }
     });
@@ -185,15 +190,31 @@ function saveCharacterData() {
         try {
             value = JSON.parse(value);
         } catch (e) {
-            // Not a JSON string, keep as is
         }
 
         setNestedValue(characterData, key.split('.'), value);
     });
 
-    chrome.storage.local.set({ 'characterData': characterData }, function () {
-        console.log('Character Data saved:', characterData);
-        alert('Character data saved successfully!');
+    // Get both 'characterId' and 'characters' to update both storage locations
+    chrome.storage.local.get(['characterId', 'characters'], function (result) {
+        const characterId = result.characterId;
+        const characters = result.characters || {};
+
+        // Update the global characterData
+        chrome.storage.local.set({ 'characterData': characterData }, function () {
+            console.log('Character Data saved to characterData');
+
+            // If character ID exists, update that specific character in the collection
+            if (characterId) {
+                characters[characterId] = characterData;
+                chrome.storage.local.set({ 'characters': characters }, function () {
+                    console.log('Character Data saved to characters collection for ID:', characterId);
+                    alert('Character data saved successfully!');
+                });
+            } else {
+                alert('Character data saved successfully!');
+            }
+        });
     });
 }
 

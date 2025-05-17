@@ -14,7 +14,7 @@ setTimeout(function () {
     const newButton = document.createElement('button');
     newButton.textContent = 'Auto Fill';
     newButton.classList.add('btn', 'btn-default');
-    const btnGroup = document.querySelector('.btn-group'); 
+    const btnGroup = document.querySelector('.btn-group');
     btnGroup.appendChild(newButton);
 
     //checkes the url remote file radio button
@@ -41,13 +41,29 @@ setTimeout(function () {
         sheetURL.style.display = 'none';
     }
 
-    //add the url to the url input element
-    chrome.storage.local.get('characterData', function (result) {
-        const characterData = result.characterData;
+    // First, try to get the activeCharacterId and characters collection
+    chrome.storage.local.get(['activeCharacterId', 'characters', 'characterData'], function (result) {
+        // Create a character selector dropdown if we have multiple characters
+        if (result.characters && Object.keys(result.characters).length > 0) {
+            createCharacterSelector(result.characters, result.activeCharacterId, result.characterData);
+        } else if (result.characterData) {
+            // If no characters collection but we have characterData, use that
+            setupWithCharacterData(result.characterData);
+        } else {
+            // No character data found
+            console.log('No character data found.');
+            if (btnGroup) {
+                newButton.disabled = true;
+                newButton.title = "No character data available";
+            }
+        }
+    });
+
+    function setupWithCharacterData(characterData) {
+        // Use the provided character data to set up the form
         urlInput.value = "https://www.dndbeyond.com/characters/" + characterData.Id;
 
         if (btnGroup) {
-            //adds a button to fill in all the inputs
             newButton.addEventListener('click', function (event) {
                 event.preventDefault();
                 addName(nameInput, characterData);
@@ -58,7 +74,87 @@ setTimeout(function () {
         } else {
             console.log('Name input not found.');
         }
-    });
+    }
+
+    function createCharacterSelector(characters, activeCharacterId, defaultCharacterData) {
+        // Create a dropdown for character selection
+        const selectorContainer = document.createElement('div');
+        selectorContainer.classList.add('character-selector-container');
+        selectorContainer.style.marginBottom = '10px';
+        selectorContainer.style.width = '400px';
+        selectorContainer.style.display = 'flex';
+        selectorContainer.style.alignItems = 'center';
+
+        const label = document.createElement('label');
+        label.textContent = 'Select character to auto-fill: ';
+        label.style.marginRight = '10px';
+
+        const select = document.createElement('select');
+        select.id = 'character-selector';
+        select.classList.add('form-control');
+        select.style.flex = '1';
+
+        // Add options for each character
+        Object.keys(characters).forEach(id => {
+            const option = document.createElement('option');
+            option.value = id;
+            option.textContent = characters[id].Name || `Character ${id}`;
+            // Select the active character by default
+            if (id === activeCharacterId) {
+                option.selected = true;
+            }
+            select.appendChild(option);
+        });
+
+        selectorContainer.appendChild(label);
+        selectorContainer.appendChild(select);
+
+        // Insert the selector before the button group
+        if (btnGroup) {
+            btnGroup.parentNode.insertBefore(selectorContainer, btnGroup);
+        }
+
+        // Determine which character data to use initially
+        let currentCharacterData;
+        if (activeCharacterId && characters[activeCharacterId]) {
+            currentCharacterData = characters[activeCharacterId];
+        } else if (defaultCharacterData) {
+            currentCharacterData = defaultCharacterData;
+        } else {
+            const firstCharacterId = Object.keys(characters)[0];
+            currentCharacterData = characters[firstCharacterId];
+        }
+
+        // Set initial URL
+        if (currentCharacterData && currentCharacterData.Id) {
+            urlInput.value = "https://www.dndbeyond.com/characters/" + currentCharacterData.Id;
+        }
+
+        // Handle character selection change
+        select.addEventListener('change', function () {
+            const selectedId = this.value;
+            if (selectedId && characters[selectedId]) {
+                currentCharacterData = characters[selectedId];
+                if (currentCharacterData.Id) {
+                    urlInput.value = "https://www.dndbeyond.com/characters/" + currentCharacterData.Id;
+                }
+            }
+        });
+
+        // Setup the auto-fill button
+        if (btnGroup && currentCharacterData) {
+            newButton.addEventListener('click', function (event) {
+                event.preventDefault();
+                const selectedId = document.getElementById('character-selector').value;
+                const selectedCharacter = characters[selectedId];
+
+                addName(nameInput, selectedCharacter);
+                addHP(hitPoints, selectedCharacter);
+                addAC(armourClass, selectedCharacter);
+                addInitiative(initiative, selectedCharacter);
+            });
+        }
+    }
 }, 0);
 
 function createButton(text) {
@@ -69,19 +165,27 @@ function createButton(text) {
 }
 
 function addName(nameInput, characterData) {
-    nameInput.value = characterData.Name;
+    if (nameInput && characterData && characterData.Name) {
+        nameInput.value = characterData.Name;
+    }
 }
 
 function addHP(hitPoints, characterData) {
-    hitPoints.value = characterData.HitPoints;
+    if (hitPoints && characterData && characterData.HitPoints) {
+        hitPoints.value = characterData.HitPoints;
+    }
 }
 
 function addAC(armourClass, characterData) {
-    armourClass.value = characterData.ArmourClass;
+    if (armourClass && characterData && characterData.ArmourClass) {
+        armourClass.value = characterData.ArmourClass;
+    }
 }
 
 function addInitiative(initiative, characterData) {
-    initiative.value = characterData.Initiative;
+    if (initiative && characterData && characterData.Initiative) {
+        initiative.value = characterData.Initiative;
+    }
 }
 
 function checkArmour(name, stats, armourData, characterData) {
@@ -127,6 +231,6 @@ function checkArmour(name, stats, armourData, characterData) {
             number = number + 1
         }
     }
-    
+
     return number;
 }
