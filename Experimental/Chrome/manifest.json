@@ -45,13 +45,6 @@
       ],
       "js": [ "js/adventure.js" ],
       "css": [ "css/characterSheet.css" ]
-    },
-    {
-      "matches": [
-        "https://www.dndbeyond.com/characters/*"
-      ],
-      "js": [ "js/dndbeyond-sync.js" ],
-      "run_at": "document_idle"
     }
 
   ]
