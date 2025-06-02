@@ -1,4 +1,4 @@
-![cauldronIconLarge](https://github.com/Jamster3000/cauldron20/assets/148760154/29aacd8f-604f-43f4-a758-3635c2c32ac6)
+<img src="https://github.com/Jamster3000/cauldron20/assets/148760154/29aacd8f-604f-43f4-a758-3635c2c32ac6" alt="cauldronIconLarge" width="200" />
 
 # What is this? 🔮
 
