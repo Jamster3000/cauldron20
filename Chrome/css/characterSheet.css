@@ -1,0 +1,928 @@
+.character-menu {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 10px;
+}
+
+.ability-panel, .skills-panel, .saving-throws-panel {
+    border: 2px solid #336699;
+    padding: 10px;
+    padding-left: 2px;
+    margin-right: 10px;
+    margin-top: 45px;
+    border-radius: 4px;
+}
+
+.ability-panel {
+    height: 380px; 
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    padding: 5px; 
+    margin-top: 160px;
+}
+
+    .ability-panel h5 {
+        margin-top: 0;
+        margin-bottom: 2px;
+        text-align: center;
+        width: 100%;
+        font-size: 14px;
+    }
+
+    .ability-panel .button-modification {
+        margin-bottom: 8px;
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+        padding: 6px;
+        height: 32px;
+    }
+
+    .ability-panel h5:first-of-type {
+        margin-top: 5px;
+    }
+
+.skills-panel {
+    height: 495px;
+    width: 155px;
+    padding-top: 0;
+}
+
+#skillList {
+    margin-top: -7.5px !important;
+}
+
+.saving-throws-panel {
+    height: 200px;
+    width: 120px;
+    margin-top: 340px;
+    padding: 5px;
+}
+
+.menu-panel {
+    border: 2px solid #336699;
+    padding: 5px;
+    height: 230px;
+    width: 120px;
+    margin-left: -130px;
+    margin-top: -23px;
+    border-radius: 4px;
+}
+
+.ability-btn {
+    margin-right: 5px;
+    width: 100%;
+}
+
+.menu-btn {
+    font-size: 12px;
+    margin-top: -10px;
+    margin-left: 2px;
+    width: 100px;
+    height: 28px;
+}
+
+/* Hit Dice */
+.hit-dice-container {
+    border: 2px solid #336699;
+    padding: 8px;
+    border-radius: 4px;
+    width: 88px;
+    height: 110px;
+    position: absolute;
+    margin-top: 45px;
+    margin-left: 0px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.hit-dice-label {
+    font-size: 14px;
+    font-weight: bold;
+    margin-bottom: 5px;
+    text-align: center;
+    margin-top: -50px;
+}
+
+.hit-dice-type {
+    font-size: 13px;
+    margin: 2px 0;
+    font-weight: bold;
+    color: #336699;
+    margin-top: 45px;
+}
+
+.hit-dice-display {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    margin-top: -50px;
+}
+
+.hit-dice-fraction {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 5px 0;
+    margin-top: 0px;
+}
+
+.hit-dice-count {
+    font-weight: bold;
+    font-size: 16px;
+    margin: 0 3px;
+}
+
+.hit-dice-button {
+    font-size: 14px;
+    width: 100%;
+    height: 25px;
+    padding: 0;
+    border: 1px solid #cccccc;
+    border-radius: 3px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #fafafa;
+    margin-top: 10px;
+}
+
+    .hit-dice-button:hover {
+        background-color: #f0f0f0;
+    }
+
+    .hit-dice-button:active {
+        transform: scale(0.97);
+    }
+
+.roll-dice {
+    border: 1px solid black;
+    font-size: 15px;
+    width: fit-content;
+    min-width: 70px;
+    height: 22px;
+    padding: 1px;
+    border-radius: 5px;
+    box-shadow: 0px 0px 20px -20px;
+    cursor: pointer;
+    background-color: white;
+    transition: all 0.1s ease-in-out 0ms;
+    user-select: none;
+    font-family: 'Poppins', sans-serif;
+    margin-top: -5px;
+}
+
+    .roll-dice:hover {
+        background-color: #F2F2F2;
+        box-shadow: 0px 0px 20px -18px;
+    }
+
+    .roll-dice:active {
+        transform: scale(0.95);
+    }
+
+/* Armour class */
+.stats-display {
+    margin-left: 55px;
+    margin-top: 0;
+    width: 40px;
+    height: 30px;
+    font-weight: bold;
+}
+
+.stats-label {
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    margin-left: 5px;
+    margin-top: -30px;
+    font-size: 15px;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.armourSection {
+    border: 2px solid #336699;
+    padding: 10px;
+    margin-left: -130px;
+    margin-top: 45px;
+    height: 50px;
+    width: 120px;
+    border-radius: 4px;
+}
+
+/* Hit Points */
+.hp-container {
+    border: 2px solid #336699;
+    padding: 10px;
+    border-radius: 4px;
+    align-items: center;
+    margin-left: -382.5px;
+    margin-top: -5px;
+    width: 125px;
+    height: 45px;
+    display: flex;
+    flex-direction: column;
+}
+
+.max-hp-input {
+    width: 35px;
+    height: 32px;
+    font-size: 12px;
+    margin-left: 17.5px; 
+    margin-top: -5px;
+    display: inline-block;
+}
+
+.current-hp-input {
+    width: 35px;
+    height: 32px;
+    font-size: 12px;
+    margin-left: -28px; 
+    margin-top: -5px;
+    display: inline-block;
+}
+
+.hp-slash {
+    font-size: 25px;
+    margin-left: -57.5px;
+    margin-top: -7.5px;
+    margin-right: 5px; 
+    display: inline-block;
+    font-weight: normal;
+}
+
+.hp-label {
+    font-size: 14px;
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    margin-left: -95px;
+    margin-top: 0px;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.hp-inputs-container {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    margin-left: 25px;
+    font-weight: bold;
+}
+
+/* Temp Hit points */
+.temp-hp-container {
+    border: 2px solid #336699;
+    padding: 10px;
+    border-radius: 4px;
+    align-items: center;
+    margin-left: 12.5px;
+    margin-top: -5px;
+    width: 110px;
+    height: 45px;
+    display: flex;
+    flex-direction: column;
+}
+
+.temp-hp-label {
+    font-size: 14px;
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    margin-left: -60px;
+    margin-top: -2.5px;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.temp-hp-input {
+    width: 50px;
+    height: 32px;
+    font-size: 12px;
+    margin-left: 35px;
+    margin-top: -2.5px;
+    display: inline-block;
+    font-weight: bold;
+}
+
+/*proficiencies*/
+.proficiencies-section {
+    position: absolute;
+    left: 151px;
+    top: 165px;
+    border: 2px solid #336699;
+    padding: 2px;
+    border-radius: 4px;
+    width: 51px;
+    height: 65px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: help;
+    margin-left: 255px;
+}
+
+#proficiencies {
+    width: 100%;
+    font-size: 15px;
+    text-align: center;
+    word-wrap: break-word;
+    line-height: 1.2;
+    font-weight: bold;
+    color: #336699;
+    user-select: none; 
+}
+
+
+.proficiency-indicator {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: 8px;
+    height: 8px;
+    background-color: #336699;
+    border-radius: 50%;
+    opacity: 0.8;
+}
+
+.proficiency-tooltip {
+    position: absolute;
+    display: none;
+    background-color: white;
+    border: 1px solid #336699;
+    border-radius: 4px;
+    padding: 5px;
+    width: max-content;
+    max-width: 300px; /* Add a maximum width to enforce wrapping */
+    top: 100%;
+    right: 0;
+    margin-bottom: 5px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    z-index: 100;
+    font-size: 11px;
+}
+
+.proficiencies-section:hover .proficiency-tooltip {
+    display: block;
+}
+
+.proficiency-type {
+    display: flex;
+    justify-content: space-between;
+    padding: 2px 0;
+}
+
+.proficiency-type-name {
+    font-weight: bold;
+    margin-right: 10px;
+}
+
+
+
+
+
+
+
+.section-title {
+    margin-top: 50px;
+    font-size: 20px;
+    text-align: center;
+}
+
+.button-modification {
+    border: 1px solid black;
+    font-size: 15px;
+    width: fit-content;
+    min-width: 70px;
+    height: 35px;
+    padding: 8px;
+    border-radius: 5px;
+    box-shadow: 0px 0px 20px -20px;
+    cursor: pointer;
+    background-color: white;
+    transition: all 0.1s ease-in-out 0ms;
+    user-select: none;
+    font-family: 'Poppins', sans-serif;
+}
+
+    .button-modification:hover {
+        background-color: #F2F2F2;
+        box-shadow: 0px 0px 20px -18px;
+    }
+
+    .button-modification:active {
+        transform: scale(0.95);
+    }
+
+.skill-button-modification {
+    border: 1px solid black;
+    font-size: 15px;
+    padding: 0;
+    border-radius: 5px;
+    box-shadow: 0px 0px 20px -20px;
+    cursor: pointer;
+    background-color: white;
+    transition: all 0.1s ease-in-out 0ms;
+    user-select: none;
+}
+
+    .skill-button-modification:hover {
+        background-color: #F2F2F2;
+        box-shadow: 0px 0px 20px -18px;
+    }
+
+    .skill-button-modification:active {
+        transform: scale(0.95);
+    }
+
+    .skill-button-modification:disabled,
+    .skill-button-modification[disabled] {
+        background-color: #E0E0E0;
+        color: #A0A0A0;
+        border: 1px solid #CCCCCC;
+        box-shadow: none;
+        cursor: not-allowed;
+        opacity: 0.7;
+        pointer-events: none;
+        /* Optional: Remove the scale effect if disabled */
+        transform: none;
+    }
+
+
+
+.input-button-modification {
+    background-color: #fafafa;
+    color: black;
+    border: 1px solid #cccccc; 
+    border-radius: 3px; 
+    font-size: 15px;
+    text-align: center;
+    padding: 4px;
+    cursor: text;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.1);
+}
+
+    .input-button-modification:focus {
+        border-color: #336699; 
+        outline: none;
+        box-shadow: inset 0 1px 2px rgba(0,0,0,0.1), 0 0 3px rgba(51,102,153,0.3);
+    }
+
+    .input-button-modification:disabled {
+        background-color: #f5f5f5;
+        cursor: not-allowed;
+    }
+
+/* From Uiverse.io by ErzenXz */
+.styled-button {
+    width: fit-content;
+    border: 1px solid black;
+    min-width: 100px;
+    height: 45px;
+    padding: 8px;
+    border-radius: 5px;
+    box-shadow: 0px 0px 20px -20px;
+    cursor: pointer;
+    background-color: white;
+    transition: all 0.2s ease-in-out 0ms;
+    user-select: none;
+    font-family: 'Poppins', sans-serif;
+}
+
+    .styled-button:hover {
+        background-color: #F2F2F2;
+        box-shadow: 0px 0px 20px -18px;
+    }
+
+    .styled-button:active {
+        transform: scale(0.95);
+    }
+
+    .styled-button:disabled {
+        background-color: #e0e0e0;
+        color: #a0a0a0;
+        border-color: #cccccc;
+        box-shadow: none;
+        cursor: not-allowed;
+        opacity: 0.7;
+        pointer-events: none;
+    }
+
+
+    /*
+===================
+==== Features =====
+===================
+*/
+    .feature-button {
+        color: #6385C1;
+        text-align: left;
+        width: 100%;
+        margin-bottom: 5px;
+        cursor: pointer;
+        background: transparent;
+        border: none;
+        padding: 5px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .feature-button:hover {
+        background-color: #f0f0f0;
+    }
+
+.feature-title {
+    font-weight: bold;
+    flex-grow: 1;
+    text-align: left;
+}
+
+.feature-description {
+    white-space: pre-wrap;
+    margin-left: 15px;
+    margin-bottom: 10px;
+    font-size: 14px;
+    display: none;
+}
+
+.arrow-icon {
+    margin-left: 5px;
+    transition: transform 0.3s ease;
+}
+
+.arrow-down {
+    transform: rotate(90deg);
+}
+
+/*
+===================
+==== Inventory ====
+===================
+*/
+
+.buttonNameWrap {
+    white-space: normal;
+    width: 150px;
+    font-style: italic;
+    background-color: white;
+    color: #6385C1;
+    padding: 5px;
+    border: 1px solid black;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 15px;
+    text-align: left;
+    margin-right: 10px;
+}
+
+    .buttonNameWrap:hover {
+        background-color: #f0f0f0;
+        box-shadow: 0px 0px 20px -18px;
+    }
+
+    .buttonNameWrap:Active {
+        transform: scale(0.95);
+    }
+
+.hrBreakline {
+    margin: 0;
+    padding: 0;
+}
+
+.inventory-header {
+    display: flex;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 5px;
+    font-weight: bold;
+}
+
+    .inventory-header span {
+        display: inline-block;
+    }
+
+.inventory-item {
+    display: flex;
+    margin-bottom: 10px;
+    align-items: flex-start;
+}
+
+.item-name {
+    width: 150px;
+    margin-right: 20px;
+}
+
+.item-quantity {
+    width: 50px;
+    text-align: center;
+    margin-right: 40px;
+}
+
+.item-cost {
+    width: 70px;
+    text-align: center;
+}
+
+.item-description {
+    width: 100%;
+    margin-top: 5px;
+    margin-bottom: 15px;
+    font-size: 13px;
+}
+
+/*
+===================
+===== Spells ======
+===================
+*/
+.spell-slot {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 2px solid #336699;
+    border-radius: 50%;
+    margin-right: 5px;
+    cursor: pointer;
+}
+
+    .spell-slot.used {
+        background-color: #d0d0d0;
+    }
+
+    .spell-slot.available {
+        background-color: #336699;
+    }
+
+.spell-slots-container {
+    margin-bottom: 10px;
+}
+
+.spell-level-container {
+    margin-bottom: 15px;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 10px;
+}
+
+.spell-button {
+    white-space: normal;
+    text-align: left;
+    margin-bottom: 5px;
+    color: #6385C1;
+    padding: 5px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: white;
+    width: 100%;
+    cursor: pointer;
+    font-weight: bold;
+    position: relative;
+}
+
+    .spell-button:hover {
+        background-color: #f0f0f0;
+    }
+
+.dice-roll {
+    color: #f08000 !important;
+    text-decoration: underline;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+    .dice-roll:hover {
+        color: #c06000 !important;
+        background-color: #f8f8f8;
+    }
+
+.spell-info {
+    margin-top: 8px;
+    margin-bottom: 8px;
+    font-size: 12px;
+    color: #666;
+}
+
+.spell-description {
+    white-space: pre-wrap;
+    font-size: 13px;
+    margin-left: 15px;
+    margin-bottom: 15px;
+    display: none;
+}
+
+.arrow-icon {
+    float: right;
+    margin-right: 10px;
+    transition: transform 0.3s;
+    display: inline-block;
+}
+
+.arrow-down {
+    transform: rotate(90deg);
+}
+
+/*
+===================
+==== Actions ======
+===================
+*/
+
+.dice-roll {
+    color: #f08000 !important;
+    text-decoration: underline;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+    .dice-roll:hover {
+        color: #c06000 !important;
+        background-color: #f8f8f8;
+    }
+
+input:disabled {
+    cursor: default !important;
+    opacity: 0.8;
+}
+
+.input-button-modification:disabled {
+    cursor: default !important;
+    background-color: #f9f9f9;
+    color: #333;
+}
+
+.current-hp-input:disabled, .max-hp-input:disabled {
+    cursor: default !important;
+    color: #333;
+    font-weight: bold;
+}
+
+/*
+===================
+======= Rest ======
+===================
+*/
+.rest-buttons {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+    margin: 5px 0;
+    margin-top: -59px;
+}
+
+    .rest-buttons #shortRest,
+    .rest-buttons #longRest {
+        width: 50px;
+        height: 50px;
+        padding: 2px;
+        text-align: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        word-wrap: break-word;
+        word-break: break-word;
+        overflow-wrap: break-word;
+        white-space: normal;
+        margin-left: 745px;
+    }
+
+
+/*
+===================
+====== Speed ======
+===================
+*/
+.speed-section {
+    border: 2px solid #336699;
+    padding: 10px;
+    margin-left: 264px;
+    position: absolute;
+    margin-top: -5px;
+    height: 45px;
+    width: 119.5px;
+    border-radius: 4px;
+}
+
+.speed-display {
+    margin-left: 55px;
+    margin-top: -5px;
+    width: 40px;
+    height: 30px;
+    font-weight: bold;
+}
+
+.speed-label {
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    margin-left: 5px;
+    margin-top: -30px;
+    font-size: 15px;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.speed-indicator {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: 8px;
+    height: 8px;
+    background-color: #336699;
+    border-radius: 50%;
+    opacity: 0.8;
+    cursor: help;
+}
+
+.speed-tooltip {
+    position: absolute;
+    display: none;
+    background-color: white;
+    border: 1px solid #336699;
+    border-radius: 4px;
+    padding: 5px;
+    width: max-content;
+    top: 100%;
+    right: 0;
+    margin-bottom: 5px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    z-index: 100;
+    font-size: 11px;
+}
+
+.speed-section:hover .speed-tooltip {
+    display: block;
+}
+
+.speed-section .speed-type {
+    display: flex;
+    justify-content: space-between;
+    padding: 2px 0;
+}
+
+.speed-section .speed-type-name {
+    font-weight: bold;
+    margin-right: 10px;
+}
+
+.dragPushLift {
+    position: absolute;
+    left: 151px;
+    top: 235px;
+    border: 2px solid #336699;
+    padding: 2px;
+    border-radius: 4px;
+    width: 51px;
+    height: 110px;
+    margin-left: 255px;
+}
+
+    .dragPushLift p {
+        text-align: center;
+        align-items: center;
+        justify-content: center;
+    }
+
+.rage-container {
+    position: absolute;
+    left: 151px;
+    top: 350px;
+    border: 2px solid #336699;
+    padding: 2px;
+    border-radius: 4px;
+    width: 51px;
+    height: 110px;
+    margin-left: 255px;
+    text-align: center;
+}
+
+.bard-container {
+    position: absolute;
+    left: 151px;
+    top: 350px;
+    border: 2px solid #336699;
+    padding: 2px;
+    border-radius: 4px;
+    width: 51px;
+    height: 160px;
+    margin-left: 255px;
+    text-align: center;
+}

@@ -202,13 +202,11 @@ function saveCharacterData() {
 
         // Update the global characterData
         chrome.storage.local.set({ 'characterData': characterData }, function () {
-            console.log('Character Data saved to characterData');
 
             // If character ID exists, update that specific character in the collection
             if (characterId) {
                 characters[characterId] = characterData;
                 chrome.storage.local.set({ 'characters': characters }, function () {
-                    console.log('Character Data saved to characters collection for ID:', characterId);
                     alert('Character data saved successfully!');
                 });
             } else {
