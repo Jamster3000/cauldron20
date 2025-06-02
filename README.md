@@ -1,4 +1,4 @@
-![cauldronIconLarge](https://github.com/Jamster3000/cauldron20/assets/148760154/29aacd8f-604f-43f4-a758-3635c2c32ac6)
+![image](https://github.com/user-attachments/assets/7d8e7fad-9bc8-4591-bf0c-176e169da9eb)![cauldronIconLarge](https://github.com/Jamster3000/cauldron20/assets/148760154/29aacd8f-604f-43f4-a758-3635c2c32ac6)
 
 # What is this? 🔮
 
@@ -29,28 +29,30 @@ This was my first first JavaScript project which has pretty much helped me learn
 
 # Screenshots
 Character Creation<br>
-![image](https://github.com/Jamster3000/cauldron20/assets/148760154/19c31f2c-5034-4be9-a1a3-79afcf6a69bf)
+![image](https://github.com/user-attachments/assets/90914ab0-9c39-4f56-ac51-603617562064)
 
 Character Sheet<br>
-![image](https://github.com/Jamster3000/cauldron20/assets/148760154/01db889d-2bd1-4d97-97bc-41fbec3331b5)
+![image](https://github.com/user-attachments/assets/c39eb751-c7be-41eb-aac4-c0f74285c79c)
 
 Actions<br>
-![image](https://github.com/Jamster3000/cauldron20/assets/148760154/afb6736e-b1ef-468c-95f1-174ba1685b63)
+![image](https://github.com/user-attachments/assets/60578dd6-4e20-4075-ac73-2458443761fd)
 
 Bio<br>
-![image](https://github.com/Jamster3000/cauldron20/assets/148760154/00814970-1746-40d1-8d6b-aad8bcf2e113)
+[Uploading image.png…]()  
 
 Features<br>
-![image](https://github.com/Jamster3000/cauldron20/assets/148760154/fcf65c09-7936-4d2f-9d23-605c26e92201)
+![image](https://github.com/user-attachments/assets/088a109b-c6f3-437e-bad2-583cc9ab5264)
 
 Inventory<br>
-![image](https://github.com/Jamster3000/cauldron20/assets/148760154/7ebd71b6-9b6b-4ffa-93fe-0973ef38fa6c)
+![image](https://github.com/user-attachments/assets/b43c116c-4806-4b22-9e69-1f71871a26a1)
 
 spells<br>
-![image](https://github.com/Jamster3000/cauldron20/assets/148760154/4939eda3-5033-480d-9314-ac9203ba9954)
+![image](https://github.com/user-attachments/assets/5167231b-8214-4099-a471-01845bd70d16)
 
-Spell Details<br>
-![image](https://github.com/Jamster3000/cauldron20/assets/148760154/7733d18c-1870-4cf7-b886-737eb87ff009)
+
+Extra's<br>
+![image](https://github.com/user-attachments/assets/37521b5e-7cdc-4e58-a41d-62dc287d191d)
+
 <br><br>
 ![GitHub issues](https://img.shields.io/github/issues/jamster3000/cauldron20)
 ![Last Commit](https://img.shields.io/github/last-commit/jamster3000/cauldron20)
