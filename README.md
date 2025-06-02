@@ -54,6 +54,17 @@ Extra's<br>
 ![image](https://github.com/user-attachments/assets/37521b5e-7cdc-4e58-a41d-62dc287d191d)
 
 <br><br>
+
+
+# Reporting errors
+There are three main ways to report errors or problems with the extentions
+- Visit the official Cauldron-vtt [Discord Server](https://discord.gg/wNRk4qbwXz) where you may also mention issues with the extention
+- Use the discussions or issues tab in this GitHub (account required).
+- Use the `Report Incorrect Character Data` that is presented in the Cauldron20 Extention's popup.
+
+# Contribution
+The only thing I've never gotten working for me is reading character data from PDF's. If you wish to contribute and help implement that feature, even partial, it's open to it, otherwise, I'm not looking for any help for other's to improve it.
+
 ![GitHub issues](https://img.shields.io/github/issues/jamster3000/cauldron20)
 ![Last Commit](https://img.shields.io/github/last-commit/jamster3000/cauldron20)
 ![GitHub Stars](https://img.shields.io/github/stars/jamster3000/cauldron20?style=social)![Code Size](https://img.shields.io/github/languages/code-size/jamster3000/cauldron20)
