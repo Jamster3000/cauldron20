@@ -1,4 +1,4 @@
-![image](https://github.com/user-attachments/assets/7d8e7fad-9bc8-4591-bf0c-176e169da9eb)![cauldronIconLarge](https://github.com/Jamster3000/cauldron20/assets/148760154/29aacd8f-604f-43f4-a758-3635c2c32ac6)
+![cauldronIconLarge](https://github.com/Jamster3000/cauldron20/assets/148760154/29aacd8f-604f-43f4-a758-3635c2c32ac6)
 
 # What is this? 🔮
 
@@ -38,7 +38,7 @@ Actions<br>
 ![image](https://github.com/user-attachments/assets/60578dd6-4e20-4075-ac73-2458443761fd)
 
 Bio<br>
-[Uploading image.png…]()  
+![image](https://github.com/user-attachments/assets/7d8e7fad-9bc8-4591-bf0c-176e169da9eb)
 
 Features<br>
 ![image](https://github.com/user-attachments/assets/088a109b-c6f3-437e-bad2-583cc9ab5264)
